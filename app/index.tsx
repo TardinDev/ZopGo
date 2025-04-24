@@ -1,19 +1,23 @@
-import { Stack, Link } from 'expo-router';
+import { useEffect } from 'react';
+import { View,Text, Image, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { BlurView } from 'expo-blur';
 
-import { Button } from '~/components/Button';
-import { Container } from '~/components/Container';
-import { ScreenContent } from '~/components/ScreenContent';
+export default function SplashScreen() {
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      router.replace('/home');
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
 
-export default function Home() {
   return (
-    <>
-      <Stack.Screen options={{ title: 'Home' }} />
-      <Container>
-        <ScreenContent path="app/index.tsx" title="Home" />
-        <Link href={{ pathname: '/details', params: { name: 'Dan' } }} asChild>
-          <Button title="Show Details" />
-        </Link>
-      </Container>
-    </>
+    <View className="flex-1 relative bg-white">   
+      <Image
+          source={require('../assets/newzopgo.png')}
+          className="w-full h-full "
+          resizeMode="cover"
+        />
+    </View>
   );
 }
