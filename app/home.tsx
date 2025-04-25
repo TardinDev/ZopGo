@@ -4,6 +4,8 @@ import { useAuth } from '~/context/AuthContext';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import SearchBar from '~/components/SearchBar';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -32,14 +34,14 @@ export default function Home() {
 
   return (
     <KeyboardAvoidingView
-  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-  className="flex-1"
->
-    <View className="flex-1 bg-[#FFDD5C]">
-      <StatusBar barStyle="dark-content" />
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1"
+  >
+      <SafeAreaView style={{ flex: 1 }} className="bg-[#FFDD5C]">
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
       {/* === Header === */}
-      <View className="px-6 pt-16 flex-row justify-between items-center">
+      <View className="px-6 flex-row justify-between items-center">
         <View className='flex-row items-center gap-3'>
         <TouchableOpacity className="w-10 h-10 bg-white rounded-full items-center justify-center shadow">
           <Text className="text-xl">🔔</Text>
@@ -125,7 +127,8 @@ export default function Home() {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+  
+    </SafeAreaView>
 </KeyboardAvoidingView>
 
   );
