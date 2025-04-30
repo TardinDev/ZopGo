@@ -1,23 +1,39 @@
+/* eslint-disable */
+
 import { useEffect } from 'react';
-import { View,Text, Image, StyleSheet } from 'react-native';
+import { Image } from 'react-native';
 import { router } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SplashScreen() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       router.replace('/home');
-    }, 3000);
+    }, 5000);
     return () => clearTimeout(timeout);
   }, []);
 
   return (
-    <View className="flex-1 relative bg-white">   
+    <LinearGradient
+    colors={['#4FA5CF', '#FCA91A']}
+    start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      className="absolute z-0"
+    >
+     
+     <BlurView
+        intensity={20} 
+        tint="light"
+        className="absolute z-10"
+      />
+
+
       <Image
-          source={require('../assets/newzopgo.png')}
-          className="w-full h-full "
-          resizeMode="cover"
-        />
-    </View>
+        source={require('../assets/zopgopro.jpeg')}
+        className="w-full h-full"
+        resizeMode="contain"
+      />
+    </LinearGradient>
   );
 }
