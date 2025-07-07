@@ -1,10 +1,18 @@
 {
   "expo": {
+<<<<<<< HEAD
     "name": "ZopGo",
     "slug": "ZopGo",
     "version": "1.0.0",
 
     "scheme": "ZopGo",
+=======
+    "name": "ZangApp",
+    "slug": "ZangApp",
+    "version": "1.0.0",
+
+    "scheme": "ZangApp",
+>>>>>>> 5115cf2 (Initial commit)
     "web": {
       "bundler": "metro",
       "output": "static",
