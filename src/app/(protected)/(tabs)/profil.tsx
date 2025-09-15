@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +14,55 @@ export default function ProfilTab() {
     totalTrips: 156,
     totalDeliveries: 89,
     memberSince: '2023',
+  };
+
+  const handleMenuPress = (index: number) => {
+    switch (index) {
+      case 0:
+        router.push('/profile-edit');
+        break;
+      case 1:
+        Alert.alert('Mes véhicules', 'Fonctionnalité en développement');
+        break;
+      case 2:
+        Alert.alert('Méthodes de paiement', 'Fonctionnalité en développement');
+        break;
+      case 3:
+        Alert.alert('Adresses favorites', 'Fonctionnalité en développement');
+        break;
+      case 4:
+        Alert.alert('Notifications', 'Fonctionnalité en développement');
+        break;
+      case 5:
+        Alert.alert('Sécurité', 'Fonctionnalité en développement');
+        break;
+      case 6:
+        Alert.alert('Aide et support', 'Fonctionnalité en développement');
+        break;
+      case 7:
+        Alert.alert('Paramètres', 'Fonctionnalité en développement');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: () => {
+            // Ici on supprimerait le token d'auth
+            router.replace('/onboarding');
+          }
+        }
+      ]
+    );
   };
 
   const menuItems = [
@@ -79,6 +129,7 @@ export default function ProfilTab() {
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
+                onPress={() => handleMenuPress(index)}
                 className="flex-row items-center border-b border-gray-100 py-4"
                 activeOpacity={0.7}>
                 <View className="mr-4 h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -93,7 +144,9 @@ export default function ProfilTab() {
             ))}
 
             {/* Bouton de déconnexion */}
-            <TouchableOpacity className="mb-6 mt-8 rounded-2xl bg-red-500 py-4">
+            <TouchableOpacity
+              onPress={handleLogout}
+              className="mb-6 mt-8 rounded-2xl bg-red-500 py-4">
               <Text className="text-center font-bold text-white">🚪 Se déconnecter</Text>
             </TouchableOpacity>
           </View>
