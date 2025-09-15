@@ -6,10 +6,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfilTab() {
   const userInfo = {
-    name: 'Alexandre Dupont',
-    email: 'alexandre.dupont@email.com',
-    phone: '+33 6 12 34 56 78',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+    name: 'Pierre Ondo Mba',
+    email: 'pierre.ondo@gmail.com',
+    phone: '+241 06 12 34 56',
+    avatar:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
     rating: 4.8,
     totalTrips: 156,
     totalDeliveries: 89,
@@ -48,21 +49,17 @@ export default function ProfilTab() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Déconnexion',
-          style: 'destructive',
-          onPress: () => {
-            // Ici on supprimerait le token d'auth
-            router.replace('/onboarding');
-          }
-        }
-      ]
-    );
+    Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Déconnexion',
+        style: 'destructive',
+        onPress: () => {
+          // Ici on supprimerait le token d'auth
+          router.replace('/onboarding');
+        },
+      },
+    ]);
   };
 
   const menuItems = [

@@ -7,33 +7,33 @@ import { Ionicons } from '@expo/vector-icons';
 const messages = [
   {
     id: '1',
-    sender: 'Amadou',
-    avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
-    content: 'Salut, la livraison est bien arrivée. Merci beaucoup !',
-    date: 'Aujourd’hui',
+    sender: 'Brice Mbongo',
+    avatar: 'https://images.nappy.co/photo/vIuT3znuWTzV4wJgMrybb.jpg',
+    content: 'Salut, la livraison à PK5 est bien arrivée. Merci beaucoup !',
+    date: 'Aujourd&apos;hui',
     read: true,
   },
   {
     id: '2',
-    sender: 'Fatou',
-    avatar: 'https://randomuser.me/api/portraits/women/65.jpg',
-    content: 'Je voulais savoir si tu es dispo demain matin ?',
+    sender: 'Marie Nguema',
+    avatar: 'https://images.nappy.co/photo/C1X368dxahRtjZfFQ2eoo.jpg',
+    content: 'Bonsoir, tu es disponible pour un trajet vers Ntoum demain ?',
     date: 'Hier',
     read: false,
   },
   {
     id: '3',
-    sender: 'Kévin',
-    avatar: 'https://randomuser.me/api/portraits/men/24.jpg',
-    content: 'Tu peux m’envoyer les infos du colis stp ?',
+    sender: 'Kevin Oba',
+    avatar: 'https://images.nappy.co/photo/X4zO6tf6D6pIf6yP2Ex7p.jpg',
+    content: 'Tu peux m&apos;envoyer les infos du colis pour Owendo stp ?',
     date: 'Il y a 3 jours',
     read: true,
   },
   {
     id: '4',
-    sender: 'Aïcha',
-    avatar: 'https://randomuser.me/api/portraits/women/40.jpg',
-    content: 'Merci pour ta rapidité ! Très bon service',
+    sender: 'Aïcha Minko',
+    avatar: 'https://images.nappy.co/photo/9XnHjfU53GGRduUTqKJoy.jpg',
+    content: 'Merci pour le voyage à Port-Gentil ! Service impeccable 👍',
     date: 'Il y a 1 semaine',
     read: false,
   },
@@ -43,7 +43,7 @@ export default function Message() {
   return (
     <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
       <SafeAreaView className="flex-1 p-6">
-        <View className="flex-row items-center justify-between mb-4">
+        <View className="mb-4 flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>

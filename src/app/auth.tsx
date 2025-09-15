@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,23 +38,19 @@ export default function AuthScreen() {
 
     try {
       // Simulation d'authentification
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // En vraie app, ici on ferait l'authentification réelle
       // Sauvegarder le token d'auth, etc.
 
-      Alert.alert(
-        'Succès',
-        isLogin ? 'Connexion réussie !' : 'Compte créé avec succès !',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/(protected)/(tabs)')
-          }
-        ]
-      );
+      Alert.alert('Succès', isLogin ? 'Connexion réussie !' : 'Compte créé avec succès !', [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/(protected)/(tabs)'),
+        },
+      ]);
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur s\'est produite. Veuillez réessayer.');
+      Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }
@@ -67,35 +63,32 @@ export default function AuthScreen() {
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         className="flex-1">
-
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1">
-
           {/* Header */}
-          <View className="pt-16 pb-8 px-8">
-            <Text className="text-4xl font-bold text-white text-center mb-2">ZopGo</Text>
-            <Text className="text-lg text-white/80 text-center">
+          <View className="px-8 pb-8 pt-16">
+            <Text className="mb-2 text-center text-4xl font-bold text-white">ZopGo</Text>
+            <Text className="text-center text-lg text-white/80">
               {isLogin ? 'Bon retour parmi nous' : 'Créez votre compte'}
             </Text>
           </View>
 
           {/* Form */}
           <View className="flex-1 px-8">
-            <View className="bg-white/10 backdrop-blur rounded-3xl p-8">
-
+            <View className="rounded-3xl bg-white/10 p-8 backdrop-blur">
               {/* Name field (only for register) */}
               {!isLogin && (
                 <View className="mb-6">
-                  <Text className="text-white/90 text-lg mb-2">Nom complet</Text>
-                  <View className="bg-white/20 rounded-2xl px-4 py-4 flex-row items-center">
+                  <Text className="mb-2 text-lg text-white/90">Nom complet</Text>
+                  <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-4">
                     <Ionicons name="person-outline" size={20} color="white" />
                     <TextInput
                       placeholder="Votre nom"
                       placeholderTextColor="rgba(255,255,255,0.6)"
                       value={formData.name}
-                      onChangeText={(text) => setFormData({...formData, name: text})}
-                      className="flex-1 ml-3 text-white text-lg"
+                      onChangeText={(text) => setFormData({ ...formData, name: text })}
+                      className="ml-3 flex-1 text-lg text-white"
                     />
                   </View>
                 </View>
@@ -103,33 +96,33 @@ export default function AuthScreen() {
 
               {/* Email */}
               <View className="mb-6">
-                <Text className="text-white/90 text-lg mb-2">Email</Text>
-                <View className="bg-white/20 rounded-2xl px-4 py-4 flex-row items-center">
+                <Text className="mb-2 text-lg text-white/90">Email</Text>
+                <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-4">
                   <Ionicons name="mail-outline" size={20} color="white" />
                   <TextInput
                     placeholder="votre.email@example.com"
                     placeholderTextColor="rgba(255,255,255,0.6)"
                     value={formData.email}
-                    onChangeText={(text) => setFormData({...formData, email: text})}
+                    onChangeText={(text) => setFormData({ ...formData, email: text })}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    className="flex-1 ml-3 text-white text-lg"
+                    className="ml-3 flex-1 text-lg text-white"
                   />
                 </View>
               </View>
 
               {/* Password */}
               <View className="mb-6">
-                <Text className="text-white/90 text-lg mb-2">Mot de passe</Text>
-                <View className="bg-white/20 rounded-2xl px-4 py-4 flex-row items-center">
+                <Text className="mb-2 text-lg text-white/90">Mot de passe</Text>
+                <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-4">
                   <Ionicons name="lock-closed-outline" size={20} color="white" />
                   <TextInput
                     placeholder="••••••••"
                     placeholderTextColor="rgba(255,255,255,0.6)"
                     value={formData.password}
-                    onChangeText={(text) => setFormData({...formData, password: text})}
+                    onChangeText={(text) => setFormData({ ...formData, password: text })}
                     secureTextEntry
-                    className="flex-1 ml-3 text-white text-lg"
+                    className="ml-3 flex-1 text-lg text-white"
                   />
                 </View>
               </View>
@@ -137,16 +130,16 @@ export default function AuthScreen() {
               {/* Confirm Password (only for register) */}
               {!isLogin && (
                 <View className="mb-8">
-                  <Text className="text-white/90 text-lg mb-2">Confirmer le mot de passe</Text>
-                  <View className="bg-white/20 rounded-2xl px-4 py-4 flex-row items-center">
+                  <Text className="mb-2 text-lg text-white/90">Confirmer le mot de passe</Text>
+                  <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-4">
                     <Ionicons name="lock-closed-outline" size={20} color="white" />
                     <TextInput
                       placeholder="••••••••"
                       placeholderTextColor="rgba(255,255,255,0.6)"
                       value={formData.confirmPassword}
-                      onChangeText={(text) => setFormData({...formData, confirmPassword: text})}
+                      onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                       secureTextEntry
-                      className="flex-1 ml-3 text-white text-lg"
+                      className="ml-3 flex-1 text-lg text-white"
                     />
                   </View>
                 </View>
@@ -156,20 +149,18 @@ export default function AuthScreen() {
               <TouchableOpacity
                 onPress={handleSubmit}
                 disabled={isLoading}
-                className={`bg-white rounded-2xl py-4 mb-6 ${
-                  isLoading ? 'opacity-50' : ''
-                }`}>
-                <Text className="text-[#2162FE] text-lg font-bold text-center">
+                className={`mb-6 rounded-2xl bg-white py-4 ${isLoading ? 'opacity-50' : ''}`}>
+                <Text className="text-center text-lg font-bold text-[#2162FE]">
                   {isLoading ? 'Chargement...' : isLogin ? 'Se connecter' : 'Créer le compte'}
                 </Text>
               </TouchableOpacity>
 
               {/* Toggle */}
               <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-                <Text className="text-white/80 text-center">
-                  {isLogin ? "Pas encore de compte ? " : "Déjà un compte ? "}
+                <Text className="text-center text-white/80">
+                  {isLogin ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
                   <Text className="font-bold text-white">
-                    {isLogin ? "Créer un compte" : "Se connecter"}
+                    {isLogin ? 'Créer un compte' : 'Se connecter'}
                   </Text>
                 </Text>
               </TouchableOpacity>

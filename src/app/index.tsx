@@ -39,11 +39,11 @@ export default function SplashScreen() {
             duration: 200,
             useNativeDriver: false,
           }).start();
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
         }
 
         // Pause finale
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Pour cette démo, on considère l'utilisateur comme connecté
         const isAuthenticated = true; // Simulé
@@ -105,22 +105,25 @@ export default function SplashScreen() {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
           }}>
-
           {/* Logo et texte superposés */}
-          <View className="items-center mb-16">
-            <View className="bg-white/10 backdrop-blur rounded-3xl p-8 items-center shadow-2xl">
-              <Text className="text-7xl font-black text-white mb-2" style={{
-                textShadowColor: 'rgba(0, 0, 0, 0.5)',
-                textShadowOffset: { width: 2, height: 2 },
-                textShadowRadius: 8,
-              }}>
+          <View className="mb-16 items-center">
+            <View className="items-center rounded-3xl bg-white/10 p-8 shadow-2xl backdrop-blur">
+              <Text
+                className="mb-2 text-7xl font-black text-white"
+                style={{
+                  textShadowColor: 'rgba(0, 0, 0, 0.5)',
+                  textShadowOffset: { width: 2, height: 2 },
+                  textShadowRadius: 8,
+                }}>
                 ZopGo
               </Text>
-              <Text className="text-xl text-white/90 font-medium tracking-wide" style={{
-                textShadowColor: 'rgba(0, 0, 0, 0.3)',
-                textShadowOffset: { width: 1, height: 1 },
-                textShadowRadius: 4,
-              }}>
+              <Text
+                className="text-xl font-medium tracking-wide text-white/90"
+                style={{
+                  textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                  textShadowOffset: { width: 1, height: 1 },
+                  textShadowRadius: 4,
+                }}>
                 Transport & Livraison
               </Text>
             </View>
@@ -128,16 +131,16 @@ export default function SplashScreen() {
 
           {/* Indicateur de chargement avec barre de progression */}
           {isLoading && (
-            <View className="items-center w-full max-w-xs">
-              <View className="bg-white/20 backdrop-blur rounded-2xl px-6 py-4 w-full">
-                <Text className="text-white/80 text-lg font-medium text-center mb-3">
+            <View className="w-full max-w-xs items-center">
+              <View className="w-full rounded-2xl bg-white/20 px-6 py-4 backdrop-blur">
+                <Text className="mb-3 text-center text-lg font-medium text-white/80">
                   Chargement...
                 </Text>
 
                 {/* Barre de progression */}
-                <View className="bg-white/20 rounded-full h-2 mb-2">
+                <View className="mb-2 h-2 rounded-full bg-white/20">
                   <Animated.View
-                    className="bg-white rounded-full h-2"
+                    className="h-2 rounded-full bg-white"
                     style={{
                       width: progressAnim.interpolate({
                         inputRange: [0, 1],
@@ -147,9 +150,7 @@ export default function SplashScreen() {
                   />
                 </View>
 
-                <Text className="text-white/60 text-sm text-center">
-                  {loadingProgress}%
-                </Text>
+                <Text className="text-center text-sm text-white/60">{loadingProgress}%</Text>
               </View>
             </View>
           )}
@@ -157,10 +158,8 @@ export default function SplashScreen() {
 
         {/* Badge en bas */}
         <View className="absolute bottom-8 left-0 right-0 items-center">
-          <View className="bg-white/10 backdrop-blur rounded-full px-4 py-2">
-            <Text className="text-white/70 text-sm font-medium">
-              Votre solution de mobilité
-            </Text>
+          <View className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
+            <Text className="text-sm font-medium text-white/70">Votre solution de mobilité</Text>
           </View>
         </View>
       </SafeAreaView>

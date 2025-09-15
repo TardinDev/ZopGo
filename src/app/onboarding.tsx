@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,7 +26,7 @@ const onboardingData = [
     id: 3,
     title: 'Livraison Express',
     subtitle: 'Envoyez vos colis partout',
-    description: 'Service de livraison rapide et sécurisé dans toute la région',
+    description: 'Service de livraison rapide et sécurisé dans tout le Gabon',
     icon: '📦',
     color: ['#10B981', '#059669'],
   },
@@ -55,11 +55,10 @@ export default function OnboardingScreen() {
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         className="flex-1">
-
         {/* Skip Button */}
         <View className="flex-row justify-end p-6">
           <TouchableOpacity onPress={handleSkip}>
-            <Text className="text-white/80 text-lg">Passer</Text>
+            <Text className="text-lg text-white/80">Passer</Text>
           </TouchableOpacity>
         </View>
 
@@ -68,18 +67,16 @@ export default function OnboardingScreen() {
           <View className="flex-1 items-center justify-center">
             {/* Icon */}
             <View className="mb-12">
-              <Text className="text-8xl text-center">{currentData.icon}</Text>
+              <Text className="text-center text-8xl">{currentData.icon}</Text>
             </View>
 
             {/* Text Content */}
-            <View className="items-center mb-16">
-              <Text className="text-4xl font-bold text-white text-center mb-4">
+            <View className="mb-16 items-center">
+              <Text className="mb-4 text-center text-4xl font-bold text-white">
                 {currentData.title}
               </Text>
-              <Text className="text-xl text-white/90 text-center mb-6">
-                {currentData.subtitle}
-              </Text>
-              <Text className="text-lg text-white/70 text-center leading-6">
+              <Text className="mb-6 text-center text-xl text-white/90">{currentData.subtitle}</Text>
+              <Text className="text-center text-lg leading-6 text-white/70">
                 {currentData.description}
               </Text>
             </View>
@@ -89,11 +86,11 @@ export default function OnboardingScreen() {
         {/* Bottom Section */}
         <View className="px-8 pb-12">
           {/* Pagination Dots */}
-          <View className="flex-row justify-center mb-8">
+          <View className="mb-8 flex-row justify-center">
             {onboardingData.map((_, index) => (
               <View
                 key={index}
-                className={`h-2 w-8 mx-1 rounded-full ${
+                className={`mx-1 h-2 w-8 rounded-full ${
                   index === currentStep ? 'bg-white' : 'bg-white/30'
                 }`}
               />
@@ -103,15 +100,11 @@ export default function OnboardingScreen() {
           {/* Next Button */}
           <TouchableOpacity
             onPress={handleNext}
-            className="bg-white/20 backdrop-blur rounded-2xl py-4 px-8 flex-row items-center justify-center">
-            <Text className="text-white text-lg font-semibold mr-2">
+            className="flex-row items-center justify-center rounded-2xl bg-white/20 px-8 py-4 backdrop-blur">
+            <Text className="mr-2 text-lg font-semibold text-white">
               {currentStep === onboardingData.length - 1 ? 'Commencer' : 'Suivant'}
             </Text>
-            <Ionicons
-              name="arrow-forward"
-              size={20}
-              color="white"
-            />
+            <Ionicons name="arrow-forward" size={20} color="white" />
           </TouchableOpacity>
         </View>
       </LinearGradient>

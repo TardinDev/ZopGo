@@ -62,7 +62,7 @@ export default function HomeTab() {
         {/* === Section bleue avec recherche + activité === */}
         <View className="mt-6 flex-1 rounded-t-3xl bg-[#2162FE] p-6 pb-24">
           <Text className="mt-2 text-base text-white">
-            ☀️ 37°C – Ensoleillé • Saturday, Jul.03{' '}
+            ☀️ 32°C – Ensoleillé • Libreville, Gabon{' '}
           </Text>
 
           <View className="self-start pt-5">
