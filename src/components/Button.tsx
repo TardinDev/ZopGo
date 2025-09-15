@@ -16,11 +16,8 @@ export const Button = forwardRef<View, ButtonProps>(({ title, ...touchableProps 
   );
 });
 
-<<<<<<< HEAD
-=======
 Button.displayName = 'Button';
 
->>>>>>> 5115cf2 (Initial commit)
 const styles = {
   button: 'items-center bg-indigo-500 rounded-[28px] shadow-md p-4',
   buttonText: 'text-white text-lg font-semibold text-center',

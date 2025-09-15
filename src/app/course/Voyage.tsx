@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,15 +21,12 @@ export default function Voyage() {
 
   const transportTypes = ['All', 'Bus', 'Voiture', 'Bateau', 'Avion'];
 
-  const filteredVoyages = selectedType === 'All' ? voyages : voyages.filter(v => v.type === selectedType);
+  const filteredVoyages =
+    selectedType === 'All' ? voyages : voyages.filter((v) => v.type === selectedType);
 
   return (
-    <LinearGradient
-      colors={['#4facfe', '#00f2fe']}
-      style={{ flex: 1 }}
-    >
+    <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
-        
         {/* Header */}
         <View className="px-6 py-4">
           <Text className="text-3xl font-bold text-white">🚀 Trouvez votre voyage</Text>
@@ -43,11 +38,11 @@ export default function Voyage() {
             <TouchableOpacity
               key={type}
               onPress={() => setSelectedType(type)}
-              className={`px-4 py-2 mr-3 rounded-full ${
+              className={`mr-3 rounded-full px-4 py-2 ${
                 selectedType === type ? 'bg-white' : 'bg-[#4facfe]'
-              } shadow-md`}
-            >
-              <Text className={`${selectedType === type ? 'text-blue-600' : 'text-white'} font-bold`}>
+              } shadow-md`}>
+              <Text
+                className={`${selectedType === type ? 'text-blue-600' : 'text-white'} font-bold`}>
                 {type}
               </Text>
             </TouchableOpacity>
@@ -57,21 +52,21 @@ export default function Voyage() {
         {/* Liste des voyages */}
         <ScrollView showsVerticalScrollIndicator={false} className="p-6">
           {filteredVoyages.map((voyage) => (
-            <TouchableOpacity
-              key={voyage.id}
-              className="bg-white p-5 rounded-2xl mb-4 shadow-md"
-            >
-              <View className="flex-row justify-between items-center">
+            <TouchableOpacity key={voyage.id} className="mb-4 rounded-2xl bg-white p-5 shadow-md">
+              <View className="flex-row items-center justify-between">
                 <View>
-                  <Text className="text-xl font-bold text-gray-800">{voyage.from} ➔ {voyage.to}</Text>
-                  <Text className="text-gray-500">{voyage.type} • {voyage.price}</Text>
+                  <Text className="text-xl font-bold text-gray-800">
+                    {voyage.from} ➔ {voyage.to}
+                  </Text>
+                  <Text className="text-gray-500">
+                    {voyage.type} • {voyage.price}
+                  </Text>
                 </View>
                 <Text className="text-4xl">{voyage.icon}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
-
       </SafeAreaView>
     </LinearGradient>
   );

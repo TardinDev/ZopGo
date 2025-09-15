@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
   "name": "ZopGo",
-=======
-  "name": "ZangApp",
->>>>>>> 5115cf2 (Initial commit)
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
@@ -18,56 +14,26 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
     "@react-navigation/native": "^7.0.3",
-<<<<<<< HEAD
-    "expo": "^52.0.46",
-    "expo-constants": "~17.0.8",
-    "expo-linking": "~7.0.5",
-    "expo-router": "~4.0.6",
-    "expo-status-bar": "~2.0.1",
-    "expo-system-ui": "~4.0.9",
-    "expo-web-browser": "~14.0.2",
-    "nativewind": "latest",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-native": "0.76.9",
-    "react-native-gesture-handler": "~2.20.2",
-    "react-native-reanimated": "3.16.2",
-    "react-native-safe-area-context": "4.12.0",
-    "react-native-screens": "~4.4.0",
-    "react-native-web": "~0.19.10"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@types/react": "~18.3.12",
-    "@typescript-eslint/eslint-plugin": "^7.7.0",
-    "@typescript-eslint/parser": "^7.7.0",
-    "eslint": "^8.57.0",
-    "eslint-config-universe": "^12.0.1",
-    "prettier": "^3.2.5",
-    "prettier-plugin-tailwindcss": "^0.5.11",
-    "tailwindcss": "^3.4.0",
-    "typescript": "~5.3.3"
-  },
-  "eslintConfig": {
-    "extends": "universe/native",
-    "root": true
-=======
-    "expo": "^53.0.9",
-    "expo-constants": "~17.1.4",
-    "expo-linking": "~7.1.4",
-    "expo-router": "~5.0.3",
+    "expo": "53.0.22",
+    "expo-blur": "~14.1.5",
+    "expo-constants": "~17.1.7",
+    "expo-linear-gradient": "~14.1.4",
+    "expo-linking": "~7.1.7",
+    "expo-router": "~5.1.6",
     "expo-status-bar": "~2.2.3",
-    "expo-system-ui": "~5.0.6",
-    "expo-web-browser": "~14.1.6",
+    "expo-system-ui": "~5.0.11",
+    "expo-web-browser": "~14.2.0",
     "nativewind": "latest",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-native": "0.79.2",
+    "react-native": "0.79.5",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-maps": "^1.20.1",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
-    "react-native-screens": "~4.10.0",
-    "react-native-web": "^0.20.0"
+    "react-native-screens": "~4.11.1",
+    "react-native-web": "^0.20.0",
+    "expo-font": "~13.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -80,7 +46,6 @@
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.0",
     "typescript": "~5.8.3"
->>>>>>> 5115cf2 (Initial commit)
   },
   "private": true
 }

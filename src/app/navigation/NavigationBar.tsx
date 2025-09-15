@@ -4,16 +4,16 @@ import { router, usePathname } from 'expo-router';
 // Déclaration explicite des routes connues
 type AppRoute =
   | '/home'
-  | '/course'
+  | '/course/Voyage'
   | '/delivery/Delivery'
-  | '/messages'
+  | '/message/Message'
   | '/earnings';
 
 const navigationItems: { icon: string; label: string; route: AppRoute }[] = [
   { icon: '🏠', label: 'Accueil', route: '/home' },
-  { icon: '🚐', label: 'Mini-bus', route: '/course' },
+  { icon: '🚐', label: 'Mini-bus', route: '/course/Voyage' },
   { icon: '📦', label: 'Colis', route: '/delivery/Delivery' },
-  { icon: '💬', label: 'Message', route: '/messages' },
+  { icon: '💬', label: 'Message', route: '/message/Message' },
   { icon: '💰', label: 'Gain', route: '/earnings' },
 ];
 
@@ -21,7 +21,7 @@ export default function NavigationBar() {
   const pathname = usePathname(); // pour détecter la page active
 
   return (
-    <View className="flex-row justify-around py-4 bg-[#2162FE] border-t border-blue-300">
+    <View className="flex-row justify-around border-t border-blue-300 bg-[#2162FE] py-4">
       {navigationItems.map(({ icon, label, route }, idx) => {
         const isActive = pathname === route;
 
@@ -29,16 +29,14 @@ export default function NavigationBar() {
           <TouchableOpacity
             key={idx}
             className="items-center"
-            onPress={() => router.push(route as never)}
-          >
+            onPress={() => router.push(route as never)}>
             <View
-              className={`w-14 h-14 rounded-full items-center justify-center shadow-md ${
+              className={`h-14 w-14 items-center justify-center rounded-full shadow-md ${
                 isActive ? 'bg-yellow-300' : 'bg-[#F7F7F7]'
-              }`}
-            >
+              }`}>
               <Text className="text-lg">{icon}</Text>
             </View>
-            <Text className="text-white text-xs mt-1">{label}</Text>
+            <Text className="mt-1 text-xs text-white">{label}</Text>
           </TouchableOpacity>
         );
       })}

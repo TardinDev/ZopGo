@@ -1,21 +1,12 @@
 {
-<<<<<<< HEAD
-  "cesVersion": "2.14.3",
-  "projectName": "ZopGo",
-=======
   "cesVersion": "2.18.3",
-  "projectName": "ZangApp",
->>>>>>> 5115cf2 (Initial commit)
+  "projectName": "ZopGo",
   "packages": [
     {
       "name": "expo-router",
       "type": "navigation",
       "options": {
-<<<<<<< HEAD
         "type": "stack"
-=======
-        "type": "tabs"
->>>>>>> 5115cf2 (Initial commit)
       }
     },
     {

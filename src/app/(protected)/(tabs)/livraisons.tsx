@@ -1,0 +1,155 @@
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export default function LivraisonsTab() {
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [dropoffLocation, setDropoffLocation] = useState('');
+  const [expandedLivreur, setExpandedLivreur] = useState<number | null>(null);
+
+  const livreurs = [
+    {
+      id: 1,
+      prenom: 'Alex',
+      vehicule: '🚲 Vélo',
+      etoiles: 4.5,
+      disponible: true,
+      photo: 'https://randomuser.me/api/portraits/men/32.jpg',
+      commentaires: ['Rapide et sympa', 'Très pro'],
+      distance: 1.2,
+    },
+    {
+      id: 2,
+      prenom: 'Sofia',
+      vehicule: '🏍️ Moto',
+      etoiles: 4.8,
+      disponible: false,
+      photo: 'https://randomuser.me/api/portraits/women/44.jpg',
+      commentaires: ['Service impeccable', "Toujours à l'heure"],
+      distance: 2.0,
+    },
+    {
+      id: 3,
+      prenom: 'Karim',
+      vehicule: '🚐 Mini-bus',
+      etoiles: 4.2,
+      disponible: true,
+      photo: 'https://randomuser.me/api/portraits/men/45.jpg',
+      commentaires: ['Super professionnel', 'Très ponctuel'],
+      distance: 1.8,
+    },
+    {
+      id: 4,
+      prenom: 'Emily',
+      vehicule: '🚗 Voiture',
+      etoiles: 4.7,
+      disponible: true,
+      photo: 'https://randomuser.me/api/portraits/women/28.jpg',
+      commentaires: ['Rapide', 'Souriante'],
+      distance: 1.5,
+    },
+    {
+      id: 5,
+      prenom: 'Lucas',
+      vehicule: '🚛 Camionnette',
+      etoiles: 4.3,
+      disponible: false,
+      photo: 'https://randomuser.me/api/portraits/men/52.jpg',
+      commentaires: ['Top!', 'Consciencieux'],
+      distance: 2.5,
+    },
+  ].sort((a, b) => a.distance - b.distance);
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1">
+      <LinearGradient colors={['#FFDD5C', '#ffffff']} style={{ flex: 1 }}>
+        <SafeAreaView className="flex-1 p-6">
+          {/* Header */}
+          <Text className="mb-6 text-3xl font-bold text-blue-800">🚚 Trouvez votre livreur</Text>
+
+          <ScrollView showsVerticalScrollIndicator={false} className="flex-1 pb-24">
+            {livreurs.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                className="mb-5 rounded-2xl bg-white p-4 shadow-md"
+                onPress={() => setExpandedLivreur(expandedLivreur === item.id ? null : item.id)}>
+                <View className="mb-2 flex-row items-center gap-4">
+                  <Image source={{ uri: item.photo }} className="h-14 w-14 rounded-full" />
+                  <View className="flex-1">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-xl font-semibold text-gray-800">{item.prenom}</Text>
+                      <Text className="text-2xl">{item.vehicule}</Text>
+                    </View>
+                    <View className="mt-1 flex-row items-center">
+                      <Text className="mr-2 font-bold text-yellow-500">⭐ {item.etoiles}</Text>
+                      <Text
+                        className={`text-xs font-bold ${item.disponible ? 'text-green-500' : 'text-red-500'}`}>
+                        {item.disponible ? 'Disponible' : 'Occupé'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {expandedLivreur === item.id && (
+                  <View className="mt-2 pl-2">
+                    <Text className="mb-1 font-bold text-gray-600">Commentaires :</Text>
+                    {item.commentaires.map((com, idx) => (
+                      <Text key={idx} className="text-sm italic text-gray-500">
+                        &ldquo;{com}&rdquo;
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Formulaire */}
+          <View className="mt-8 space-y-4 pb-6">
+            <View className="flex-col gap-5">
+              <View className="flex-row items-center rounded-2xl bg-white p-4 shadow-md">
+                <Ionicons name="location-outline" size={24} color="#2162FE" className="mr-3" />
+                <TextInput
+                  className="flex-1 text-gray-700"
+                  placeholder="Lieu de récupération"
+                  value={pickupLocation}
+                  onChangeText={setPickupLocation}
+                />
+              </View>
+
+              <View className="flex-row items-center rounded-2xl bg-white p-4 shadow-md">
+                <Ionicons name="flag-outline" size={24} color="#2162FE" className="mr-3" />
+                <TextInput
+                  className="flex-1 text-gray-700"
+                  placeholder="Lieu de dépôt"
+                  value={dropoffLocation}
+                  onChangeText={setDropoffLocation}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => console.log('Confirmer livraison')}
+              className="mt-4 items-center rounded-2xl bg-[#2162FE] py-4 shadow-md"
+              activeOpacity={0.8}>
+              <Text className="text-lg font-bold text-white">✅ Confirmer la livraison</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    </KeyboardAvoidingView>
+  );
+}
