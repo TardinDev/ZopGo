@@ -39,10 +39,10 @@ export default function VoyageDetailScreen() {
           text: 'Confirmer',
           onPress: () => {
             Alert.alert('Succès', 'Votre réservation a été confirmée !', [
-              { text: 'OK', onPress: () => router.back() }
+              { text: 'OK', onPress: () => router.back() },
             ]);
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -54,31 +54,30 @@ export default function VoyageDetailScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.3 }}
         className="pb-8">
-
         {/* Header */}
-        <View className="flex-row items-center justify-between px-6 pt-4 pb-6">
+        <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Détails du voyage</Text>
+          <Text className="text-xl font-bold text-white">Détails du voyage</Text>
           <TouchableOpacity>
             <Ionicons name="heart-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
 
         {/* Trip Info Card */}
-        <View className="mx-6 bg-white/10 backdrop-blur rounded-2xl p-6">
-          <View className="flex-row items-center justify-between mb-4">
+        <View className="mx-6 rounded-2xl bg-white/10 p-6 backdrop-blur">
+          <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-4xl">{voyage.icon}</Text>
-            <View className="bg-white/20 px-3 py-1 rounded-full">
-              <Text className="text-white text-sm font-medium">{voyage.type}</Text>
+            <View className="rounded-full bg-white/20 px-3 py-1">
+              <Text className="text-sm font-medium text-white">{voyage.type}</Text>
             </View>
           </View>
 
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-white text-2xl font-bold">{voyage.from}</Text>
+          <View className="mb-2 flex-row items-center justify-between">
+            <Text className="text-2xl font-bold text-white">{voyage.from}</Text>
             <Ionicons name="arrow-forward" size={20} color="white" />
-            <Text className="text-white text-2xl font-bold">{voyage.to}</Text>
+            <Text className="text-2xl font-bold text-white">{voyage.to}</Text>
           </View>
 
           <View className="flex-row items-center justify-between">
@@ -89,27 +88,27 @@ export default function VoyageDetailScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView className="flex-1 px-6 -mt-4">
+      <ScrollView className="-mt-4 flex-1 px-6">
         {/* Price Card */}
-        <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-          <View className="flex-row items-center justify-between mb-4">
+        <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+          <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-gray-600">Prix par personne</Text>
             <Text className="text-2xl font-bold text-[#2162FE]">{voyage.price}</Text>
           </View>
 
           {/* Passenger Selector */}
           <View className="flex-row items-center justify-between">
-            <Text className="text-gray-700 font-medium">Nombre de passagers</Text>
+            <Text className="font-medium text-gray-700">Nombre de passagers</Text>
             <View className="flex-row items-center">
               <TouchableOpacity
                 onPress={() => passengers > 1 && setPassengers(passengers - 1)}
-                className="bg-gray-100 w-10 h-10 rounded-full items-center justify-center">
+                className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                 <Ionicons name="remove" size={20} color="#666" />
               </TouchableOpacity>
               <Text className="mx-4 text-lg font-bold">{passengers}</Text>
               <TouchableOpacity
                 onPress={() => passengers < voyage.availableSeats && setPassengers(passengers + 1)}
-                className="bg-[#2162FE] w-10 h-10 rounded-full items-center justify-center">
+                className="h-10 w-10 items-center justify-center rounded-full bg-[#2162FE]">
                 <Ionicons name="add" size={20} color="white" />
               </TouchableOpacity>
             </View>
@@ -117,35 +116,35 @@ export default function VoyageDetailScreen() {
         </View>
 
         {/* Vehicle Info */}
-        <View className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
-          <Text className="text-lg font-bold text-gray-800 mb-4">Informations du véhicule</Text>
+        <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+          <Text className="mb-4 text-lg font-bold text-gray-800">Informations du véhicule</Text>
 
-          <View className="flex-row items-center justify-between mb-3">
+          <View className="mb-3 flex-row items-center justify-between">
             <Text className="text-gray-600">Véhicule</Text>
             <Text className="font-medium">{voyage.vehicle}</Text>
           </View>
 
-          <View className="flex-row items-center justify-between mb-3">
+          <View className="mb-3 flex-row items-center justify-between">
             <Text className="text-gray-600">Places disponibles</Text>
             <Text className="font-medium text-green-600">{voyage.availableSeats} places</Text>
           </View>
 
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-gray-600">Conducteur</Text>
             <View className="flex-row items-center">
-              <Text className="font-medium mr-2">{voyage.driver}</Text>
+              <Text className="mr-2 font-medium">{voyage.driver}</Text>
               <View className="flex-row items-center">
                 <Ionicons name="star" size={16} color="#FCA91A" />
-                <Text className="text-sm text-gray-600 ml-1">{voyage.driverRating}</Text>
+                <Text className="ml-1 text-sm text-gray-600">{voyage.driverRating}</Text>
               </View>
             </View>
           </View>
 
           {/* Amenities */}
-          <Text className="text-gray-600 mb-2">Équipements</Text>
+          <Text className="mb-2 text-gray-600">Équipements</Text>
           <View className="flex-row flex-wrap">
             {voyage.amenities.map((amenity, index) => (
-              <View key={index} className="bg-gray-100 px-3 py-1 rounded-full mr-2 mb-2">
+              <View key={index} className="mb-2 mr-2 rounded-full bg-gray-100 px-3 py-1">
                 <Text className="text-sm text-gray-700">{amenity}</Text>
               </View>
             ))}
@@ -153,16 +152,16 @@ export default function VoyageDetailScreen() {
         </View>
 
         {/* Total and Book Button */}
-        <View className="bg-white rounded-2xl p-6 mb-8 shadow-sm">
-          <View className="flex-row items-center justify-between mb-4">
+        <View className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+          <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-lg font-bold text-gray-800">Total</Text>
             <Text className="text-2xl font-bold text-[#2162FE]">{totalPrice} Fcfa</Text>
           </View>
 
           <TouchableOpacity
             onPress={handleBooking}
-            className="bg-[#2162FE] rounded-2xl py-4 items-center">
-            <Text className="text-white text-lg font-bold">Réserver maintenant</Text>
+            className="items-center rounded-2xl bg-[#2162FE] py-4">
+            <Text className="text-lg font-bold text-white">Réserver maintenant</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

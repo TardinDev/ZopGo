@@ -22,106 +22,115 @@ export default function Delivery() {
   const livreurs = [
     {
       id: 1,
-      prenom: 'Alex',
+      prenom: 'Thierry Ngoma',
       vehicule: '🚲 Vélo',
       etoiles: 4.5,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/men/32.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Rapide et sympa', 'Très pro'],
       distance: 1.2,
     },
     {
       id: 2,
-      prenom: 'Sofia',
+      prenom: 'Grace Moussavou',
       vehicule: '🏍️ Moto',
       etoiles: 4.8,
       disponible: false,
-      photo: 'https://randomuser.me/api/portraits/women/44.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Service impeccable', "Toujours à l'heure"],
       distance: 2.0,
     },
     {
       id: 3,
-      prenom: 'Karim',
+      prenom: 'Alain Ndong',
       vehicule: '🚐 Mini-bus',
       etoiles: 4.2,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/men/45.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Super professionnel', 'Très ponctuel'],
       distance: 1.8,
     },
     {
       id: 4,
-      prenom: 'Emily',
+      prenom: 'Sandrine Oba',
       vehicule: '🚗 Voiture',
       etoiles: 4.7,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/women/28.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Rapide', 'Souriante'],
       distance: 1.5,
     },
     {
       id: 5,
-      prenom: 'Lucas',
+      prenom: 'Jean-Claude Mba',
       vehicule: '🚛 Camionnette',
       etoiles: 4.3,
       disponible: false,
-      photo: 'https://randomuser.me/api/portraits/men/52.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Top!', 'Consciencieux'],
       distance: 2.5,
     },
     {
       id: 6,
-      prenom: 'Nina',
+      prenom: 'Sylvie Mintsa',
       vehicule: '🚲 Vélo',
       etoiles: 4.6,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/women/36.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Rapide', 'Très gentille'],
       distance: 1.9,
     },
     {
       id: 7,
-      prenom: 'Thomas',
+      prenom: 'Patrick Ella',
       vehicule: '🛵 Scooter',
       etoiles: 4.4,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/men/76.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Professionnel', 'Serviable'],
       distance: 2.2,
     },
     {
       id: 8,
-      prenom: 'Laura',
+      prenom: 'Christelle Ntoutoume',
       vehicule: '🚗 Voiture',
       etoiles: 4.5,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/women/58.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Très agréable', 'Super ponctuelle'],
       distance: 1.4,
     },
     {
       id: 9,
-      prenom: 'Hugo',
+      prenom: 'Boris Ondo',
       vehicule: '🚐 Mini-bus',
       etoiles: 4.1,
       disponible: false,
-      photo: 'https://randomuser.me/api/portraits/men/84.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Ponctuel', 'Bon service'],
       distance: 3.0,
     },
     {
       id: 10,
-      prenom: 'Emma',
+      prenom: 'Fatou Kombila',
       vehicule: '🚗 Voiture',
       etoiles: 4.9,
       disponible: true,
-      photo: 'https://randomuser.me/api/portraits/women/70.jpg',
+      photo:
+        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face',
       commentaires: ['Super rapide!', 'Hyper gentille'],
       distance: 1.1,
     },
   ].sort((a, b) => a.distance - b.distance);
-
 
   return (
     <KeyboardAvoidingView
@@ -130,7 +139,7 @@ export default function Delivery() {
       <LinearGradient colors={['#FFDD5C', '#ffffff']} style={{ flex: 1 }}>
         <SafeAreaView className="flex-1 p-6">
           {/* Header */}
-          <View className="flex-row items-center justify-between mb-6">
+          <View className="mb-6 flex-row items-center justify-between">
             <TouchableOpacity onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color="#1e40af" />
             </TouchableOpacity>
