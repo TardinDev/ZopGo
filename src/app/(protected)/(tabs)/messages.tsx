@@ -1,6 +1,3 @@
-/* eslint-disable */
-
-
 import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,7 +8,7 @@ const messages = [
     sender: 'Amadou',
     avatar: 'https://randomuser.me/api/portraits/men/15.jpg',
     content: 'Salut, la livraison est bien arrivée. Merci beaucoup !',
-    date: 'Aujourd’hui',
+    date: 'Aujourd&apos;hui',
     read: true,
   },
   {
@@ -26,7 +23,7 @@ const messages = [
     id: '3',
     sender: 'Kévin',
     avatar: 'https://randomuser.me/api/portraits/men/24.jpg',
-    content: 'Tu peux m’envoyer les infos du colis stp ?',
+    content: 'Tu peux m&apos;envoyer les infos du colis stp ?',
     date: 'Il y a 3 jours',
     read: true,
   },
@@ -40,31 +37,28 @@ const messages = [
   },
 ];
 
-export default function Message() {
+export default function MessagesTab() {
   return (
     <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
       <SafeAreaView className="flex-1 p-6">
-        <Text className="text-3xl font-bold text-white mb-4">📬 Messagerie</Text>
+        <Text className="mb-4 text-3xl font-bold text-white">📬 Messagerie</Text>
 
         <FlatList
           data={messages}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item }) => (
             <TouchableOpacity
-              className="bg-white rounded-2xl p-4 mb-4 shadow-md flex-row items-center"
-              activeOpacity={0.8}
-            >
-              <Image
-                source={{ uri: item.avatar }}
-                className="w-14 h-14 rounded-full mr-4"
-              />
+              className="mb-4 flex-row items-center rounded-2xl bg-white p-4 shadow-md"
+              activeOpacity={0.8}>
+              <Image source={{ uri: item.avatar }} className="mr-4 h-14 w-14 rounded-full" />
 
               <View className="flex-1">
-                <View className="flex-row justify-between items-center mb-1">
+                <View className="mb-1 flex-row items-center justify-between">
                   <Text className="text-lg font-semibold text-gray-800">{item.sender}</Text>
                   {!item.read && (
-                    <Text className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                    <Text className="rounded-full bg-green-500 px-2 py-0.5 text-xs text-white">
                       Nouveau
                     </Text>
                   )}
@@ -72,7 +66,7 @@ export default function Message() {
                 <Text numberOfLines={1} className="text-gray-600">
                   {item.content}
                 </Text>
-                <Text className="text-xs text-gray-400 mt-1">{item.date}</Text>
+                <Text className="mt-1 text-xs text-gray-400">{item.date}</Text>
               </View>
             </TouchableOpacity>
           )}
