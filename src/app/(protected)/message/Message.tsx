@@ -1,6 +1,8 @@
 import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const messages = [
   {
@@ -41,7 +43,13 @@ export default function Message() {
   return (
     <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
       <SafeAreaView className="flex-1 p-6">
-        <Text className="mb-4 text-3xl font-bold text-white">📬 Messagerie</Text>
+        <View className="flex-row items-center justify-between mb-4">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text className="text-2xl font-bold text-white">📬 Messagerie</Text>
+          <View className="w-6" />
+        </View>
 
         <FlatList
           data={messages}

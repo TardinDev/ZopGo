@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 
 export default function Delivery() {
   const [pickupLocation, setPickupLocation] = useState('');
@@ -122,7 +122,6 @@ export default function Delivery() {
     },
   ].sort((a, b) => a.distance - b.distance);
 
-  const router = useRouter();
 
   return (
     <KeyboardAvoidingView
@@ -131,7 +130,13 @@ export default function Delivery() {
       <LinearGradient colors={['#FFDD5C', '#ffffff']} style={{ flex: 1 }}>
         <SafeAreaView className="flex-1 p-6">
           {/* Header */}
-          <Text className="mb-6 text-3xl font-bold text-blue-800">🚚 Trouvez votre livreur</Text>
+          <View className="flex-row items-center justify-between mb-6">
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#1e40af" />
+            </TouchableOpacity>
+            <Text className="text-2xl font-bold text-blue-800">🚚 Trouvez votre livreur</Text>
+            <View className="w-6" />
+          </View>
 
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
             {livreurs.map((item) => (
