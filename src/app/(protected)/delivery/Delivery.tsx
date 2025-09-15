@@ -195,7 +195,7 @@ export default function Delivery() {
             </View>
 
             <TouchableOpacity
-              onPress={() => router.push('/home')}
+              onPress={() => router.push('/(protected)/(tabs)')}
               className="mt-4 items-center rounded-2xl bg-[#2162FE] py-4 shadow-md"
               activeOpacity={0.8}>
               <Text className="text-lg font-bold text-white">✅ Confirmer la livraison</Text>

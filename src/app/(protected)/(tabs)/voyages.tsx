@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -52,7 +53,20 @@ export default function VoyagesTab() {
         {/* Liste des voyages */}
         <ScrollView showsVerticalScrollIndicator={false} className="p-6 pb-24">
           {filteredVoyages.map((voyage) => (
-            <TouchableOpacity key={voyage.id} className="mb-4 rounded-2xl bg-white p-5 shadow-md">
+            <TouchableOpacity
+              key={voyage.id}
+              onPress={() => router.push({
+                pathname: '/voyage-detail',
+                params: {
+                  id: voyage.id,
+                  type: voyage.type,
+                  from: voyage.from,
+                  to: voyage.to,
+                  price: voyage.price,
+                  icon: voyage.icon
+                }
+              })}
+              className="mb-4 rounded-2xl bg-white p-5 shadow-md">
               <View className="flex-row items-center justify-between">
                 <View>
                   <Text className="text-xl font-bold text-gray-800">
