@@ -1,7 +1,9 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Voyage() {
   const [selectedType, setSelectedType] = useState('All');
@@ -28,8 +30,12 @@ export default function Voyage() {
     <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
         {/* Header */}
-        <View className="px-6 py-4">
-          <Text className="text-3xl font-bold text-white">🚀 Trouvez votre voyage</Text>
+        <View className="flex-row items-center justify-between px-6 py-4">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text className="text-2xl font-bold text-white">🚀 Trouvez votre voyage</Text>
+          <View className="w-6" />
         </View>
 
         {/* Types de transport */}

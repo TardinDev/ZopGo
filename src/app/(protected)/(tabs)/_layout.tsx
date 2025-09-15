@@ -78,6 +78,22 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Écrans de détail - masqués de la tab bar */}
+      <Tabs.Screen
+        name="voyage-detail"
+        options={{
+          href: null, // Masque de la tab bar
+          title: 'Détail du voyage',
+        }}
+      />
+      <Tabs.Screen
+        name="profile-edit"
+        options={{
+          href: null, // Masque de la tab bar
+          title: 'Modifier le profil',
+        }}
+      />
     </Tabs>
   );
 }
