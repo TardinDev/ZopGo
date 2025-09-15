@@ -1,34 +1,79 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: '#2162FE',
         tabBarInactiveTintColor: '#6B7280',
+
+        // --- Capsule flottante ---
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingBottom: 10,
-          paddingTop: 8,
-          height: 70,
           position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: -2,
-          },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
+          bottom: 16,
+          left: 16,
+          right: 16,
+          height: 72,
+          borderRadius: 28,
+          backgroundColor: 'transparent', // important pour voir le blur
+          borderTopWidth: 0,
+          overflow: 'hidden', // masque le contenu au rayon
+          // Ombre douce
+          ...Platform.select({
+            ios: {
+              shadowColor: '#000',
+              shadowOpacity: 0.15,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 8 },
+            },
+            android: {
+              elevation: 16,
+            },
+          }),
         },
-        headerShown: false,
-      }}>
+
+        // --- Fond "Liquid Glass" ---
+        tabBarBackground: () => (
+          <View style={StyleSheet.absoluteFill}>
+            <BlurView
+              // iOS/Android: le blur natif rend le verre liquide
+              intensity={70}
+              tint="light"
+              style={StyleSheet.absoluteFill}
+            />
+            {/* Liseré + reflet subtil pour l’effet verre */}
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                { borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.35)' },
+              ]}
+            />
+            <LinearGradient
+              pointerEvents="none"
+              colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0.10)', 'rgba(255,255,255,0.00)']}
+              locations={[0, 0.35, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
+        ),
+
+        // — Alignement propre des labels sous icônes —
+        tabBarItemStyle: {
+          paddingVertical: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          marginTop: 2, // force le label bien sous l’icône
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
@@ -38,6 +83,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="voyages"
         options={{
@@ -47,6 +93,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="livraisons"
         options={{
@@ -56,19 +103,17 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'chatbubble' : 'chatbubble-outline'}
-              size={24}
-              color={color}
-            />
+            <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={24} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
         name="profil"
         options={{
@@ -79,21 +124,9 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Écrans de détail - masqués de la tab bar */}
-      <Tabs.Screen
-        name="voyage-detail"
-        options={{
-          href: null, // Masque de la tab bar
-          title: 'Détail du voyage',
-        }}
-      />
-      <Tabs.Screen
-        name="profile-edit"
-        options={{
-          href: null, // Masque de la tab bar
-          title: 'Modifier le profil',
-        }}
-      />
+      {/* Ecrans hors tab bar */}
+      <Tabs.Screen name="voyage-detail" options={{ href: null, title: 'Détail du voyage' }} />
+      <Tabs.Screen name="profile-edit" options={{ href: null, title: 'Modifier le profil' }} />
     </Tabs>
   );
 }
