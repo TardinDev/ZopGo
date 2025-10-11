@@ -40,22 +40,60 @@ export default function VoyagesTab() {
           <Text className="text-3xl font-bold text-white">🚀 Trouvez votre voyage</Text>
         </View>
 
-        {/* Types de transport */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 py-2">
-          {transportTypes.map((type) => (
-            <TouchableOpacity
-              key={type}
-              onPress={() => setSelectedType(type)}
-              className={`mr-3 rounded-full px-4 py-2 ${
-                selectedType === type ? 'bg-white' : 'bg-[#4facfe]'
-              } shadow-md`}>
-              <Text
-                className={`${selectedType === type ? 'text-blue-600' : 'text-white'} font-bold`}>
-                {type}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+       {/* Types de transport */}
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+>
+  {transportTypes.map((type) => {
+    const isActive = selectedType === type;
+    return (
+      <TouchableOpacity
+        key={type}
+        activeOpacity={0.9}
+        onPress={() => setSelectedType(type)}
+        style={{
+          // Dimensions fixes = pas de “saut”
+          width: 95,
+          height: 40,
+          borderRadius: 20,
+          marginRight: 12,
+
+          // Centrage parfait du contenu
+          alignItems: 'center',
+          justifyContent: 'center',
+
+          // Couleurs stables
+          backgroundColor: isActive ? '#FFFFFF' : '#4facfe',
+
+          // Ombres légères mais constantes
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 2,
+          elevation: 2,
+        }}
+      >
+        <Text
+          style={{
+            color: isActive ? '#2563EB' : '#FFFFFF',
+            fontWeight: '600',
+            fontSize: 14,
+            lineHeight: 18,            // IMPORTANT: lineHeight calée
+            textAlign: 'center',
+            includeFontPadding: false, // Android: évite le décalage bas
+            textAlignVertical: 'center',
+          }}
+          allowFontScaling={false}     // (optionnel) évite de légers “sauts”
+        >
+          {type}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</ScrollView>
+
 
         {/* Liste des voyages */}
         <ScrollView showsVerticalScrollIndicator={false} className="p-6 pb-24">

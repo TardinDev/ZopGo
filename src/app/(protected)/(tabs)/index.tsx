@@ -60,28 +60,48 @@ export default function HomeTab() {
         </View>
 
         {/* === Section bleue avec recherche + activité === */}
-        <View className="mt-6 flex-1 rounded-t-3xl bg-[#2162FE] p-6 pb-24">
-          <Text className="mt-2 text-base text-white">
-            ☀️ 32°C – Ensoleillé • Libreville, Gabon{' '}
-          </Text>
+        <View className="mt-8 flex-1 rounded-t-[40px] bg-[#2162FE] px-6 pt-6 pb-24">
+          {/* Météo en card */}
+          <View className="mb-5 rounded-2xl bg-white/15 px-4 pb-2 pt-1">
+            <Text className="text-base font-semibold text-white">
+              ☀️ 32°C – Ensoleillé • Libreville, Gabon
+            </Text>
+          </View>
 
-          <View className="self-start pt-5">
+          {/* Barre de recherche */}
+          <View className="mb-6">
             <SearchBar />
           </View>
 
           {/* === Activités scrollables === */}
-          <View className="mt-6 flex-1">
-            <Text className="mb-4 text-lg font-bold text-white">🕒 Dernières activités</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+          <View className="flex-1">
+            <Text className="mb-3 text-xl font-bold text-white">Dernières activités</Text>
+            <ScrollView
+              className=" -mb-10"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 10, }}>
               {[...Array(10)].map((_, index) => (
-                <View key={index} className="mb-3 rounded-xl bg-white p-4 shadow-md">
-                  <Text className="font-medium text-gray-700">
-                    {index % 2 === 0 ? '🚕 Trajet client' : '📦 Livraison client'}
-                  </Text>
-                  <Text className="mt-1 text-sm text-gray-400">
-                    {index % 2 === 0 ? 'Aujourd&apos;hui à 13:30' : 'Hier à 18:45'}
-                  </Text>
-                </View>
+                <TouchableOpacity
+                  key={index}
+                  activeOpacity={0.8}
+                  className="mb-2.5 flex-row items-center rounded-xl bg-white p-3 shadow-md">
+                  <View className={`mr-3 h-10 w-10 items-center justify-center rounded-lg ${
+                    index % 2 === 0 ? 'bg-blue-100' : 'bg-yellow-100'
+                  }`}>
+                    <Text className="text-xl">
+                      {index % 2 === 0 ? '🚕' : '📦'}
+                    </Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-sm font-bold text-gray-900">
+                      {index % 2 === 0 ? 'Trajet client' : 'Livraison client'}
+                    </Text>
+                    <Text className="mt-0.5 text-xs text-gray-500">
+                      {index % 2 === 0 ? "Aujourd'hui à 13:30" : 'Hier à 18:45'}
+                    </Text>
+                  </View>
+                  <Text className="text-sm text-gray-400">›</Text>
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
