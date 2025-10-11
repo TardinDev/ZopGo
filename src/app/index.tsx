@@ -77,7 +77,7 @@ export default function SplashScreen() {
 
       {/* Image de fond */}
       <Image
-        source={require('../../assets/zopgopro.jpeg')}
+        source={require('../../assets/splashScreen.jpg')}
         style={{
           position: 'absolute',
           width: width,
