@@ -27,6 +27,13 @@ export default function ProtectedLayout() {
           presentation: 'card',
         }}
       />
+      <Stack.Screen
+        name="conversation"
+        options={{
+          headerShown: false,
+          presentation: 'card',
+        }}
+      />
     </Stack>
   );
 }

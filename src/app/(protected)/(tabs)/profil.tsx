@@ -10,7 +10,7 @@ export default function ProfilTab() {
     email: 'pierre.ondo@gmail.com',
     phone: '+241 06 12 34 56',
     avatar:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
     rating: 4.8,
     totalTrips: 156,
     totalDeliveries: 89,
