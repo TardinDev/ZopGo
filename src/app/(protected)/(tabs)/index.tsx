@@ -88,7 +88,9 @@ export default function HomeTab() {
               </View>
 
               <View className="flex-row items-center gap-3">
-                <TouchableOpacity className="h-12 w-12 items-center justify-center rounded-full bg-white/80 shadow-lg">
+                <TouchableOpacity
+                  onPress={() => router.push('/(protected)/(tabs)/messages')}
+                  className="h-12 w-12 items-center justify-center rounded-full bg-white/80 shadow-lg">
                   <Ionicons name="notifications-outline" size={24} color="#2162FE" />
                   <View className="absolute -top-1 -right-1 h-5 w-5 items-center justify-center rounded-full bg-red-500">
                     <Text className="text-xs font-bold text-white">3</Text>
