@@ -18,7 +18,7 @@
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -35,8 +35,8 @@
     "android": {
       "package": "com.zopgo.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#14181E"
+        "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
+        "backgroundColor": "#FFFFFF"
       }
     }
   }

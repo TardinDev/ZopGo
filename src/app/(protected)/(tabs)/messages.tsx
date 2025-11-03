@@ -103,7 +103,7 @@ const notifications = [
 ];
 
 export default function MessagesTab() {
-  const [selectedTab, setSelectedTab] = useState<'messages' | 'notifications'>('notifications');
+  const [selectedTab, setSelectedTab] = useState('notifications');
 
   return (
     <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
@@ -159,7 +159,11 @@ export default function MessagesTab() {
                 <View
                   className="mr-4 h-12 w-12 items-center justify-center rounded-xl"
                   style={{ backgroundColor: item.iconBg }}>
-                  <Ionicons name={item.icon as any} size={24} color={item.iconColor} />
+                  <Ionicons
+                    name={item.icon as keyof typeof Ionicons.glyphMap}
+                    size={24}
+                    color={item.iconColor}
+                  />
                 </View>
 
                 {/* Content */}

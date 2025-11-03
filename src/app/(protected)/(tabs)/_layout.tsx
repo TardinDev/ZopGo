@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,7 +18,7 @@ export default function TabLayout() {
         // --- Capsule flottante ---
         tabBarStyle: {
           position: 'absolute',
-          bottom: 4,
+          bottom: Platform.OS === 'android' ? 16 : 4,
           left: 16,
           right: 16,
           height: 72,
@@ -82,7 +82,7 @@ export default function TabLayout() {
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+            <MaterialCommunityIcons name={focused ? 'home' : 'home-outline'} size={26} color={color} />
           ),
         }}
       />
@@ -92,7 +92,7 @@ export default function TabLayout() {
         options={{
           title: 'Voyages',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'car' : 'car-outline'} size={24} color={color} />
+            <MaterialCommunityIcons name={focused ? 'car-side' : 'car-outline'} size={26} color={color} />
           ),
         }}
       />
@@ -102,7 +102,7 @@ export default function TabLayout() {
         options={{
           title: 'Livraisons',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'cube' : 'cube-outline'} size={24} color={color} />
+            <MaterialCommunityIcons name={focused ? 'package-variant' : 'package-variant-closed'} size={26} color={color} />
           ),
         }}
       />
@@ -112,7 +112,7 @@ export default function TabLayout() {
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={24} color={color} />
+            <MaterialCommunityIcons name={focused ? 'message' : 'message-outline'} size={26} color={color} />
           ),
         }}
       />
@@ -122,7 +122,7 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+            <MaterialCommunityIcons name={focused ? 'account' : 'account-outline'} size={26} color={color} />
           ),
         }}
       />
