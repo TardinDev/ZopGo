@@ -9,12 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileEditScreen() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: 'Pierre Ondo Mba',
     email: 'pierre.ondo@gmail.com',

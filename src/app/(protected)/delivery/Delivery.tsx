@@ -12,125 +12,16 @@ import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { getSortedLivreursByDistance } from '../../../data';
 
 export default function Delivery() {
+  const router = useRouter();
   const [pickupLocation, setPickupLocation] = useState('');
   const [dropoffLocation, setDropoffLocation] = useState('');
-  const [expandedLivreur, setExpandedLivreur] = useState<number | null>(null); // pour voir les commentaires
+  const [expandedLivreur, setExpandedLivreur] = useState<number | null>(null);
 
-  const livreurs = [
-    {
-      id: 1,
-      prenom: 'Thierry Ngoma',
-      vehicule: '🚲 Vélo',
-      etoiles: 4.5,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Rapide et sympa', 'Très pro'],
-      distance: 1.2,
-    },
-    {
-      id: 2,
-      prenom: 'Grace Moussavou',
-      vehicule: '🏍️ Moto',
-      etoiles: 4.8,
-      disponible: false,
-      photo:
-        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Service impeccable', "Toujours à l'heure"],
-      distance: 2.0,
-    },
-    {
-      id: 3,
-      prenom: 'Alain Ndong',
-      vehicule: '🚐 Mini-bus',
-      etoiles: 4.2,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Super professionnel', 'Très ponctuel'],
-      distance: 1.8,
-    },
-    {
-      id: 4,
-      prenom: 'Sandrine Oba',
-      vehicule: '🚗 Voiture',
-      etoiles: 4.7,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Rapide', 'Souriante'],
-      distance: 1.5,
-    },
-    {
-      id: 5,
-      prenom: 'Jean-Claude Mba',
-      vehicule: '🚛 Camionnette',
-      etoiles: 4.3,
-      disponible: false,
-      photo:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Top!', 'Consciencieux'],
-      distance: 2.5,
-    },
-    {
-      id: 6,
-      prenom: 'Sylvie Mintsa',
-      vehicule: '🚲 Vélo',
-      etoiles: 4.6,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Rapide', 'Très gentille'],
-      distance: 1.9,
-    },
-    {
-      id: 7,
-      prenom: 'Patrick Ella',
-      vehicule: '🛵 Scooter',
-      etoiles: 4.4,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Professionnel', 'Serviable'],
-      distance: 2.2,
-    },
-    {
-      id: 8,
-      prenom: 'Christelle Ntoutoume',
-      vehicule: '🚗 Voiture',
-      etoiles: 4.5,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Très agréable', 'Super ponctuelle'],
-      distance: 1.4,
-    },
-    {
-      id: 9,
-      prenom: 'Boris Ondo',
-      vehicule: '🚐 Mini-bus',
-      etoiles: 4.1,
-      disponible: false,
-      photo:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Ponctuel', 'Bon service'],
-      distance: 3.0,
-    },
-    {
-      id: 10,
-      prenom: 'Fatou Kombila',
-      vehicule: '🚗 Voiture',
-      etoiles: 4.9,
-      disponible: true,
-      photo:
-        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face',
-      commentaires: ['Super rapide!', 'Hyper gentille'],
-      distance: 1.1,
-    },
-  ].sort((a, b) => a.distance - b.distance);
+  const livreurs = getSortedLivreursByDistance();
 
   return (
     <KeyboardAvoidingView
