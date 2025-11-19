@@ -1,11 +1,12 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function VoyageDetailScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams();
   const [passengers, setPassengers] = useState(1);
 

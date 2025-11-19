@@ -8,24 +8,28 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '../../../components/SearchBar';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { stats, generateActivities, weatherInfo } from '../../../data';
+import { COLORS } from '../../../constants';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const INITIAL_POSITION = SCREEN_HEIGHT * 0.75; // Position de départ (25% de l'écran visible)
 const MIN_TRANSLATE_Y = 100; // Position maximale (reste 100px en haut)
 
 export default function HomeTab() {
+  const router = useRouter();
+  const activities = useMemo(() => generateActivities(10), []);
   const translateY = useSharedValue(INITIAL_POSITION);
   const startY = useSharedValue(0);
 
@@ -75,7 +79,7 @@ export default function HomeTab() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1">
-      <LinearGradient colors={['#FFDD5C', '#FFE89A']} style={{ flex: 1 }}>
+      <LinearGradient colors={COLORS.gradients.yellow} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
@@ -91,7 +95,7 @@ export default function HomeTab() {
                 <TouchableOpacity
                   onPress={() => router.push('/(protected)/(tabs)/messages')}
                   className="h-12 w-12 items-center justify-center rounded-full bg-white/80 shadow-lg">
-                  <Ionicons name="notifications-outline" size={24} color="#2162FE" />
+                  <Ionicons name="notifications-outline" size={24} color={COLORS.primary} />
                   <View className="absolute -top-1 -right-1 h-5 w-5 items-center justify-center rounded-full bg-red-500">
                     <Text className="text-xs font-bold text-white">3</Text>
                   </View>
@@ -113,29 +117,23 @@ export default function HomeTab() {
           {/* === Cartes statistiques === */}
           <View className="px-6 mb-4">
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-3">
-              <View className="mr-3 w-40 rounded-2xl bg-white/90 p-4 shadow-md">
-                <View className="mb-2 h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                  <Ionicons name="cash-outline" size={20} color="#10B981" />
+              {stats.map((stat) => (
+                <View key={stat.id} className="mr-3 w-40 rounded-2xl bg-white/90 p-4 shadow-md">
+                  <View className={`mb-2 h-10 w-10 items-center justify-center rounded-full bg-${stat.color}-100`}>
+                    <Ionicons
+                      name={stat.icon as any}
+                      size={20}
+                      color={
+                        stat.color === 'green' ? COLORS.success :
+                        stat.color === 'blue' ? COLORS.info :
+                        COLORS.warning
+                      }
+                    />
+                  </View>
+                  <Text className="text-2xl font-bold text-gray-900">{stat.value}</Text>
+                  <Text className="text-xs text-gray-600">{stat.subtitle}</Text>
                 </View>
-                <Text className="text-2xl font-bold text-gray-900">25,000</Text>
-                <Text className="text-xs text-gray-600">FCFA aujourd'hui</Text>
-              </View>
-
-              <View className="mr-3 w-40 rounded-2xl bg-white/90 p-4 shadow-md">
-                <View className="mb-2 h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                  <Ionicons name="car-outline" size={20} color="#3B82F6" />
-                </View>
-                <Text className="text-2xl font-bold text-gray-900">12</Text>
-                <Text className="text-xs text-gray-600">Courses du jour</Text>
-              </View>
-
-              <View className="mr-3 w-40 rounded-2xl bg-white/90 p-4 shadow-md">
-                <View className="mb-2 h-10 w-10 items-center justify-center rounded-full bg-yellow-100">
-                  <Ionicons name="star-outline" size={20} color="#F59E0B" />
-                </View>
-                <Text className="text-2xl font-bold text-gray-900">4.8</Text>
-                <Text className="text-xs text-gray-600">Note moyenne</Text>
-              </View>
+              ))}
             </ScrollView>
           </View>
 
@@ -146,7 +144,7 @@ export default function HomeTab() {
               activeOpacity={0.9}
               className="overflow-hidden rounded-3xl shadow-xl">
               <LinearGradient
-                colors={['#3B82F6', '#2563EB']}
+                colors={COLORS.gradients.blue}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ paddingVertical: 24, paddingHorizontal: 24 }}>
@@ -168,7 +166,7 @@ export default function HomeTab() {
               activeOpacity={0.9}
               className="overflow-hidden rounded-3xl shadow-xl">
               <LinearGradient
-                colors={['#F59E0B', '#D97706']}
+                colors={COLORS.gradients.orange}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ paddingVertical: 24, paddingHorizontal: 24 }}>
@@ -198,10 +196,11 @@ export default function HomeTab() {
                   height: SCREEN_HEIGHT,
                   zIndex: 10,
                   elevation: 10,
+                  backgroundColor: COLORS.primary,
                 },
                 animatedStyle,
               ]}
-              className="rounded-t-[40px] bg-[#2162FE] px-6 pt-3 shadow-2xl">
+              className="rounded-t-[40px] px-6 pt-3 shadow-2xl">
               {/* Indicateur de glissement */}
               <View className="items-center py-3 mb-2">
                 <View className="h-1.5 w-16 rounded-full bg-white/50" />
@@ -210,14 +209,14 @@ export default function HomeTab() {
               {/* En-tête de section avec météo */}
             <View className="mb-5 flex-row items-center justify-between rounded-2xl bg-white/15 px-4 py-3 backdrop-blur">
               <View className="flex-row items-center">
-                <Text className="text-3xl mr-2">☀️</Text>
+                <Text className="text-3xl mr-2">{weatherInfo.icon}</Text>
                 <View>
-                  <Text className="text-xl font-bold text-white">32°C</Text>
-                  <Text className="text-xs text-white/80">Libreville, Gabon</Text>
+                  <Text className="text-xl font-bold text-white">{weatherInfo.temperature}</Text>
+                  <Text className="text-xs text-white/80">{weatherInfo.location}</Text>
                 </View>
               </View>
               <View className="rounded-full bg-white/20 px-3 py-1">
-                <Text className="text-xs font-semibold text-white">Ensoleillé</Text>
+                <Text className="text-xs font-semibold text-white">{weatherInfo.condition}</Text>
               </View>
             </View>
 
@@ -239,40 +238,38 @@ export default function HomeTab() {
                 className="-mb-10"
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 10 }}>
-                {[...Array(10)].map((_, index) => (
+                {activities.map((activity) => (
                   <TouchableOpacity
-                    key={index}
+                    key={activity.id}
                     activeOpacity={0.8}
                     className="mb-3 overflow-hidden rounded-2xl bg-white shadow-lg">
                     <View className="flex-row items-center p-4">
                       <View className={`mr-4 h-12 w-12 items-center justify-center rounded-xl ${
-                        index % 2 === 0 ? 'bg-blue-500' : 'bg-yellow-500'
+                        activity.type === 'course' ? 'bg-blue-500' : 'bg-yellow-500'
                       }`}>
-                        <Text className="text-2xl">
-                          {index % 2 === 0 ? '🚕' : '📦'}
-                        </Text>
+                        <Text className="text-2xl">{activity.icon}</Text>
                       </View>
 
                       <View className="flex-1">
                         <Text className="text-base font-bold text-gray-900">
-                          {index % 2 === 0 ? 'Course vers Akanda' : 'Livraison Glass'}
+                          {activity.title}
                         </Text>
                         <Text className="mt-1 text-xs text-gray-500">
-                          {index % 2 === 0 ? "Aujourd'hui à 13:30" : 'Hier à 18:45'}
+                          {activity.time}
                         </Text>
                       </View>
 
                       <View className="items-end">
                         <Text className="text-base font-bold text-green-600">
-                          {index % 2 === 0 ? '5,000' : '3,500'} F
+                          {activity.price} F
                         </Text>
                         <View className={`mt-1 rounded-full px-2 py-0.5 ${
-                          index % 3 === 0 ? 'bg-green-100' : 'bg-gray-100'
+                          activity.status === 'completed' ? 'bg-green-100' : 'bg-gray-100'
                         }`}>
                           <Text className={`text-xs font-semibold ${
-                            index % 3 === 0 ? 'text-green-700' : 'text-gray-700'
+                            activity.status === 'completed' ? 'text-green-700' : 'text-gray-700'
                           }`}>
-                            {index % 3 === 0 ? 'Terminée' : 'En cours'}
+                            {activity.status === 'completed' ? 'Terminée' : 'En cours'}
                           </Text>
                         </View>
                       </View>
