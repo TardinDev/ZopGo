@@ -13,10 +13,8 @@ interface State {
   error?: Error;
 }
 
-/**
- * Error Boundary pour capturer les erreurs React
- */
-export class ErrorBoundary extends Component<Props, State> {
+// Error Boundary pour capturer les erreurs React
+export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -59,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </Text>
 
             <Text className="mt-3 text-center text-base text-gray-600 px-8">
-              Nous sommes désolés, quelque chose s'est mal passé.
+              Nous sommes désolés, quelque chose s&apos;est mal passé.
               Veuillez réessayer ou contacter le support si le problème persiste.
             </Text>
 
