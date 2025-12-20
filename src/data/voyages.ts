@@ -1,5 +1,7 @@
 import { Voyage, Hebergement } from '../types';
 
+
+
 // Liste des voyages disponibles
 export const voyages: Voyage[] = [
   { id: 1, type: 'Bus', from: 'Libreville', to: 'Franceville', price: '25000 FCFA', icon: '🚍' },

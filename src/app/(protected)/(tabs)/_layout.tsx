@@ -94,6 +94,7 @@ export default function TabLayout() {
         }}
       />
 
+
       <Tabs.Screen
         name="livraisons"
         options={{
@@ -103,6 +104,17 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="location"
+        options={{
+          title: 'Location',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons name={focused ? 'key-variant' : 'key-outline'} size={26} color={color} />
+          ),
+        }}
+      />
+
 
       <Tabs.Screen
         name="messages"
