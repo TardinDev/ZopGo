@@ -21,14 +21,23 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
                 {/* Overlay gradient */}
                 <LinearGradient
-                    colors={['transparent', 'rgba(0, 0, 0, 0.9)']}
+                    colors={['transparent', 'rgba(0, 0, 0, 0.95)']}
                     style={styles.imageOverlay}
                 />
 
                 {/* Badge disponibilité */}
-                <View style={[styles.badge, vehicle.isAvailable ? styles.badgeAvailable : styles.badgeBusy]}>
-                    <View style={[styles.statusDot, vehicle.isAvailable ? styles.dotAvailable : styles.dotBusy]} />
-                    <Text style={[styles.badgeText, vehicle.isAvailable ? styles.textAvailable : styles.textBusy]}>
+                <View style={[
+                    styles.badge,
+                    vehicle.isAvailable ? styles.badgeAvailable : styles.badgeUnavailable
+                ]}>
+                    <View style={[
+                        styles.statusDot,
+                        vehicle.isAvailable ? styles.dotAvailable : styles.dotUnavailable
+                    ]} />
+                    <Text style={[
+                        styles.badgeText,
+                        vehicle.isAvailable ? styles.textAvailable : styles.textUnavailable
+                    ]}>
                         {vehicle.isAvailable ? 'Disponible' : 'Loué'}
                     </Text>
                 </View>
@@ -41,7 +50,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     <Ionicons
                         name={isFavorite ? 'heart' : 'heart-outline'}
                         size={20}
-                        color={isFavorite ? '#EF4444' : 'white'}
+                        color={isFavorite ? '#EF4444' : '#FFFFFF'}
                     />
                 </TouchableOpacity>
 
@@ -63,7 +72,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 </View>
 
                 <View style={styles.locationRow}>
-                    <Ionicons name="location" size={14} color="#2162FE" />
+                    <Ionicons name="location-outline" size={14} color="#6B7280" />
                     <Text style={styles.location}>{vehicle.location}</Text>
                 </View>
 
@@ -83,13 +92,21 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                             <Text style={styles.ownerLabel}>Propriétaire</Text>
                         </View>
                     </View>
-                    <TouchableOpacity>
-                        <LinearGradient
-                            colors={['#2162FE', '#1E40AF']}
-                            style={styles.bookButton}>
-                            <Text style={styles.bookText}>Réserver</Text>
-                            <Ionicons name="arrow-forward" size={16} color="white" />
-                        </LinearGradient>
+                    <TouchableOpacity
+                        style={[
+                            styles.bookButton,
+                            !vehicle.isAvailable && styles.bookButtonDisabled
+                        ]}
+                        disabled={!vehicle.isAvailable}>
+                        <Text style={[
+                            styles.bookText,
+                            !vehicle.isAvailable && styles.bookTextDisabled
+                        ]}>
+                            {vehicle.isAvailable ? 'Réserver' : 'Indisponible'}
+                        </Text>
+                        {vehicle.isAvailable && (
+                            <Ionicons name="arrow-forward" size={16} color="#000000" />
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -104,7 +121,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     imageContainer: {
         height: 200,
@@ -119,7 +136,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        height: 80,
+        height: 100,
     },
     badge: {
         position: 'absolute',
@@ -128,15 +145,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingVertical: 8,
         borderRadius: 20,
         gap: 6,
     },
     badgeAvailable: {
-        backgroundColor: 'rgba(33, 98, 254, 0.9)',
+        backgroundColor: 'rgba(34, 197, 94, 0.9)',
     },
-    badgeBusy: {
-        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    badgeUnavailable: {
+        backgroundColor: 'rgba(75, 85, 99, 0.9)',
     },
     statusDot: {
         width: 6,
@@ -144,32 +161,33 @@ const styles = StyleSheet.create({
         borderRadius: 3,
     },
     dotAvailable: {
-        backgroundColor: '#93C5FD',
+        backgroundColor: '#86EFAC',
     },
-    dotBusy: {
-        backgroundColor: '#FCA5A5',
+    dotUnavailable: {
+        backgroundColor: '#9CA3AF',
     },
     badgeText: {
         fontSize: 12,
         fontWeight: '700',
     },
     textAvailable: {
-        color: 'white',
+        color: '#FFFFFF',
     },
-    textBusy: {
-        color: 'white',
+    textUnavailable: {
+        color: '#D1D5DB',
     },
     favButton: {
         position: 'absolute',
         top: 16,
         right: 16,
-        height: 40,
-        width: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        height: 44,
+        width: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         alignItems: 'center',
         justifyContent: 'center',
-        backdropFilter: 'blur(10px)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     priceTag: {
         position: 'absolute',
@@ -179,13 +197,13 @@ const styles = StyleSheet.create({
         alignItems: 'baseline',
     },
     priceAmount: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: '800',
-        color: 'white',
+        color: '#FFFFFF',
     },
     pricePeriod: {
         fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: 'rgba(255, 255, 255, 0.6)',
         marginLeft: 2,
     },
     content: {
@@ -198,9 +216,9 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     name: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '700',
-        color: '#F1F5F9',
+        color: '#FFFFFF',
         flex: 1,
         marginRight: 12,
     },
@@ -209,7 +227,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(251, 191, 36, 0.15)',
         paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingVertical: 6,
         borderRadius: 10,
         gap: 4,
     },
@@ -225,7 +243,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     location: {
-        color: '#94A3B8',
+        color: '#6B7280',
         fontSize: 14,
     },
     features: {
@@ -235,13 +253,15 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     featureTag: {
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
         paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
+        paddingVertical: 8,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     featureText: {
-        color: '#94A3B8',
+        color: '#9CA3AF',
         fontSize: 12,
         fontWeight: '500',
     },
@@ -256,35 +276,43 @@ const styles = StyleSheet.create({
     owner: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
     },
     avatar: {
-        height: 40,
-        width: 40,
-        borderRadius: 20,
+        height: 44,
+        width: 44,
+        borderRadius: 22,
         borderWidth: 2,
-        borderColor: '#2162FE',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
     },
     ownerName: {
         fontSize: 14,
-        color: '#F1F5F9',
+        color: '#FFFFFF',
         fontWeight: '600',
     },
     ownerLabel: {
-        fontSize: 11,
-        color: '#64748B',
+        fontSize: 12,
+        color: '#6B7280',
+        marginTop: 2,
     },
     bookButton: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderRadius: 14,
         gap: 8,
     },
+    bookButtonDisabled: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    },
     bookText: {
-        color: 'white',
+        color: '#000000',
         fontSize: 14,
         fontWeight: '700',
+    },
+    bookTextDisabled: {
+        color: '#6B7280',
     },
 });

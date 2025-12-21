@@ -9,13 +9,11 @@ export function LocationSearchBar() {
     return (
         <View style={styles.container}>
             <View style={styles.inputContainer}>
-                <View style={styles.searchIcon}>
-                    <Ionicons name="search" size={20} color="#2162FE" />
-                </View>
+                <Ionicons name="search" size={20} color="#6B7280" />
                 <TextInput
                     style={styles.input}
                     placeholder="Rechercher un véhicule..."
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor="#6B7280"
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
@@ -23,11 +21,12 @@ export function LocationSearchBar() {
                     <TouchableOpacity
                         onPress={() => setSearchQuery('')}
                         style={styles.clearButton}>
-                        <Ionicons name="close-circle" size={20} color="#64748B" />
+                        <Ionicons name="close-circle" size={20} color="#6B7280" />
                     </TouchableOpacity>
                 )}
+                <View style={styles.divider} />
                 <TouchableOpacity style={styles.filterButton}>
-                    <Ionicons name="options" size={20} color="#2162FE" />
+                    <Ionicons name="options-outline" size={20} color="#E5E7EB" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -37,35 +36,38 @@ export function LocationSearchBar() {
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 20,
-        marginBottom: 16,
-        marginTop: 16,
+        marginBottom: 20,
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#111111',
+        backgroundColor: '#1A1A1A',
         borderRadius: 16,
-        paddingHorizontal: 4,
-        paddingVertical: 4,
+        paddingLeft: 16,
+        paddingRight: 6,
+        paddingVertical: 6,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',
-    },
-    searchIcon: {
-        padding: 12,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     input: {
         flex: 1,
         fontSize: 16,
-        color: '#F1F5F9',
+        color: '#FFFFFF',
         paddingVertical: 12,
+        marginLeft: 12,
     },
     clearButton: {
         padding: 8,
     },
+    divider: {
+        width: 1,
+        height: 24,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        marginHorizontal: 8,
+    },
     filterButton: {
-        backgroundColor: 'rgba(33, 98, 254, 0.15)',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
         padding: 12,
         borderRadius: 12,
-        marginLeft: 4,
     },
 });

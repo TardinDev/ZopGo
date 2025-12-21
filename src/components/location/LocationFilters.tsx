@@ -2,7 +2,6 @@ import React from 'react';
 import { Text, TouchableOpacity, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocationStore, VehicleType } from '../../stores/locationStore';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const filters: { id: VehicleType; label: string; icon: string }[] = [
     { id: 'tous', label: 'Tous', icon: 'apps' },
@@ -27,30 +26,21 @@ export function LocationFilters() {
                         key={filter.id}
                         onPress={() => setSelectedType(filter.id)}
                         activeOpacity={0.8}
-                        style={styles.chipWrapper}>
-                        {isSelected ? (
-                            <LinearGradient
-                                colors={['#2162FE', '#1E40AF']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.chip}>
-                                <Ionicons
-                                    name={filter.icon as any}
-                                    size={18}
-                                    color="white"
-                                />
-                                <Text style={styles.selectedLabel}>{filter.label}</Text>
-                            </LinearGradient>
-                        ) : (
-                            <View style={[styles.chip, styles.unselectedChip]}>
-                                <Ionicons
-                                    name={`${filter.icon}-outline` as any}
-                                    size={18}
-                                    color="#64748B"
-                                />
-                                <Text style={styles.unselectedLabel}>{filter.label}</Text>
-                            </View>
-                        )}
+                        style={[
+                            styles.chip,
+                            isSelected ? styles.selectedChip : styles.unselectedChip,
+                        ]}>
+                        <Ionicons
+                            name={(isSelected ? filter.icon : `${filter.icon}-outline`) as any}
+                            size={18}
+                            color={isSelected ? '#000000' : '#9CA3AF'}
+                        />
+                        <Text style={[
+                            styles.label,
+                            isSelected ? styles.selectedLabel : styles.unselectedLabel,
+                        ]}>
+                            {filter.label}
+                        </Text>
                     </TouchableOpacity>
                 );
             })}
@@ -62,34 +52,34 @@ const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 20,
         paddingVertical: 8,
-        marginBottom: 8,
-        gap: 10,
-    },
-    chipWrapper: {
-        marginRight: 10,
+        marginBottom: 16,
     },
     chip: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 18,
         height: 44,
         borderRadius: 22,
+        marginRight: 10,
         gap: 8,
     },
+    selectedChip: {
+        backgroundColor: '#FFFFFF',
+    },
     unselectedChip: {
-        backgroundColor: '#111111',
+        backgroundColor: '#1A1A1A',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
-    selectedLabel: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    unselectedLabel: {
-        color: '#94A3B8',
+    label: {
         fontSize: 14,
         fontWeight: '600',
+    },
+    selectedLabel: {
+        color: '#000000',
+    },
+    unselectedLabel: {
+        color: '#9CA3AF',
     },
 });
