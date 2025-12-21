@@ -63,7 +63,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 </View>
 
                 <View style={styles.locationRow}>
-                    <Ionicons name="location" size={14} color="#10B981" />
+                    <Ionicons name="location" size={14} color="#2162FE" />
                     <Text style={styles.location}>{vehicle.location}</Text>
                 </View>
 
@@ -85,7 +85,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     </View>
                     <TouchableOpacity>
                         <LinearGradient
-                            colors={['#10B981', '#059669']}
+                            colors={['#2162FE', '#1E40AF']}
                             style={styles.bookButton}>
                             <Text style={styles.bookText}>Réserver</Text>
                             <Ionicons name="arrow-forward" size={16} color="white" />
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     badgeAvailable: {
-        backgroundColor: 'rgba(16, 185, 129, 0.9)',
+        backgroundColor: 'rgba(33, 98, 254, 0.9)',
     },
     badgeBusy: {
         backgroundColor: 'rgba(239, 68, 68, 0.9)',
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
         borderRadius: 3,
     },
     dotAvailable: {
-        backgroundColor: '#6EE7B7',
+        backgroundColor: '#93C5FD',
     },
     dotBusy: {
         backgroundColor: '#FCA5A5',
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
         width: 40,
         borderRadius: 20,
         borderWidth: 2,
-        borderColor: '#10B981',
+        borderColor: '#2162FE',
     },
     ownerName: {
         fontSize: 14,

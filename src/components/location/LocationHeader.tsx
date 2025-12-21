@@ -24,7 +24,7 @@ export function LocationHeader() {
                     </TouchableOpacity>
                     <TouchableOpacity>
                         <LinearGradient
-                            colors={['#10B981', '#059669']}
+                            colors={['#2162FE', '#1E40AF']}
                             style={styles.mapButton}>
                             <Ionicons name="map" size={20} color="white" />
                         </LinearGradient>
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     badge: {
-        backgroundColor: '#10B981',
+        backgroundColor: '#2162FE',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 6,

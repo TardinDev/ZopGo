@@ -30,7 +30,7 @@ export function LocationFilters() {
                         style={styles.chipWrapper}>
                         {isSelected ? (
                             <LinearGradient
-                                colors={['#10B981', '#059669']}
+                                colors={['#2162FE', '#1E40AF']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={styles.chip}>
