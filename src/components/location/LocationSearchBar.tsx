@@ -43,12 +43,12 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: '#111111',
         borderRadius: 16,
         paddingHorizontal: 4,
         paddingVertical: 4,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.15)',
     },
     searchIcon: {
         padding: 12,
