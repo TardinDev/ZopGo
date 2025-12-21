@@ -53,34 +53,38 @@ const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 24,
         paddingBottom: 16,
-        gap: 12,
+        paddingVertical: 6,
+        marginBottom: 8,
     },
     chip: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 9999,
-        borderWidth: 1,
-        marginRight: 8,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     selectedChip: {
-        backgroundColor: '#10B981', // Green for Location theme
-        borderColor: '#10B981',
+        backgroundColor: '#10B981',
     },
     unselectedChip: {
         backgroundColor: 'white',
-        borderColor: '#E5E7EB',
     },
     label: {
         marginLeft: 8,
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 16,
+        fontWeight: '700',
     },
     selectedLabel: {
         color: 'white',
     },
     unselectedLabel: {
-        color: '#6B7280',
+        color: '#374151',
     },
 });
