@@ -1,9 +1,22 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+    View,
+    Text,
+    Image,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+    Dimensions,
+    NativeSyntheticEvent,
+    NativeScrollEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Vehicle } from '../../data/location';
 import { useLocationStore } from '../../stores';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IMAGE_WIDTH = SCREEN_WIDTH - 40; // 20px padding on each side
 
 interface VehicleCardProps {
     vehicle: Vehicle;
@@ -12,18 +25,72 @@ interface VehicleCardProps {
 export function VehicleCard({ vehicle }: VehicleCardProps) {
     const { favorites, toggleFavorite } = useLocationStore();
     const isFavorite = favorites.includes(vehicle.id);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const scrollViewRef = useRef<ScrollView>(null);
+
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const contentOffsetX = event.nativeEvent.contentOffset.x;
+        const index = Math.round(contentOffsetX / IMAGE_WIDTH);
+        setActiveIndex(index);
+    };
+
+    const images = vehicle.images || [vehicle.images?.[0] || ''];
 
     return (
         <TouchableOpacity activeOpacity={0.95} style={styles.card}>
-            {/* Image Section */}
+            {/* Image Carousel */}
             <View style={styles.imageContainer}>
-                <Image source={{ uri: vehicle.image }} style={styles.image} resizeMode="cover" />
+                <ScrollView
+                    ref={scrollViewRef}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                    decelerationRate="fast"
+                    snapToInterval={IMAGE_WIDTH}
+                    snapToAlignment="center"
+                    contentContainerStyle={{ width: IMAGE_WIDTH * images.length }}>
+                    {images.map((imageUri, index) => (
+                        <Image
+                            key={index}
+                            source={{ uri: imageUri }}
+                            style={[styles.image, { width: IMAGE_WIDTH }]}
+                            resizeMode="cover"
+                        />
+                    ))}
+                </ScrollView>
 
                 {/* Overlay gradient */}
                 <LinearGradient
                     colors={['transparent', 'rgba(0, 0, 0, 0.95)']}
                     style={styles.imageOverlay}
+                    pointerEvents="none"
                 />
+
+                {/* Pagination dots */}
+                {images.length > 1 && (
+                    <View style={styles.pagination}>
+                        {images.map((_, index) => (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.dot,
+                                    activeIndex === index ? styles.dotActive : styles.dotInactive,
+                                ]}
+                            />
+                        ))}
+                    </View>
+                )}
+
+                {/* Image counter */}
+                {images.length > 1 && (
+                    <View style={styles.imageCounter}>
+                        <Text style={styles.imageCounterText}>
+                            {activeIndex + 1}/{images.length}
+                        </Text>
+                    </View>
+                )}
 
                 {/* Badge disponibilité */}
                 <View style={[
@@ -32,7 +99,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 ]}>
                     <View style={[
                         styles.statusDot,
-                        vehicle.isAvailable ? styles.dotAvailable : styles.dotUnavailable
+                        vehicle.isAvailable ? styles.dotAvailableStatus : styles.dotUnavailableStatus
                     ]} />
                     <Text style={[
                         styles.badgeText,
@@ -57,7 +124,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 {/* Prix sur l'image */}
                 <View style={styles.priceTag}>
                     <Text style={styles.priceAmount}>{vehicle.price}</Text>
-                    <Text style={styles.pricePeriod}>/{vehicle.period}</Text>
+                    <Text style={styles.pricePeriod}> FCFA/{vehicle.period}</Text>
                 </View>
             </View>
 
@@ -124,19 +191,55 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     imageContainer: {
-        height: 200,
+        height: 220,
         position: 'relative',
+        overflow: 'hidden',
     },
     image: {
-        width: '100%',
-        height: '100%',
+        height: 220,
     },
     imageOverlay: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 100,
+        height: 120,
+    },
+    pagination: {
+        position: 'absolute',
+        bottom: 60,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    dotActive: {
+        backgroundColor: '#FFFFFF',
+        width: 24,
+    },
+    dotInactive: {
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    },
+    imageCounter: {
+        position: 'absolute',
+        top: 16,
+        right: 70,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 12,
+    },
+    imageCounterText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: '600',
     },
     badge: {
         position: 'absolute',
@@ -160,10 +263,10 @@ const styles = StyleSheet.create({
         height: 6,
         borderRadius: 3,
     },
-    dotAvailable: {
+    dotAvailableStatus: {
         backgroundColor: '#86EFAC',
     },
-    dotUnavailable: {
+    dotUnavailableStatus: {
         backgroundColor: '#9CA3AF',
     },
     badgeText: {
@@ -204,7 +307,6 @@ const styles = StyleSheet.create({
     pricePeriod: {
         fontSize: 14,
         color: 'rgba(255, 255, 255, 0.6)',
-        marginLeft: 2,
     },
     content: {
         padding: 20,
