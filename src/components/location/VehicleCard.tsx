@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Vehicle } from '../../data/location';
 import { useLocationStore } from '../../stores';
 
@@ -13,12 +14,20 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
     const isFavorite = favorites.includes(vehicle.id);
 
     return (
-        <TouchableOpacity activeOpacity={0.9} style={styles.card}>
+        <TouchableOpacity activeOpacity={0.95} style={styles.card}>
+            {/* Image Section */}
             <View style={styles.imageContainer}>
                 <Image source={{ uri: vehicle.image }} style={styles.image} resizeMode="cover" />
 
+                {/* Overlay gradient */}
+                <LinearGradient
+                    colors={['transparent', 'rgba(15, 23, 42, 0.8)']}
+                    style={styles.imageOverlay}
+                />
+
                 {/* Badge disponibilité */}
                 <View style={[styles.badge, vehicle.isAvailable ? styles.badgeAvailable : styles.badgeBusy]}>
+                    <View style={[styles.statusDot, vehicle.isAvailable ? styles.dotAvailable : styles.dotBusy]} />
                     <Text style={[styles.badgeText, vehicle.isAvailable ? styles.textAvailable : styles.textBusy]}>
                         {vehicle.isAvailable ? 'Disponible' : 'Loué'}
                     </Text>
@@ -32,39 +41,56 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                     <Ionicons
                         name={isFavorite ? 'heart' : 'heart-outline'}
                         size={20}
-                        color={isFavorite ? '#EF4444' : '#1F2937'}
+                        color={isFavorite ? '#EF4444' : 'white'}
                     />
                 </TouchableOpacity>
+
+                {/* Prix sur l'image */}
+                <View style={styles.priceTag}>
+                    <Text style={styles.priceAmount}>{vehicle.price}</Text>
+                    <Text style={styles.pricePeriod}>/{vehicle.period}</Text>
+                </View>
             </View>
 
+            {/* Content Section */}
             <View style={styles.content}>
                 <View style={styles.header}>
-                    <Text style={styles.name}>{vehicle.name}</Text>
+                    <Text style={styles.name} numberOfLines={1}>{vehicle.name}</Text>
                     <View style={styles.rating}>
-                        <Ionicons name="star" size={16} color="#F59E0B" />
+                        <Ionicons name="star" size={14} color="#FBBF24" />
                         <Text style={styles.ratingText}>{vehicle.rating}</Text>
                     </View>
                 </View>
 
                 <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={16} color="#6B7280" />
+                    <Ionicons name="location" size={14} color="#10B981" />
                     <Text style={styles.location}>{vehicle.location}</Text>
                 </View>
 
                 <View style={styles.features}>
-                    {vehicle.features.map((feature, idx) => (
-                        <Text key={idx} style={styles.feature}>• {feature}</Text>
+                    {vehicle.features.slice(0, 3).map((feature, idx) => (
+                        <View key={idx} style={styles.featureTag}>
+                            <Text style={styles.featureText}>{feature}</Text>
+                        </View>
                     ))}
                 </View>
 
                 <View style={styles.footer}>
                     <View style={styles.owner}>
                         <Image source={{ uri: vehicle.owner.avatar }} style={styles.avatar} />
-                        <Text style={styles.ownerName}>{vehicle.owner.name}</Text>
+                        <View>
+                            <Text style={styles.ownerName}>{vehicle.owner.name}</Text>
+                            <Text style={styles.ownerLabel}>Propriétaire</Text>
+                        </View>
                     </View>
-                    <Text style={styles.price}>
-                        {vehicle.price} <Text style={styles.period}>/ {vehicle.period}</Text>
-                    </Text>
+                    <TouchableOpacity>
+                        <LinearGradient
+                            colors={['#10B981', '#059669']}
+                            style={styles.bookButton}>
+                            <Text style={styles.bookText}>Réserver</Text>
+                            <Ionicons name="arrow-forward" size={16} color="white" />
+                        </LinearGradient>
+                    </TouchableOpacity>
                 </View>
             </View>
         </TouchableOpacity>
@@ -73,57 +99,94 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: 'white',
+        backgroundColor: '#1E293B',
         borderRadius: 24,
         marginBottom: 20,
-        shadowColor: '#000',
-        shadowOpacity: 0.08,
-        shadowRadius: 10,
-        elevation: 3,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     imageContainer: {
-        height: 180,
+        height: 200,
         position: 'relative',
     },
     image: {
         width: '100%',
         height: '100%',
     },
+    imageOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 80,
+    },
     badge: {
         position: 'absolute',
         top: 16,
         left: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 8,
+        borderRadius: 20,
+        gap: 6,
     },
     badgeAvailable: {
-        backgroundColor: 'rgba(220, 252, 231, 0.9)', // green-100 opacity
+        backgroundColor: 'rgba(16, 185, 129, 0.9)',
     },
     badgeBusy: {
-        backgroundColor: 'rgba(254, 226, 226, 0.9)', // red-100 opacity
+        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    },
+    statusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    dotAvailable: {
+        backgroundColor: '#6EE7B7',
+    },
+    dotBusy: {
+        backgroundColor: '#FCA5A5',
     },
     badgeText: {
         fontSize: 12,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
-    textAvailable: { color: '#15803D' },
-    textBusy: { color: '#B91C1C' },
+    textAvailable: {
+        color: 'white',
+    },
+    textBusy: {
+        color: 'white',
+    },
     favButton: {
         position: 'absolute',
         top: 16,
         right: 16,
-        height: 36,
-        width: 36,
-        borderRadius: 18,
-        backgroundColor: 'white',
+        height: 40,
+        width: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        backdropFilter: 'blur(10px)',
+    },
+    priceTag: {
+        position: 'absolute',
+        bottom: 16,
+        left: 16,
+        flexDirection: 'row',
+        alignItems: 'baseline',
+    },
+    priceAmount: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: 'white',
+    },
+    pricePeriod: {
+        fontSize: 14,
+        color: 'rgba(255, 255, 255, 0.7)',
+        marginLeft: 2,
     },
     content: {
         padding: 20,
@@ -136,80 +199,92 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1F2937',
+        fontWeight: '700',
+        color: '#F1F5F9',
         flex: 1,
-        marginRight: 8,
+        marginRight: 12,
     },
     rating: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FEF3C7',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
+        backgroundColor: 'rgba(251, 191, 36, 0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+        gap: 4,
     },
     ratingText: {
-        marginLeft: 4,
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#92400E',
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#FBBF24',
     },
     locationRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
+        gap: 6,
     },
     location: {
-        marginLeft: 6,
-        color: '#6B7280',
+        color: '#94A3B8',
         fontSize: 14,
     },
     features: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 8,
-        marginBottom: 16,
+        marginBottom: 20,
     },
-    feature: {
-        color: '#4B5563',
+    featureTag: {
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    featureText: {
+        color: '#94A3B8',
         fontSize: 12,
-        backgroundColor: '#F3F4F6',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
+        fontWeight: '500',
     },
     footer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
+        borderTopColor: 'rgba(255, 255, 255, 0.08)',
         paddingTop: 16,
     },
     owner: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 10,
     },
     avatar: {
-        height: 32,
-        width: 32,
-        borderRadius: 16,
-        marginRight: 8,
+        height: 40,
+        width: 40,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#10B981',
     },
     ownerName: {
-        fontSize: 12,
-        color: '#4B5563',
-        fontWeight: '500',
+        fontSize: 14,
+        color: '#F1F5F9',
+        fontWeight: '600',
     },
-    price: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#10B981',
+    ownerLabel: {
+        fontSize: 11,
+        color: '#64748B',
     },
-    period: {
-        fontSize: 12,
-        color: '#6B7280',
-        fontWeight: 'normal',
+    bookButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 14,
+        gap: 8,
+    },
+    bookText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

@@ -1,13 +1,14 @@
 import React from 'react';
-import { Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocationStore, VehicleType } from '../../stores/locationStore';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const filters: { id: VehicleType; label: string; icon: string }[] = [
-    { id: 'tous', label: 'Tous', icon: 'grid-outline' },
-    { id: 'voiture', label: 'Voitures', icon: 'car-sport-outline' },
-    { id: 'moto', label: 'Motos', icon: 'bicycle-outline' },
-    { id: 'utilitaire', label: 'Utilitaires', icon: 'bus-outline' },
+    { id: 'tous', label: 'Tous', icon: 'apps' },
+    { id: 'voiture', label: 'Voitures', icon: 'car-sport' },
+    { id: 'moto', label: 'Motos', icon: 'bicycle' },
+    { id: 'utilitaire', label: 'Utilitaires', icon: 'bus' },
 ];
 
 export function LocationFilters() {
@@ -25,23 +26,31 @@ export function LocationFilters() {
                     <TouchableOpacity
                         key={filter.id}
                         onPress={() => setSelectedType(filter.id)}
-                        style={[
-                            styles.chip,
-                            isSelected ? styles.selectedChip : styles.unselectedChip,
-                        ]}
-                        activeOpacity={0.8}>
-                        <Ionicons
-                            name={filter.icon as any}
-                            size={18}
-                            color={isSelected ? 'white' : '#6B7280'}
-                        />
-                        <Text
-                            style={[
-                                styles.label,
-                                isSelected ? styles.selectedLabel : styles.unselectedLabel,
-                            ]}>
-                            {filter.label}
-                        </Text>
+                        activeOpacity={0.8}
+                        style={styles.chipWrapper}>
+                        {isSelected ? (
+                            <LinearGradient
+                                colors={['#10B981', '#059669']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.chip}>
+                                <Ionicons
+                                    name={filter.icon as any}
+                                    size={18}
+                                    color="white"
+                                />
+                                <Text style={styles.selectedLabel}>{filter.label}</Text>
+                            </LinearGradient>
+                        ) : (
+                            <View style={[styles.chip, styles.unselectedChip]}>
+                                <Ionicons
+                                    name={`${filter.icon}-outline` as any}
+                                    size={18}
+                                    color="#64748B"
+                                />
+                                <Text style={styles.unselectedLabel}>{filter.label}</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 );
             })}
@@ -51,40 +60,36 @@ export function LocationFilters() {
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: 24,
-        paddingBottom: 16,
-        paddingVertical: 6,
+        paddingHorizontal: 20,
+        paddingVertical: 8,
         marginBottom: 8,
+        gap: 10,
+    },
+    chipWrapper: {
+        marginRight: 10,
     },
     chip: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 16,
-        height: 40,
-        borderRadius: 20,
-        marginRight: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    selectedChip: {
-        backgroundColor: '#10B981',
+        height: 44,
+        borderRadius: 22,
+        gap: 8,
     },
     unselectedChip: {
-        backgroundColor: 'white',
-    },
-    label: {
-        marginLeft: 8,
-        fontSize: 16,
-        fontWeight: '700',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     selectedLabel: {
         color: 'white',
+        fontSize: 14,
+        fontWeight: '700',
     },
     unselectedLabel: {
-        color: '#374151',
+        color: '#94A3B8',
+        fontSize: 14,
+        fontWeight: '600',
     },
 });
