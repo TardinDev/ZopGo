@@ -5,7 +5,6 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
@@ -32,7 +31,6 @@ const INITIAL_POSITION = SCREEN_HEIGHT * 0.75; // Position de départ (25% de l'
 const MIN_TRANSLATE_Y = 100; // Position maximale (reste 100px en haut)
 
 export default function HomeTab() {
-  const router = useRouter();
   const activities = useMemo(() => generateActivities(10), []);
   const translateY = useSharedValue(INITIAL_POSITION);
   const startY = useSharedValue(0);

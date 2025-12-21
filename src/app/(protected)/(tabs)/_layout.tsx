@@ -139,6 +139,7 @@ export default function TabLayout() {
       {/* Ecrans hors tab bar */}
       <Tabs.Screen name="voyage-detail" options={{ href: null, title: 'Détail du voyage' }} />
       <Tabs.Screen name="profile-edit" options={{ href: null, title: 'Modifier le profil' }} />
+      <Tabs.Screen name="hebergements" options={{ href: null, title: 'Hébergements' }} />
     </Tabs>
   );
 }

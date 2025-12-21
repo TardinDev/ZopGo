@@ -11,7 +11,7 @@ export default function ProfilTab() {
   const handleMenuPress = (index: number) => {
     switch (index) {
       case 0:
-        router.push('/profile-edit');
+        router.push('/(protected)/(tabs)/profile-edit');
         break;
       case 1:
         Alert.alert('Mes véhicules', 'Fonctionnalité en développement');

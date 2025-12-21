@@ -18,7 +18,7 @@ export function NoResponseView({ livreur, onRetry, onCancel }: NoResponseViewPro
                 </View>
                 <Text style={styles.title}>Livreur non disponible</Text>
                 <Text style={styles.subtitle}>
-                    {livreur?.prenom} n'a pas répondu à votre demande dans les temps impartis.
+                    {livreur?.prenom} n&apos;a pas répondu à votre demande dans les temps impartis.
                 </Text>
 
                 {/* Info livreur */}
@@ -39,7 +39,7 @@ export function NoResponseView({ livreur, onRetry, onCancel }: NoResponseViewPro
                     <View style={styles.messageRow}>
                         <Ionicons name="information-circle" size={20} color="#2162FE" />
                         <Text style={styles.messageText}>
-                            Ne vous inquiétez pas ! Il y a d'autres livreurs disponibles pour vous aider.
+                            Ne vous inquiétez pas ! Il y a d&apos;autres livreurs disponibles pour vous aider.
                         </Text>
                     </View>
                 </View>

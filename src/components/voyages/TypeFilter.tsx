@@ -38,25 +38,32 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     container: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingHorizontal: 20,
+        paddingVertical: 6,
+        marginBottom: 8,
     },
     filter: {
         paddingHorizontal: 20,
-        paddingVertical: 10,
+        height: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
         borderRadius: 20,
         marginRight: 12,
-        backgroundColor: '#4facfe',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
     },
     activeFilter: {
         backgroundColor: 'white',
     },
     filterText: {
         color: 'white',
-        fontWeight: '600',
-        fontSize: 14,
+        fontWeight: '700',
+        fontSize: 16,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     activeFilterText: {
         color: '#2563EB',
+        textShadowColor: 'transparent',
     },
 });

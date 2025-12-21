@@ -58,7 +58,7 @@ export function LivreurCard({ livreur, isSelected, onSelect }: LivreurCardProps)
                     {livreur.commentaires.map((com, idx) => (
                         <View key={idx} style={styles.reviewRow}>
                             <Ionicons name="chatbox-ellipses" size={14} color="#9CA3AF" />
-                            <Text style={styles.reviewText}>"{com}"</Text>
+                            <Text style={styles.reviewText}>&quot;{com}&quot;</Text>
                         </View>
                     ))}
                 </View>

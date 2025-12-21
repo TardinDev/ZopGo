@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useLocationStore, VehicleType } from '../../stores/locationStore';
 import { Ionicons } from '@expo/vector-icons';
 

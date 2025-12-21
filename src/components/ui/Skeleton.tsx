@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, DimensionValue } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,7 +9,7 @@ import Animated, {
 import { useEffect } from 'react';
 
 interface SkeletonProps {
-  width?: number | string;
+  width?: DimensionValue;
   height?: number;
   className?: string;
 }
@@ -28,7 +28,7 @@ export const Skeleton = ({ width, height = 100, className }: SkeletonProps) => {
       ),
       -1
     );
-  }, []);
+  }, [opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -37,11 +37,11 @@ export const Skeleton = ({ width, height = 100, className }: SkeletonProps) => {
   return (
     <Animated.View
       style={[
-        animatedStyle,
         {
           width: width || '100%',
           height,
         },
+        animatedStyle,
       ]}
       className={`rounded-2xl bg-gray-200 ${className || ''}`}
     />

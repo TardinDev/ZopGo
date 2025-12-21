@@ -49,7 +49,7 @@ export default function AuthScreen() {
           onPress: () => router.replace('/(protected)/(tabs)'),
         },
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
