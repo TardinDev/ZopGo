@@ -5,7 +5,6 @@ import {
     Platform,
     StyleSheet,
     Text,
-    TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,7 +18,7 @@ import {
 } from '../../../components/location';
 
 export default function LocationTab() {
-    const { filteredVehicles = [], selectedType } = useLocationStore();
+    const { filteredVehicles = [] } = useLocationStore();
 
     // Gradient plus doux pour Location (vert menthe / blanc)
     const gradientColors = ['#ECFDF5', '#F9FAFB'] as const; // emerald-50 -> gray-50

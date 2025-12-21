@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../../constants';
 
 export function HomeActions() {
     const router = useRouter();
@@ -67,16 +66,16 @@ export function HomeActions() {
                 </ImageBackground>
             </TouchableOpacity>
 
-            {/* Bouton Location (Nouveau) */}
+            {/* Bouton Location */}
             <TouchableOpacity
                 onPress={() => router.push('/(protected)/(tabs)/location')}
                 activeOpacity={0.9}
                 style={styles.card}>
                 <ImageBackground
-                    source={{ uri: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&q=80' }} // Luxury car image
+                    source={{ uri: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&q=80' }}
                     style={styles.bgImage}>
                     <LinearGradient
-                        colors={['rgba(107, 114, 128, 0.8)', 'rgba(55, 65, 81, 0.9)']} // Gray transparent gradient
+                        colors={['rgba(107, 114, 128, 0.8)', 'rgba(55, 65, 81, 0.9)']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.gradient}>
@@ -88,6 +87,33 @@ export function HomeActions() {
                             </View>
                             <View style={styles.iconCircle}>
                                 <Text style={styles.emoji}>🔑</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                </ImageBackground>
+            </TouchableOpacity>
+
+            {/* Bouton Hébergement */}
+            <TouchableOpacity
+                onPress={() => router.push('/(protected)/(tabs)/hebergements')}
+                activeOpacity={0.9}
+                style={styles.card}>
+                <ImageBackground
+                    source={{ uri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80' }}
+                    style={styles.bgImage}>
+                    <LinearGradient
+                        colors={['rgba(139, 92, 246, 0.9)', 'rgba(168, 85, 247, 0.8)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.gradient}>
+                        <View style={styles.content}>
+                            <View style={styles.textContainer}>
+                                <Text style={styles.title}>Trouver un</Text>
+                                <Text style={styles.title}>hébergement</Text>
+                                <Text style={styles.subtitle}>Hôtels, Auberges et plus</Text>
+                            </View>
+                            <View style={styles.iconCircle}>
+                                <Text style={styles.emoji}>🏨</Text>
                             </View>
                         </View>
                     </LinearGradient>

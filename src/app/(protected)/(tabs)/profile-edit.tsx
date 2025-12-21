@@ -40,7 +40,7 @@ export default function ProfileEditScreen() {
       Alert.alert('Succès', 'Profil mis à jour avec succès !', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert('Erreur', 'Impossible de sauvegarder les modifications');
     } finally {
       setIsLoading(false);

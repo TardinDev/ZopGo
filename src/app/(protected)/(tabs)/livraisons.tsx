@@ -1,5 +1,4 @@
 import {
-  View,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -33,7 +32,6 @@ export default function LivraisonsTab() {
     setWaitingForAcceptance,
     setAccepted,
     setNoResponse,
-    resetSearch,
     resetAll,
   } = useLivraisonsStore();
 

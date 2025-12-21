@@ -2,7 +2,6 @@ import { View, Text, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback } from 'react';
-import { useRouter } from 'expo-router';
 import { useMessagesStore } from '../../../stores';
 import { TabSelector } from '../../../components/voyages';
 import { NotificationCard, MessageCard } from '../../../components/messages';
@@ -14,8 +13,6 @@ const TABS = [
 ];
 
 export default function MessagesTab() {
-  const router = useRouter();
-
   // État global Zustand
   const {
     selectedTab,

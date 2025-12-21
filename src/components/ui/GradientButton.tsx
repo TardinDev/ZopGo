@@ -6,7 +6,7 @@ import { COLORS } from '../../constants';
 interface GradientButtonProps extends TouchableOpacityProps {
   title: string;
   icon?: keyof typeof Ionicons.glyphMap;
-  colors?: string[];
+  colors?: readonly [string, string, ...string[]];
   onPress: () => void;
   subtitle?: string;
 }

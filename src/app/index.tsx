@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { View, Image, Text, Animated, Dimensions, StatusBar } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,9 +8,9 @@ const { width, height } = Dimensions.get('window');
 export default function SplashScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.8);
-  const progressAnim = new Animated.Value(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Animation d'entrée
@@ -69,7 +69,7 @@ export default function SplashScreen() {
     };
 
     checkAuth();
-  }, []);
+  }, [fadeAnim, progressAnim, scaleAnim]);
 
   return (
     <View className="flex-1 bg-white">
