@@ -78,9 +78,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     unselectedChip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: '#111111',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(255, 255, 255, 0.15)',
     },
     selectedLabel: {
         color: 'white',

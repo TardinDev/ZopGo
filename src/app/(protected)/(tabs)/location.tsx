@@ -25,7 +25,7 @@ export default function LocationTab() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}>
             <LinearGradient
-                colors={['#0F172A', '#1E293B', '#0F172A']}
+                colors={['#000000', '#0A0A0A', '#000000']}
                 locations={[0, 0.5, 1]}
                 style={{ flex: 1 }}>
                 <SafeAreaView style={{ flex: 1 }}>

@@ -21,7 +21,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
                 {/* Overlay gradient */}
                 <LinearGradient
-                    colors={['transparent', 'rgba(15, 23, 42, 0.8)']}
+                    colors={['transparent', 'rgba(0, 0, 0, 0.9)']}
                     style={styles.imageOverlay}
                 />
 
@@ -99,12 +99,12 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#1E293B',
+        backgroundColor: '#111111',
         borderRadius: 24,
         marginBottom: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     imageContainer: {
         height: 200,
