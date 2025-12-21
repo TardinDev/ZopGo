@@ -1,33 +1,22 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export function LocationHeader() {
     return (
         <View style={styles.container}>
             <View style={styles.row}>
                 <View style={styles.titleContainer}>
-                    <View style={styles.titleRow}>
-                        <Text style={styles.title}>Location</Text>
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>PRO</Text>
-                        </View>
-                    </View>
+                    <Text style={styles.title}>Location</Text>
                     <Text style={styles.subtitle}>Trouvez le véhicule parfait</Text>
                 </View>
 
                 <View style={styles.actions}>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Ionicons name="notifications-outline" size={22} color="#F1F5F9" />
-                        <View style={styles.notifDot} />
+                        <Ionicons name="notifications-outline" size={22} color="#E5E7EB" />
                     </TouchableOpacity>
-                    <TouchableOpacity>
-                        <LinearGradient
-                            colors={['#2162FE', '#1E40AF']}
-                            style={styles.mapButton}>
-                            <Ionicons name="map" size={20} color="white" />
-                        </LinearGradient>
+                    <TouchableOpacity style={styles.iconButton}>
+                        <Ionicons name="map-outline" size={22} color="#E5E7EB" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -39,7 +28,7 @@ const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 20,
         paddingTop: 8,
-        paddingBottom: 8,
+        paddingBottom: 16,
     },
     row: {
         flexDirection: 'row',
@@ -49,56 +38,27 @@ const styles = StyleSheet.create({
     titleContainer: {
         flex: 1,
     },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-    },
     title: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#F1F5F9',
+        color: '#FFFFFF',
         letterSpacing: -0.5,
     },
-    badge: {
-        backgroundColor: '#2162FE',
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 6,
-    },
-    badgeText: {
-        color: 'white',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 0.5,
-    },
     subtitle: {
-        color: '#64748B',
+        color: '#6B7280',
         marginTop: 4,
         fontSize: 14,
     },
     actions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 8,
     },
     iconButton: {
-        position: 'relative',
-        padding: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 12,
-    },
-    notifDot: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#EF4444',
-    },
-    mapButton: {
-        padding: 10,
-        borderRadius: 12,
+        padding: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
 });
