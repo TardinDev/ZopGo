@@ -20,14 +20,14 @@ import {
 export default function LocationTab() {
     const { filteredVehicles = [] } = useLocationStore();
 
-    // Gradient plus doux pour Location (vert menthe / blanc)
-    const gradientColors = ['#ECFDF5', '#F9FAFB'] as const; // emerald-50 -> gray-50
-
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}>
-            <LinearGradient colors={gradientColors} style={{ flex: 1 }}>
+            <LinearGradient
+                colors={['#0F172A', '#1E293B', '#0F172A']}
+                locations={[0, 0.5, 1]}
+                style={{ flex: 1 }}>
                 <SafeAreaView style={{ flex: 1 }}>
                     <LocationHeader />
 
@@ -40,26 +40,33 @@ export default function LocationTab() {
                         contentContainerStyle={styles.scrollContent}>
 
                         <View style={styles.resultsHeader}>
-                            <Text style={styles.resultsCount}>
-                                {filteredVehicles?.length || 0} véhicule{(filteredVehicles?.length || 0) > 1 ? 's' : ''} trouvé{(filteredVehicles?.length || 0) > 1 ? 's' : ''}
-                            </Text>
+                            <View style={styles.resultsRow}>
+                                <Text style={styles.resultsCount}>
+                                    {filteredVehicles?.length || 0} véhicule{(filteredVehicles?.length || 0) > 1 ? 's' : ''}
+                                </Text>
+                                <View style={styles.sortButton}>
+                                    <Ionicons name="swap-vertical" size={16} color="#10B981" />
+                                    <Text style={styles.sortText}>Trier</Text>
+                                </View>
+                            </View>
                         </View>
 
                         {filteredVehicles && filteredVehicles.length > 0 ? (
                             filteredVehicles.map((vehicle) => (
-                                <View key={vehicle.id} style={{ paddingHorizontal: 24 }}>
+                                <View key={vehicle.id} style={{ paddingHorizontal: 20 }}>
                                     <VehicleCard vehicle={vehicle} />
                                 </View>
                             ))
                         ) : (
                             <View style={styles.emptyState}>
-                                <Ionicons name="search-outline" size={64} color="#D1D5DB" />
-                                <Text style={styles.emptyTitle}>Aucun résultat</Text>
-                                <Text style={styles.emptySubtitle}>Essayez de modifier vos filtres</Text>
+                                <View style={styles.emptyIconContainer}>
+                                    <Ionicons name="car-sport-outline" size={48} color="#10B981" />
+                                </View>
+                                <Text style={styles.emptyTitle}>Aucun véhicule trouvé</Text>
+                                <Text style={styles.emptySubtitle}>Essayez de modifier vos filtres de recherche</Text>
                             </View>
                         )}
 
-                        {/* Spacer pour éviter que le dernier élément soit caché par la tab bar */}
                         <View style={{ height: 100 }} />
                     </ScrollView>
                 </SafeAreaView>
@@ -73,28 +80,59 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     resultsHeader: {
-        paddingHorizontal: 24,
+        paddingHorizontal: 20,
         marginBottom: 16,
+    },
+    resultsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     resultsCount: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6B7280',
+        color: '#94A3B8',
+    },
+    sortButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 6,
+    },
+    sortText: {
+        color: '#10B981',
+        fontSize: 14,
+        fontWeight: '600',
     },
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 60,
+        paddingTop: 80,
+        paddingHorizontal: 40,
+    },
+    emptyIconContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(16, 185, 129, 0.3)',
     },
     emptyTitle: {
-        marginTop: 16,
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#374151',
+        color: '#F1F5F9',
+        marginBottom: 8,
     },
     emptySubtitle: {
-        marginTop: 8,
         fontSize: 14,
-        color: '#6B7280',
-    }
+        color: '#64748B',
+        textAlign: 'center',
+    },
 });
