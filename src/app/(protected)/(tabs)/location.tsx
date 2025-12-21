@@ -45,7 +45,7 @@ export default function LocationTab() {
                                     {filteredVehicles?.length || 0} véhicule{(filteredVehicles?.length || 0) > 1 ? 's' : ''}
                                 </Text>
                                 <View style={styles.sortButton}>
-                                    <Ionicons name="swap-vertical" size={16} color="#10B981" />
+                                    <Ionicons name="swap-vertical" size={16} color="#2162FE" />
                                     <Text style={styles.sortText}>Trier</Text>
                                 </View>
                             </View>
@@ -60,7 +60,7 @@ export default function LocationTab() {
                         ) : (
                             <View style={styles.emptyState}>
                                 <View style={styles.emptyIconContainer}>
-                                    <Ionicons name="car-sport-outline" size={48} color="#10B981" />
+                                    <Ionicons name="car-sport-outline" size={48} color="#2162FE" />
                                 </View>
                                 <Text style={styles.emptyTitle}>Aucun véhicule trouvé</Text>
                                 <Text style={styles.emptySubtitle}>Essayez de modifier vos filtres de recherche</Text>
@@ -96,14 +96,14 @@ const styles = StyleSheet.create({
     sortButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        backgroundColor: 'rgba(33, 98, 254, 0.15)',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
         gap: 6,
     },
     sortText: {
-        color: '#10B981',
+        color: '#2162FE',
         fontSize: 14,
         fontWeight: '600',
     },
@@ -117,12 +117,12 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: 'rgba(33, 98, 254, 0.1)',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: 'rgba(16, 185, 129, 0.3)',
+        borderColor: 'rgba(33, 98, 254, 0.3)',
     },
     emptyTitle: {
         fontSize: 20,

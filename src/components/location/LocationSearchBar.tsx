@@ -10,7 +10,7 @@ export function LocationSearchBar() {
         <View style={styles.container}>
             <View style={styles.inputContainer}>
                 <View style={styles.searchIcon}>
-                    <Ionicons name="search" size={20} color="#10B981" />
+                    <Ionicons name="search" size={20} color="#2162FE" />
                 </View>
                 <TextInput
                     style={styles.input}
@@ -27,7 +27,7 @@ export function LocationSearchBar() {
                     </TouchableOpacity>
                 )}
                 <TouchableOpacity style={styles.filterButton}>
-                    <Ionicons name="options" size={20} color="#10B981" />
+                    <Ionicons name="options" size={20} color="#2162FE" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
         padding: 8,
     },
     filterButton: {
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        backgroundColor: 'rgba(33, 98, 254, 0.15)',
         padding: 12,
         borderRadius: 12,
         marginLeft: 4,
