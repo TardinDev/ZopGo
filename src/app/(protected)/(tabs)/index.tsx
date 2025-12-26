@@ -7,6 +7,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { userInfo, generateActivities } from '../../../data';
 import { COLORS } from '../../../constants';
 import SearchBar from '../../../components/SearchBar';
+import { AnimatedTabScreen } from '../../../components/ui';
 
 import {
   HomeHeader,
@@ -68,72 +69,74 @@ export default function HomeTab() {
   });
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}>
-      <LinearGradient colors={COLORS.gradients.yellow} style={{ flex: 1 }}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+    <AnimatedTabScreen>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}>
+        <LinearGradient colors={COLORS.gradients.yellow} style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1 }}>
+            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-          {/* En-tête */}
-          <HomeHeader userName={userInfo.name} />
+            {/* En-tête */}
+            <HomeHeader userName={userInfo.name} />
 
-          {/* Statistiques */}
-          <StatsCards />
+            {/* Statistiques */}
+            <StatsCards />
 
-          {/* Actions Principales */}
-          <HomeActions />
+            {/* Actions Principales */}
+            <HomeActions />
 
-          {/* Section Déroulable */}
-          <GestureDetector gesture={panGesture}>
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: SCREEN_HEIGHT,
-                  zIndex: 10,
-                  elevation: 10,
-                  backgroundColor: 'rgba(33, 98, 254, 0.92)',
-                  borderTopLeftRadius: 40,
-                  borderTopRightRadius: 40,
-                  paddingHorizontal: 24,
-                  paddingTop: 12,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: -10 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 20,
-                },
-                animatedStyle,
-              ]}>
-              {/* Indicateur de glissement */}
-              <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                <View
-                  style={{
-                    height: 6,
-                    width: 64,
-                    borderRadius: 3,
-                    backgroundColor: 'rgba(255,255,255,0.5)',
-                  }}
-                />
-              </View>
+            {/* Section Déroulable */}
+            <GestureDetector gesture={panGesture}>
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: SCREEN_HEIGHT,
+                    zIndex: 10,
+                    elevation: 10,
+                    backgroundColor: 'rgba(33, 98, 254, 0.92)',
+                    borderTopLeftRadius: 40,
+                    borderTopRightRadius: 40,
+                    paddingHorizontal: 24,
+                    paddingTop: 12,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -10 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 20,
+                  },
+                  animatedStyle,
+                ]}>
+                {/* Indicateur de glissement */}
+                <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                  <View
+                    style={{
+                      height: 6,
+                      width: 64,
+                      borderRadius: 3,
+                      backgroundColor: 'rgba(255,255,255,0.5)',
+                    }}
+                  />
+                </View>
 
-              {/* Météo */}
-              <WeatherWidget />
+                {/* Météo */}
+                <WeatherWidget />
 
-              {/* Barre de recherche */}
-              <View style={{ marginBottom: 24 }}>
-                <SearchBar />
-              </View>
+                {/* Barre de recherche */}
+                <View style={{ marginBottom: 24 }}>
+                  <SearchBar />
+                </View>
 
-              {/* Activités */}
-              <ActivityList activities={activities} />
-            </Animated.View>
-          </GestureDetector>
-        </SafeAreaView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+                {/* Activités */}
+                <ActivityList activities={activities} />
+              </Animated.View>
+            </GestureDetector>
+          </SafeAreaView>
+        </LinearGradient>
+      </KeyboardAvoidingView>
+    </AnimatedTabScreen>
   );
 }

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TIMEOUTS, COLORS } from '../../../constants';
 import { getSortedLivreursByDistance } from '../../../data';
 import { useLivraisonsStore } from '../../../stores';
+import { AnimatedTabScreen } from '../../../components/ui';
 import {
   LivraisonHeader,
   LivraisonForm,
@@ -75,51 +76,53 @@ export default function LivraisonsTab() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}>
-      <LinearGradient colors={COLORS.gradients.orange} style={{ flex: 1 }}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <LivraisonHeader />
+    <AnimatedTabScreen>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}>
+        <LinearGradient colors={COLORS.gradients.orange} style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1 }}>
+            <LivraisonHeader />
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}>
-            {noResponse ? (
-              <NoResponseView
-                livreur={currentLivreur}
-                onRetry={handleRetrySearch}
-                onCancel={resetAll}
-              />
-            ) : waitingForAcceptance ? (
-              <WaitingView
-                livreur={currentLivreur}
-                pickupLocation={pickupLocation}
-                dropoffLocation={dropoffLocation}
-              />
-            ) : accepted ? (
-              <AcceptedView
-                livreur={currentLivreur}
-                pickupLocation={pickupLocation}
-                dropoffLocation={dropoffLocation}
-                onNewDelivery={resetAll}
-              />
-            ) : showResults ? (
-              <LivreurList
-                livreurs={livreurs}
-                pickupLocation={pickupLocation}
-                dropoffLocation={dropoffLocation}
-                selectedLivreurId={selectedLivreur}
-                onSelectLivreur={setSelectedLivreur}
-                onConfirm={handleConfirmLivraison}
-                onEditSearch={handleEditSearch}
-              />
-            ) : (
-              <LivraisonForm />
-            )}
-          </ScrollView>
-        </SafeAreaView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 100 }}>
+              {noResponse ? (
+                <NoResponseView
+                  livreur={currentLivreur}
+                  onRetry={handleRetrySearch}
+                  onCancel={resetAll}
+                />
+              ) : waitingForAcceptance ? (
+                <WaitingView
+                  livreur={currentLivreur}
+                  pickupLocation={pickupLocation}
+                  dropoffLocation={dropoffLocation}
+                />
+              ) : accepted ? (
+                <AcceptedView
+                  livreur={currentLivreur}
+                  pickupLocation={pickupLocation}
+                  dropoffLocation={dropoffLocation}
+                  onNewDelivery={resetAll}
+                />
+              ) : showResults ? (
+                <LivreurList
+                  livreurs={livreurs}
+                  pickupLocation={pickupLocation}
+                  dropoffLocation={dropoffLocation}
+                  selectedLivreurId={selectedLivreur}
+                  onSelectLivreur={setSelectedLivreur}
+                  onConfirm={handleConfirmLivraison}
+                  onEditSearch={handleEditSearch}
+                />
+              ) : (
+                <LivraisonForm />
+              )}
+            </ScrollView>
+          </SafeAreaView>
+        </LinearGradient>
+      </KeyboardAvoidingView>
+    </AnimatedTabScreen>
   );
 }

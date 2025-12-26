@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { voyages, transportTypes } from '../../../data';
 import type { Voyage } from '../../../types';
 import { useVoyagesStore } from '../../../stores';
+import { AnimatedTabScreen } from '../../../components/ui';
 import {
   VoyageCard,
   TypeFilter,
@@ -49,56 +50,58 @@ export default function VoyagesTab() {
   );
 
   return (
-    <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1 }}>
-        {/* Header */}
-        <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: 'white' }}>
-            Trouvez votre voyage
-          </Text>
-          <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-            Bus, voitures, trains et plus
-          </Text>
-        </View>
+    <AnimatedTabScreen>
+      <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1 }}>
+          {/* Header */}
+          <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
+            <Text style={{ fontSize: 28, fontWeight: 'bold', color: 'white' }}>
+              Trouvez votre voyage
+            </Text>
+            <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
+              Bus, voitures, trains et plus
+            </Text>
+          </View>
 
-        {/* Barre de recherche */}
-        <View style={{ paddingHorizontal: 24, paddingBottom: 8 }}>
-          <TransportSearchBar
-            fromCity={fromCity}
-            toCity={toCity}
-            onFromChange={setFromCity}
-            onToChange={setToCity}
-            onSwap={swapCities}
-          />
-        </View>
-
-        {/* Filtres par type */}
-        <TypeFilter
-          types={transportTypes}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-        />
-
-        {/* Liste des résultats */}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}>
-          {filteredVoyages.length > 0 ? (
-            filteredVoyages.map((voyage) => (
-              <VoyageCard
-                key={voyage.id}
-                voyage={voyage}
-                onPress={() => handleVoyagePress(voyage)}
-              />
-            ))
-          ) : (
-            <EmptyResults
-              message="Aucun voyage trouvé"
-              subMessage="Essayez une autre recherche ou un autre filtre"
+          {/* Barre de recherche */}
+          <View style={{ paddingHorizontal: 24, paddingBottom: 8 }}>
+            <TransportSearchBar
+              fromCity={fromCity}
+              toCity={toCity}
+              onFromChange={setFromCity}
+              onToChange={setToCity}
+              onSwap={swapCities}
             />
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+          </View>
+
+          {/* Filtres par type */}
+          <TypeFilter
+            types={transportTypes}
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+          />
+
+          {/* Liste des résultats */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}>
+            {filteredVoyages.length > 0 ? (
+              filteredVoyages.map((voyage) => (
+                <VoyageCard
+                  key={voyage.id}
+                  voyage={voyage}
+                  onPress={() => handleVoyagePress(voyage)}
+                />
+              ))
+            ) : (
+              <EmptyResults
+                message="Aucun voyage trouvé"
+                subMessage="Essayez une autre recherche ou un autre filtre"
+              />
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+    </AnimatedTabScreen>
   );
 }
