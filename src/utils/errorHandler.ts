@@ -11,10 +11,7 @@ interface ErrorResponse {
 /**
  * Gère une erreur et retourne un message utilisateur friendly
  */
-export const handleError = (
-  error: unknown,
-  context?: string
-): ErrorResponse => {
+export const handleError = (error: unknown, context?: string): ErrorResponse => {
   const message = error instanceof Error ? error.message : 'Unknown error';
 
   // Log l'erreur en développement

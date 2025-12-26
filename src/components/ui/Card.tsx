@@ -10,13 +10,7 @@ interface CardProps extends ViewProps {
  * Composant Card réutilisable
  * Utilisé pour créer des cartes blanches avec différents styles
  */
-export const Card = ({
-  children,
-  variant = 'default',
-  className,
-  style,
-  ...props
-}: CardProps) => {
+export const Card = ({ children, variant = 'default', className, style, ...props }: CardProps) => {
   const variants = {
     default: 'bg-white rounded-2xl p-6',
     elevated: 'bg-white rounded-2xl p-6 shadow-lg',
@@ -24,11 +18,7 @@ export const Card = ({
   };
 
   return (
-    <View
-      className={`${variants[variant]} ${className || ''}`}
-      style={style}
-      {...props}
-    >
+    <View className={`${variants[variant]} ${className || ''}`} style={style} {...props}>
       {children}
     </View>
   );

@@ -1,7 +1,5 @@
 import { Voyage, Hebergement } from '../types';
 
-
-
 // Liste des voyages disponibles
 export const voyages: Voyage[] = [
   { id: 1, type: 'Bus', from: 'Libreville', to: 'Franceville', price: '25000 FCFA', icon: '🚍' },
@@ -22,14 +20,78 @@ export const voyages: Voyage[] = [
 
 // Liste des hébergements disponibles
 export const hebergements: Hebergement[] = [
-  { id: 1, type: 'Hôtel', name: 'Hôtel Le Meridien', location: 'Libreville', price: '45000 FCFA/nuit', rating: 4.5, icon: '🏨' },
-  { id: 2, type: 'Auberge', name: 'Auberge du Centre', location: 'Franceville', price: '15000 FCFA/nuit', rating: 3.8, icon: '🏠' },
-  { id: 3, type: 'Hôtel', name: 'Hôtel Hibiscus', location: 'Port-Gentil', price: '38000 FCFA/nuit', rating: 4.2, icon: '🏨' },
-  { id: 4, type: 'Auberge', name: 'Chez Marie', location: 'Oyem', price: '12000 FCFA/nuit', rating: 4.0, icon: '🏠' },
-  { id: 5, type: 'Hôtel', name: 'Hôtel Rapontchombo', location: 'Lambaréné', price: '25000 FCFA/nuit', rating: 3.9, icon: '🏨' },
-  { id: 6, type: 'Auberge', name: 'Villa Tropicale', location: 'Mayumba', price: '18000 FCFA/nuit', rating: 4.3, icon: '🏠' },
-  { id: 7, type: 'Hôtel', name: 'Hôtel Residence', location: 'Tchibanga', price: '20000 FCFA/nuit', rating: 3.7, icon: '🏨' },
-  { id: 8, type: 'Auberge', name: 'Auberge du Parc', location: 'Lopé', price: '22000 FCFA/nuit', rating: 4.4, icon: '🏠' },
+  {
+    id: 1,
+    type: 'Hôtel',
+    name: 'Hôtel Le Meridien',
+    location: 'Libreville',
+    price: '45000 FCFA/nuit',
+    rating: 4.5,
+    icon: '🏨',
+  },
+  {
+    id: 2,
+    type: 'Auberge',
+    name: 'Auberge du Centre',
+    location: 'Franceville',
+    price: '15000 FCFA/nuit',
+    rating: 3.8,
+    icon: '🏠',
+  },
+  {
+    id: 3,
+    type: 'Hôtel',
+    name: 'Hôtel Hibiscus',
+    location: 'Port-Gentil',
+    price: '38000 FCFA/nuit',
+    rating: 4.2,
+    icon: '🏨',
+  },
+  {
+    id: 4,
+    type: 'Auberge',
+    name: 'Chez Marie',
+    location: 'Oyem',
+    price: '12000 FCFA/nuit',
+    rating: 4.0,
+    icon: '🏠',
+  },
+  {
+    id: 5,
+    type: 'Hôtel',
+    name: 'Hôtel Rapontchombo',
+    location: 'Lambaréné',
+    price: '25000 FCFA/nuit',
+    rating: 3.9,
+    icon: '🏨',
+  },
+  {
+    id: 6,
+    type: 'Auberge',
+    name: 'Villa Tropicale',
+    location: 'Mayumba',
+    price: '18000 FCFA/nuit',
+    rating: 4.3,
+    icon: '🏠',
+  },
+  {
+    id: 7,
+    type: 'Hôtel',
+    name: 'Hôtel Residence',
+    location: 'Tchibanga',
+    price: '20000 FCFA/nuit',
+    rating: 3.7,
+    icon: '🏨',
+  },
+  {
+    id: 8,
+    type: 'Auberge',
+    name: 'Auberge du Parc',
+    location: 'Lopé',
+    price: '22000 FCFA/nuit',
+    rating: 4.4,
+    icon: '🏠',
+  },
 ];
 
 // Types de transport disponibles

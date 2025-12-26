@@ -18,8 +18,7 @@ import { useState } from 'react';
 const conversationsData: { [key: string]: any } = {
   '1': {
     sender: 'Brice Mbongo',
-    avatar:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop',
     messages: [
       {
         id: '1',
@@ -49,8 +48,7 @@ const conversationsData: { [key: string]: any } = {
   },
   '2': {
     sender: 'Marie Nguema',
-    avatar:
-      'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop',
+    avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop',
     messages: [
       {
         id: '1',
@@ -68,8 +66,7 @@ const conversationsData: { [key: string]: any } = {
   },
   '3': {
     sender: 'Kevin Oba',
-    avatar:
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop',
     messages: [
       {
         id: '1',
@@ -87,8 +84,7 @@ const conversationsData: { [key: string]: any } = {
   },
   '4': {
     sender: 'Aïcha Minko',
-    avatar:
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop',
     messages: [
       {
         id: '1',
@@ -172,9 +168,7 @@ export default function ConversationScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 20 }}
             renderItem={({ item }) => (
               <View
-                className={`mb-3 max-w-[75%] ${
-                  item.sender === 'me' ? 'self-end' : 'self-start'
-                }`}>
+                className={`mb-3 max-w-[75%] ${item.sender === 'me' ? 'self-end' : 'self-start'}`}>
                 <View
                   className={`rounded-2xl px-4 py-3 ${
                     item.sender === 'me'

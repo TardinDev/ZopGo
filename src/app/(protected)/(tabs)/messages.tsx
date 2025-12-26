@@ -24,20 +24,29 @@ export default function MessagesTab() {
   } = useMessagesStore();
 
   // Handlers
-  const handleTabChange = useCallback((tab: string) => {
-    setSelectedTab(tab as 'notifications' | 'messages');
-  }, [setSelectedTab]);
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      setSelectedTab(tab as 'notifications' | 'messages');
+    },
+    [setSelectedTab]
+  );
 
-  const handleNotificationPress = useCallback((notificationId: string) => {
-    markNotificationAsRead(notificationId);
-    console.log('Opening notification:', notificationId);
-  }, [markNotificationAsRead]);
+  const handleNotificationPress = useCallback(
+    (notificationId: string) => {
+      markNotificationAsRead(notificationId);
+      console.log('Opening notification:', notificationId);
+    },
+    [markNotificationAsRead]
+  );
 
-  const handleMessagePress = useCallback((messageId: string) => {
-    markMessageAsRead(messageId);
-    console.log('Opening conversation:', messageId);
-    // router.push({ pathname: '/(protected)/conversation/[id]', params: { id: messageId } });
-  }, [markMessageAsRead]);
+  const handleMessagePress = useCallback(
+    (messageId: string) => {
+      markMessageAsRead(messageId);
+      console.log('Opening conversation:', messageId);
+      // router.push({ pathname: '/(protected)/conversation/[id]', params: { id: messageId } });
+    },
+    [markMessageAsRead]
+  );
 
   return (
     <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
@@ -49,11 +58,7 @@ export default function MessagesTab() {
 
         {/* Onglets */}
         <View style={{ marginHorizontal: 24, marginBottom: 16 }}>
-          <TabSelector
-            tabs={TABS}
-            selectedTab={selectedTab}
-            onTabChange={handleTabChange}
-          />
+          <TabSelector tabs={TABS} selectedTab={selectedTab} onTabChange={handleTabChange} />
         </View>
 
         {/* Content */}
@@ -77,10 +82,7 @@ export default function MessagesTab() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
             renderItem={({ item }) => (
-              <MessageCard
-                message={item}
-                onPress={() => handleMessagePress(item.id)}
-              />
+              <MessageCard message={item} onPress={() => handleMessagePress(item.id)} />
             )}
           />
         )}

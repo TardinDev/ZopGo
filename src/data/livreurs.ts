@@ -75,8 +75,7 @@ export const getSortedLivreursByDistance = () =>
 /**
  * Retourne uniquement les livreurs disponibles
  */
-export const getAvailableLivreurs = () =>
-  livreurs.filter(l => l.disponible);
+export const getAvailableLivreurs = () => livreurs.filter((l) => l.disponible);
 
 /**
  * Retourne les livreurs disponibles triés par distance
@@ -87,5 +86,4 @@ export const getAvailableLivreursSorted = () =>
 /**
  * Trouve un livreur par ID
  */
-export const getLivreurById = (id: number) =>
-  livreurs.find(l => l.id === id);
+export const getLivreurById = (id: number) => livreurs.find((l) => l.id === id);

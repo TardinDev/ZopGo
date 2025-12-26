@@ -47,8 +47,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <View className="items-center">
             <View
               className="mb-6 h-24 w-24 items-center justify-center rounded-full"
-              style={{ backgroundColor: `${COLORS.error}20` }}
-            >
+              style={{ backgroundColor: `${COLORS.error}20` }}>
               <Ionicons name="alert-circle" size={64} color={COLORS.error} />
             </View>
 
@@ -56,25 +55,22 @@ export default class ErrorBoundary extends Component<Props, State> {
               Une erreur est survenue
             </Text>
 
-            <Text className="mt-3 text-center text-base text-gray-600 px-8">
-              Nous sommes désolés, quelque chose s&apos;est mal passé.
-              Veuillez réessayer ou contacter le support si le problème persiste.
+            <Text className="mt-3 px-8 text-center text-base text-gray-600">
+              Nous sommes désolés, quelque chose s&apos;est mal passé. Veuillez réessayer ou
+              contacter le support si le problème persiste.
             </Text>
 
             {__DEV__ && this.state.error && (
-              <View className="mt-4 w-full rounded-xl bg-red-50 p-4 border border-red-200">
-                <Text className="text-xs text-red-800 font-mono">
-                  {this.state.error.message}
-                </Text>
+              <View className="mt-4 w-full rounded-xl border border-red-200 bg-red-50 p-4">
+                <Text className="font-mono text-xs text-red-800">{this.state.error.message}</Text>
               </View>
             )}
 
             <TouchableOpacity
               onPress={this.handleReset}
               className="mt-8 rounded-2xl px-8 py-4"
-              style={{ backgroundColor: COLORS.primary }}
-            >
-              <Text className="font-bold text-white text-base">Réessayer</Text>
+              style={{ backgroundColor: COLORS.primary }}>
+              <Text className="text-base font-bold text-white">Réessayer</Text>
             </TouchableOpacity>
           </View>
         </View>

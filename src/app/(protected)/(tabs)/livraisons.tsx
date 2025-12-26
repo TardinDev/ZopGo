@@ -1,8 +1,4 @@
-import {
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
