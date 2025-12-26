@@ -63,6 +63,7 @@ function RevenueCard({ stat }: { stat: typeof stats[0] }) {
                     <BlurView
                         intensity={80}
                         tint="light"
+                        experimentalBlurMethod="dimezisBlurView"
                         style={styles.blurView}
                     >
                         <View style={styles.blurOverlay}>
