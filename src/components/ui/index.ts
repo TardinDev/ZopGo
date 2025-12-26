@@ -6,3 +6,4 @@ export * from './Card';
 export * from './GradientButton';
 export * from './EmptyState';
 export * from './Skeleton';
+export * from './AnimatedTabScreen';

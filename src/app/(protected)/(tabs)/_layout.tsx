@@ -4,15 +4,24 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMessagesStore } from '../../../stores';
+import { useTabAnimation } from '../../../hooks/useTabAnimation';
 
 export default function TabLayout() {
   const { notifications, messages } = useMessagesStore();
   const unreadNotifications = notifications.filter((n) => !n.read).length;
   const unreadMessages = messages.filter((m) => !m.read).length;
   const totalUnread = unreadNotifications + unreadMessages;
+  const { navigateToTab } = useTabAnimation();
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: (e) => {
+          // Récupérer le nom du tab depuis la route
+          const tabName = e.target?.split('-')[0] || 'index';
+          navigateToTab(tabName);
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#2162FE',
