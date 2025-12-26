@@ -1,25 +1,102 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { stats } from '../../data';
 import { COLORS } from '../../constants';
+
+const CARD_HEIGHT = 120;
+// Le rideau commence en couvrant 4/5 de la carte (96px sur 120px)
+// revealOffset: 0 = rideau en position haute (4/5 couvert), 96 = rideau complètement descendu (tout révélé)
+const INITIAL_OFFSET = 0; // Position initiale
+const MAX_OFFSET = 96; // Maximum de déplacement vers le bas
+
+// Composant pour la carte avec le rideau flou
+function RevenueCard({ stat }: { stat: typeof stats[0] }) {
+    const offset = useSharedValue(INITIAL_OFFSET);
+    const startOffset = useSharedValue(0);
+
+    const panGesture = Gesture.Pan()
+        .onBegin(() => {
+            startOffset.value = offset.value;
+        })
+        .onUpdate((event) => {
+            // Glisser vers le bas = augmenter l'offset (révéler plus)
+            const newValue = startOffset.value + event.translationY;
+            offset.value = Math.max(0, Math.min(MAX_OFFSET, newValue));
+        })
+        .onEnd(() => {
+            // Retour à la position initiale (4/5 couvert)
+            offset.value = withSpring(INITIAL_OFFSET, {
+                damping: 20,
+                stiffness: 300,
+            });
+        });
+
+    // Le rideau flou se déplace vers le bas
+    const animatedBlurStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: offset.value }],
+    }));
+
+    return (
+        <View style={[styles.card, styles.revenueCard]}>
+            {/* Contenu de la carte */}
+            <View style={[styles.iconContainer, { backgroundColor: getBgColor(stat.color) }]}>
+                <Ionicons
+                    name={stat.icon as any}
+                    size={20}
+                    color={getColor(stat.color)}
+                />
+            </View>
+            <Text style={styles.value}>{stat.value}</Text>
+            <Text style={styles.subtitle}>{stat.subtitle}</Text>
+
+            {/* Rideau flou - couvre le haut de la carte */}
+            <GestureDetector gesture={panGesture}>
+                <Animated.View style={[styles.blurContainer, animatedBlurStyle]}>
+                    <BlurView
+                        intensity={80}
+                        tint="light"
+                        style={styles.blurView}
+                    >
+                        <View style={styles.blurOverlay}>
+                            <Ionicons name="eye-off-outline" size={16} color="rgba(0,0,0,0.4)" />
+                            <Text style={styles.blurText}>↓ Glisser</Text>
+                            <View style={styles.dragHandle} />
+                        </View>
+                    </BlurView>
+                </Animated.View>
+            </GestureDetector>
+        </View>
+    );
+}
 
 export function StatsCards() {
     return (
         <View style={styles.container}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {stats.map((stat) => (
-                    <View key={stat.id} style={styles.card}>
-                        <View style={[styles.iconContainer, { backgroundColor: getBgColor(stat.color) }]}>
-                            <Ionicons
-                                name={stat.icon as any}
-                                size={20}
-                                color={getColor(stat.color)}
-                            />
+                    stat.id === 1 ? (
+                        <RevenueCard key={stat.id} stat={stat} />
+                    ) : (
+                        <View key={stat.id} style={styles.card}>
+                            <View style={[styles.iconContainer, { backgroundColor: getBgColor(stat.color) }]}>
+                                <Ionicons
+                                    name={stat.icon as any}
+                                    size={20}
+                                    color={getColor(stat.color)}
+                                />
+                            </View>
+                            <Text style={styles.value}>{stat.value}</Text>
+                            <Text style={styles.subtitle}>{stat.subtitle}</Text>
                         </View>
-                        <Text style={styles.value}>{stat.value}</Text>
-                        <Text style={styles.subtitle}>{stat.subtitle}</Text>
-                    </View>
+                    )
                 ))}
             </ScrollView>
         </View>
@@ -79,5 +156,41 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 12, // text-xs
         color: '#4B5563',
+    },
+    revenueCard: {
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    blurContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 96, // 4/5 de la carte (couvre 80%)
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    blurView: {
+        flex: 1,
+        borderRadius: 16,
+    },
+    blurOverlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        paddingBottom: 12,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        borderRadius: 2,
+        marginBottom: 8,
+    },
+    blurText: {
+        fontSize: 10,
+        color: 'rgba(0,0,0,0.4)',
+        marginTop: 4,
     },
 });
