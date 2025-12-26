@@ -66,7 +66,7 @@ function RevenueCard({ stat }: { stat: typeof stats[0] }) {
                         style={styles.blurView}
                     >
                         <View style={styles.blurOverlay}>
-                            <Ionicons name="eye-off-outline" size={16} color="rgba(0,0,0,0.4)" />
+                            <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#FFD700' }}>$</Text>
                             <Text style={styles.blurText}>↓ Glisser</Text>
                             <View style={styles.dragHandle} />
                         </View>
