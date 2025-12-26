@@ -1,18 +1,8 @@
-import {
-  View,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  Dimensions,
-} from 'react-native';
+import { View, StatusBar, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { userInfo, generateActivities } from '../../../data';
 import { COLORS } from '../../../constants';
@@ -34,7 +24,6 @@ export default function HomeTab() {
   const activities = useMemo(() => generateActivities(10), []);
   const translateY = useSharedValue(INITIAL_POSITION);
   const startY = useSharedValue(0);
-
 
   const panGesture = Gesture.Pan()
     .onBegin(() => {
@@ -121,7 +110,14 @@ export default function HomeTab() {
               ]}>
               {/* Indicateur de glissement */}
               <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                <View style={{ height: 6, width: 64, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' }} />
+                <View
+                  style={{
+                    height: 6,
+                    width: 64,
+                    borderRadius: 3,
+                    backgroundColor: 'rgba(255,255,255,0.5)',
+                  }}
+                />
               </View>
 
               {/* Météo */}
@@ -134,7 +130,6 @@ export default function HomeTab() {
 
               {/* Activités */}
               <ActivityList activities={activities} />
-
             </Animated.View>
           </GestureDetector>
         </SafeAreaView>

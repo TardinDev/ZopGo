@@ -30,20 +30,16 @@ export const GradientButton = ({
       disabled={disabled}
       className={`overflow-hidden rounded-3xl shadow-xl ${disabled ? 'opacity-50' : ''} ${className || ''}`}
       activeOpacity={0.9}
-      {...props}
-    >
+      {...props}>
       <LinearGradient
         colors={colors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingVertical: 24, paddingHorizontal: 24 }}
-      >
+        style={{ paddingVertical: 24, paddingHorizontal: 24 }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-1">
             <Text className="text-2xl font-bold text-white">{title}</Text>
-            {subtitle && (
-              <Text className="text-sm text-white/80 mt-1">{subtitle}</Text>
-            )}
+            {subtitle && <Text className="mt-1 text-sm text-white/80">{subtitle}</Text>}
           </View>
           {icon && (
             <View className="h-16 w-16 items-center justify-center rounded-full bg-white/20">

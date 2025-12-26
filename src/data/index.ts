@@ -5,5 +5,3 @@ export * from './home';
 export * from './livreurs';
 export * from './messages';
 export * from './location';
-
-

@@ -22,10 +22,7 @@ export const Skeleton = ({ width, height = 100, className }: SkeletonProps) => {
 
   useEffect(() => {
     opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 800 }),
-        withTiming(0.3, { duration: 800 })
-      ),
+      withSequence(withTiming(1, { duration: 800 }), withTiming(0.3, { duration: 800 })),
       -1
     );
   }, [opacity]);

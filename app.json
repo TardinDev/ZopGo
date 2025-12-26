@@ -30,9 +30,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#0E1218"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zopgo.app"

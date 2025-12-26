@@ -57,12 +57,20 @@ export default function TabLayout() {
               pointerEvents="none"
               style={[
                 StyleSheet.absoluteFill,
-                { borderRadius: 28, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.35)' },
+                {
+                  borderRadius: 28,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: 'rgba(255,255,255,0.35)',
+                },
               ]}
             />
             <LinearGradient
               pointerEvents="none"
-              colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0.10)', 'rgba(255,255,255,0.00)']}
+              colors={[
+                'rgba(255,255,255,0.35)',
+                'rgba(255,255,255,0.10)',
+                'rgba(255,255,255,0.00)',
+              ]}
               locations={[0, 0.35, 1]}
               style={StyleSheet.absoluteFill}
             />
@@ -78,14 +86,17 @@ export default function TabLayout() {
           fontWeight: '600',
           marginTop: 2, // force le label bien sous l’icône
         },
-      }}
-    >
+      }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'home' : 'home-outline'} size={26} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? 'home' : 'home-outline'}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
@@ -95,18 +106,25 @@ export default function TabLayout() {
         options={{
           title: 'Voyages',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'car-side' : 'car-outline'} size={26} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? 'car-side' : 'car-outline'}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
-
 
       <Tabs.Screen
         name="livraisons"
         options={{
           title: 'Livraisons',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'package-variant' : 'package-variant-closed'} size={26} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? 'package-variant' : 'package-variant-closed'}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
@@ -116,18 +134,25 @@ export default function TabLayout() {
         options={{
           title: 'Location',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'key-variant' : 'key-outline'} size={26} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? 'key-variant' : 'key-outline'}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
-
 
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'message' : 'message-outline'} size={26} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? 'message' : 'message-outline'}
+              size={26}
+              color={color}
+            />
           ),
           tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
           tabBarBadgeStyle: {
@@ -145,7 +170,11 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'account' : 'account-outline'} size={26} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? 'account' : 'account-outline'}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
