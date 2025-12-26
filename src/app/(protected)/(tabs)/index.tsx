@@ -17,7 +17,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { userInfo, generateActivities } from '../../../data';
 import { COLORS } from '../../../constants';
 import SearchBar from '../../../components/SearchBar';
-import { useMessagesStore } from '../../../stores';
+
 import {
   HomeHeader,
   StatsCards,
@@ -35,8 +35,6 @@ export default function HomeTab() {
   const translateY = useSharedValue(INITIAL_POSITION);
   const startY = useSharedValue(0);
 
-  const { notifications } = useMessagesStore();
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const panGesture = Gesture.Pan()
     .onBegin(() => {
@@ -89,7 +87,7 @@ export default function HomeTab() {
           <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
           {/* En-tête */}
-          <HomeHeader userName={userInfo.name} notificationCount={unreadCount} />
+          <HomeHeader userName={userInfo.name} />
 
           {/* Statistiques */}
           <StatsCards />
