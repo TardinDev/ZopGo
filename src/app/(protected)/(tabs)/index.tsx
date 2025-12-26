@@ -109,7 +109,7 @@ export default function HomeTab() {
                   height: SCREEN_HEIGHT,
                   zIndex: 10,
                   elevation: 10,
-                  backgroundColor: COLORS.primary,
+                  backgroundColor: 'rgba(33, 98, 254, 0.92)',
                   borderTopLeftRadius: 40,
                   borderTopRightRadius: 40,
                   paddingHorizontal: 24,
