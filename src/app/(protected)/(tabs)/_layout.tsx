@@ -3,8 +3,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useMessagesStore } from '../../../stores';
 
 export default function TabLayout() {
+  const { notifications, messages } = useMessagesStore();
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
+  const unreadMessages = messages.filter((m) => !m.read).length;
+  const totalUnread = unreadNotifications + unreadMessages;
+
   return (
     <Tabs
       screenOptions={{
@@ -123,6 +129,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons name={focused ? 'message' : 'message-outline'} size={26} color={color} />
           ),
+          tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: '#EF4444',
+            fontSize: 10,
+            fontWeight: 'bold',
+            minWidth: 18,
+            height: 18,
+          },
         }}
       />
 
