@@ -42,7 +42,7 @@ export const COLORS = {
   gradients: {
     blue: ['#3B82F6', '#2563EB'],
     orange: ['#F59E0B', '#D97706'],
-    yellow: ['#FFDD5C', '#FFE89A'],
+    yellow: ['#FFFEF5', '#FFDD5C'],
     purple: ['#667eea', '#764ba2'],
     cyan: ['#4facfe', '#00f2fe'],
   },

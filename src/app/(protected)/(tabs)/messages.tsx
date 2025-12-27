@@ -51,7 +51,7 @@ export default function MessagesTab() {
 
   return (
     <AnimatedTabScreen>
-      <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
+      <LinearGradient colors={['#00D9A5', '#00F5C4']} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12 }}>
