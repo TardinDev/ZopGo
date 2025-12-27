@@ -73,7 +73,7 @@ export default function HomeTab() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}>
-        <LinearGradient colors={COLORS.gradients.yellow} style={{ flex: 1 }}>
+        <LinearGradient colors={['#FFDD5C', '#FFE89A']} style={{ flex: 1 }}>
           <SafeAreaView style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
