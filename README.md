@@ -143,6 +143,14 @@ Ce projet est privé et destiné à un usage commercial.
 
 Pour toute question ou suggestion, contactez l'équipe ZopGo.
 
+### Auteur
+
+**Davy Tardin**
+
+[![GitHub](https://img.shields.io/badge/GitHub-TardinDev-181717?style=flat&logo=github)](https://github.com/TardinDev)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Davy%20Tardin-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/davy-tardin-11a7a1159/)
+[![Website](https://img.shields.io/badge/Website-evoubap.com-4285F4?style=flat&logo=googlechrome)](https://evoubap.com)
+
 ---
 
 Développé avec ❤️ pour le Gabon
