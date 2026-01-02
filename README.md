@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/newdesignZopGo.png" alt="ZopGo Logo" width="300"/>
+</p>
+
 # ZopGo
 
 Une application mobile moderne de covoiturage et de transport au Gabon, développée avec React Native et Expo.
