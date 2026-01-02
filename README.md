@@ -2,6 +2,10 @@
 
 Une application mobile moderne de covoiturage et de transport au Gabon, développée avec React Native et Expo.
 
+<p align="center">
+  <img src="assets/zopgopro.jpeg" alt="ZopGo - Une course, un colis, une solution" width="400"/>
+</p>
+
 ## À propos
 
 ZopGo est une plateforme de mobilité qui connecte les voyageurs avec différents modes de transport (bus, voiture, bateau, avion) à travers le Gabon. L'application offre une expérience utilisateur fluide avec une interface moderne et intuitive.
