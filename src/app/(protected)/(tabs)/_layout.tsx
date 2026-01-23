@@ -5,6 +5,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMessagesStore } from '../../../stores';
 import { useTabAnimation } from '../../../hooks/useTabAnimation';
+import { useAuthStore } from '../../../stores/authStore';
 
 export default function TabLayout() {
   const { notifications, messages } = useMessagesStore();
@@ -12,6 +13,10 @@ export default function TabLayout() {
   const unreadMessages = messages.filter((m) => !m.read).length;
   const totalUnread = unreadNotifications + unreadMessages;
   const { navigateToTab } = useTabAnimation();
+  const { user } = useAuthStore();
+
+  // Si l'utilisateur est un chauffeur, on masque certains tabs
+  const isChauffeur = user?.role === 'chauffeur';
 
   return (
     <Tabs
@@ -114,6 +119,7 @@ export default function TabLayout() {
         name="voyages"
         options={{
           title: 'Voyages',
+          href: isChauffeur ? null : undefined, // Masqué pour les chauffeurs
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'car-side' : 'car-outline'}
@@ -128,6 +134,7 @@ export default function TabLayout() {
         name="livraisons"
         options={{
           title: 'Livraisons',
+          href: isChauffeur ? null : undefined, // Masqué pour les chauffeurs
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'package-variant' : 'package-variant-closed'}
@@ -142,6 +149,7 @@ export default function TabLayout() {
         name="location"
         options={{
           title: 'Location',
+          href: isChauffeur ? null : undefined, // Masqué pour les chauffeurs
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'key-variant' : 'key-outline'}
