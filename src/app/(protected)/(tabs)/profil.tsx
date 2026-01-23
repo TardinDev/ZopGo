@@ -72,6 +72,8 @@ export default function ProfilTab() {
         style: 'destructive',
         onPress: () => {
           logout();
+          // Naviguer vers la racine puis vers auth
+          router.dismissAll();
           router.replace('/auth');
         },
       },
