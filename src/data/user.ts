@@ -21,6 +21,11 @@ export const menuItems: MenuItem[] = [
     subtitle: 'Modifier vos données',
   },
   {
+    icon: 'star-outline',
+    title: 'Mes avis',
+    subtitle: 'Voir vos évaluations',
+  },
+  {
     icon: 'car-outline',
     title: 'Mes véhicules',
     subtitle: 'Gérer vos véhicules',

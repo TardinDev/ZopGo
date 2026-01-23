@@ -3,8 +3,8 @@ import { useEffect, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TIMEOUTS, COLORS } from '../../../constants';
-import { getSortedLivreursByDistance } from '../../../data';
 import { useLivraisonsStore } from '../../../stores';
+import { useDriversStore } from '../../../stores/driversStore';
 import { AnimatedTabScreen } from '../../../components/ui';
 import {
   LivraisonHeader,
@@ -35,7 +35,9 @@ export default function LivraisonsTab() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const acceptanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const livreurs = getSortedLivreursByDistance();
+  // Utilise le driversStore pour obtenir tous les livreurs (statiques + chauffeurs connectés)
+  const { getAllDrivers } = useDriversStore();
+  const livreurs = getAllDrivers();
   const currentLivreur = livreurs.find((l) => l.id === selectedLivreur);
 
   // Nettoyage des timeouts

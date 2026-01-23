@@ -70,3 +70,53 @@ export interface Livreur {
   commentaires: string[];
   distance: number;
 }
+
+// Types pour les évaluations
+export interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  authorName: string;
+  authorAvatar: string;
+  date: string;
+  tripType: 'voyage' | 'livraison' | 'location';
+  tripId?: number;
+}
+
+// Types pour le résumé des notes
+export interface RatingSummaryData {
+  average: number;
+  total: number;
+  distribution: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
+}
+
+// Types pour l'authentification et les rôles
+export type UserRole = 'client' | 'chauffeur';
+
+export type VehicleType = 'moto' | 'velo' | 'voiture' | 'camionnette';
+
+export interface VehicleInfo {
+  type: VehicleType;
+  label: string;
+  icon: string;
+}
+
+// Profil chauffeur (étend UserInfo avec infos spécifiques)
+export interface ChauffeurProfile extends UserInfo {
+  vehicule: VehicleInfo;
+  disponible: boolean;
+  distance?: number; // Distance par rapport au client (calculée dynamiquement)
+}
+
+// Utilisateur authentifié (peut être client ou chauffeur)
+export interface AuthUser {
+  id: string;
+  role: UserRole;
+  profile: UserInfo | ChauffeurProfile;
+}
