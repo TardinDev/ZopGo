@@ -21,13 +21,20 @@ interface ModeTransitionProps {
   visible: boolean;
   role: UserRole;
   onComplete: () => void;
+  quick?: boolean; // Animation plus rapide pour le changement de rôle
 }
 
-export function ModeTransition({ visible, role, onComplete }: ModeTransitionProps) {
+export function ModeTransition({ visible, role, onComplete, quick = false }: ModeTransitionProps) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
   const rotation = useSharedValue(0);
   const checkScale = useSharedValue(0);
+
+  // Durées selon le mode
+  const spinDuration = quick ? 600 : 1000;
+  const spinCount = quick ? 1 : 2;
+  const checkDelay = quick ? 600 : 2000;
+  const dismissDelay = quick ? 1200 : 2800;
 
   const isClient = role === 'client';
   const icon = isClient ? 'person' : 'car-sport';
@@ -47,14 +54,14 @@ export function ModeTransition({ visible, role, onComplete }: ModeTransitionProp
 
       // Spin the icon
       rotation.value = withRepeat(
-        withTiming(360, { duration: 1000, easing: Easing.linear }),
-        2,
+        withTiming(360, { duration: spinDuration, easing: Easing.linear }),
+        spinCount,
         false
       );
 
       // Show checkmark after spinning
       checkScale.value = withDelay(
-        2000,
+        checkDelay,
         withSequence(
           withTiming(1.2, { duration: 200, easing: Easing.out(Easing.back(2)) }),
           withTiming(1, { duration: 150 })
@@ -67,7 +74,7 @@ export function ModeTransition({ visible, role, onComplete }: ModeTransitionProp
           runOnJS(onComplete)();
         });
         scale.value = withTiming(0.8, { duration: 300 });
-      }, 2800);
+      }, dismissDelay);
 
       return () => clearTimeout(timer);
     } else {

@@ -28,8 +28,24 @@ export default function AuthScreen() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('client');
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('moto');
   const [showTransition, setShowTransition] = useState(false);
+  const [transitionRole, setTransitionRole] = useState<UserRole>('client');
+  const [isRoleSwitch, setIsRoleSwitch] = useState(false);
 
   const { login, register, isLoading } = useAuthStore();
+
+  const handleRoleChange = (newRole: UserRole) => {
+    if (newRole !== selectedRole) {
+      setTransitionRole(newRole);
+      setIsRoleSwitch(true);
+      setShowTransition(true);
+    }
+  };
+
+  const handleRoleSwitchComplete = () => {
+    setSelectedRole(transitionRole);
+    setShowTransition(false);
+    setIsRoleSwitch(false);
+  };
 
   const handleSubmit = async () => {
     if (!formData.email || !formData.password) {
@@ -66,6 +82,8 @@ export default function AuthScreen() {
       }
 
       // Afficher la transition animée
+      setTransitionRole(selectedRole);
+      setIsRoleSwitch(false);
       setShowTransition(true);
     } catch {
       Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
@@ -106,7 +124,7 @@ export default function AuthScreen() {
                   <Text className="mb-3 text-lg font-semibold text-white">Je suis</Text>
                   <View className="flex-row gap-3">
                     <TouchableOpacity
-                      onPress={() => setSelectedRole('client')}
+                      onPress={() => handleRoleChange('client')}
                       className={`flex-1 flex-row items-center justify-center gap-2 rounded-2xl py-4 ${
                         selectedRole === 'client' ? 'bg-white' : 'bg-white/20'
                       }`}>
@@ -124,7 +142,7 @@ export default function AuthScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      onPress={() => setSelectedRole('chauffeur')}
+                      onPress={() => handleRoleChange('chauffeur')}
                       className={`flex-1 flex-row items-center justify-center gap-2 rounded-2xl py-4 ${
                         selectedRole === 'chauffeur' ? 'bg-white' : 'bg-white/20'
                       }`}>
@@ -263,8 +281,9 @@ export default function AuthScreen() {
         {/* Mode Transition Overlay */}
         <ModeTransition
           visible={showTransition}
-          role={selectedRole}
-          onComplete={handleTransitionComplete}
+          role={isRoleSwitch ? transitionRole : selectedRole}
+          onComplete={isRoleSwitch ? handleRoleSwitchComplete : handleTransitionComplete}
+          quick={isRoleSwitch}
         />
       </LinearGradient>
     </SafeAreaView>
