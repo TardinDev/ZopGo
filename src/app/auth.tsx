@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore, VEHICLE_TYPES } from '../stores/authStore';
 import { UserRole, VehicleType } from '../types';
+import { ModeTransition } from '../components/ui';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,6 +27,7 @@ export default function AuthScreen() {
   });
   const [selectedRole, setSelectedRole] = useState<UserRole>('client');
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('moto');
+  const [showTransition, setShowTransition] = useState(false);
 
   const { login, register, isLoading } = useAuthStore();
 
@@ -63,15 +65,16 @@ export default function AuthScreen() {
         );
       }
 
-      Alert.alert('Succès', isLogin ? 'Connexion réussie !' : 'Compte créé avec succès !', [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/(protected)/(tabs)'),
-        },
-      ]);
+      // Afficher la transition animée
+      setShowTransition(true);
     } catch {
       Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
     }
+  };
+
+  const handleTransitionComplete = () => {
+    setShowTransition(false);
+    router.replace('/(protected)/(tabs)');
   };
 
   const vehicleOptions = Object.values(VEHICLE_TYPES);
@@ -256,6 +259,13 @@ export default function AuthScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Mode Transition Overlay */}
+        <ModeTransition
+          visible={showTransition}
+          role={selectedRole}
+          onComplete={handleTransitionComplete}
+        />
       </LinearGradient>
     </SafeAreaView>
   );
