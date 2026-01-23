@@ -72,7 +72,7 @@ export default function ProfilTab() {
         style: 'destructive',
         onPress: () => {
           logout();
-          router.replace('/onboarding');
+          router.replace('/auth');
         },
       },
     ]);
@@ -126,9 +126,8 @@ export default function ProfilTab() {
               {isUserChauffeur && chauffeurProfile && (
                 <View className="mt-4 flex-row items-center rounded-2xl bg-white/10 px-5 py-3">
                   <View
-                    className={`mr-3 h-3 w-3 rounded-full ${
-                      chauffeurProfile.disponible ? 'bg-green-400' : 'bg-red-400'
-                    }`}
+                    className={`mr-3 h-3 w-3 rounded-full ${chauffeurProfile.disponible ? 'bg-green-400' : 'bg-red-400'
+                      }`}
                   />
                   <Text className="mr-3 font-medium text-white">
                     {chauffeurProfile.disponible ? 'Disponible' : 'Indisponible'}
@@ -171,9 +170,8 @@ export default function ProfilTab() {
               {/* Onglets principaux : Avis / Réglages */}
               <View className="mb-5 flex-row rounded-2xl bg-white p-1.5 shadow-sm">
                 <TouchableOpacity
-                  className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3 ${
-                    activeMainTab === 'reviews' ? 'bg-purple-600' : ''
-                  }`}
+                  className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3 ${activeMainTab === 'reviews' ? 'bg-purple-600' : ''
+                    }`}
                   onPress={() => setActiveMainTab('reviews')}>
                   <Ionicons
                     name="star"
@@ -181,29 +179,33 @@ export default function ProfilTab() {
                     color={activeMainTab === 'reviews' ? 'white' : '#9CA3AF'}
                   />
                   <Text
-                    className={`text-base font-semibold ${
-                      activeMainTab === 'reviews' ? 'text-white' : 'text-gray-400'
-                    }`}>
+                    className={`text-base font-semibold ${activeMainTab === 'reviews' ? 'text-white' : 'text-gray-400'
+                      }`}>
                     Avis
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3 ${
-                    activeMainTab === 'settings' ? 'bg-purple-600' : ''
-                  }`}
+                  className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl py-3 ${activeMainTab === 'settings' ? 'bg-purple-600' : ''
+                    }`}
                   onPress={() => setActiveMainTab('settings')}>
-                  <Ionicons
-                    name="settings"
-                    size={20}
-                    color={activeMainTab === 'settings' ? 'white' : '#9CA3AF'}
-                  />
-                  <Text
-                    className={`text-base font-semibold ${
-                      activeMainTab === 'settings' ? 'text-white' : 'text-gray-400'
-                    }`}>
-                    Réglages
-                  </Text>
+                  <View>
+
+                    <View className='flex-row items-center gap-2'>
+                      <Ionicons
+                        name="settings"
+                        size={20}
+                        color={activeMainTab === 'settings' ? 'white' : '#9CA3AF'}
+                      />
+                      <Text
+                        className={`text-base font-semibold ${activeMainTab === 'settings' ? 'text-white' : 'text-gray-400'
+                          }`}>
+                        Réglages
+                      </Text>
+                    </View>
+                    <Text className='text-red-500 text-sm text-center'>Se Déconnecter</Text>
+                  </View>
+
                 </TouchableOpacity>
               </View>
 
@@ -217,9 +219,8 @@ export default function ProfilTab() {
                   {!isUserChauffeur ? (
                     <View className="mb-4 flex-row rounded-2xl bg-white p-1 shadow-sm">
                       <TouchableOpacity
-                        className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${
-                          activeReviewTab === 'received' ? 'bg-blue-50' : ''
-                        }`}
+                        className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${activeReviewTab === 'received' ? 'bg-blue-50' : ''
+                          }`}
                         onPress={() => setActiveReviewTab('received')}>
                         <Ionicons
                           name="arrow-down-circle"
@@ -227,30 +228,26 @@ export default function ProfilTab() {
                           color={activeReviewTab === 'received' ? COLORS.primary : '#9CA3AF'}
                         />
                         <Text
-                          className={`text-sm font-medium ${
-                            activeReviewTab === 'received'
-                              ? 'font-semibold text-blue-600'
-                              : 'text-gray-400'
-                          }`}>
+                          className={`text-sm font-medium ${activeReviewTab === 'received'
+                            ? 'font-semibold text-blue-600'
+                            : 'text-gray-400'
+                            }`}>
                           Reçus
                         </Text>
                         <View
-                          className={`rounded-full px-2 py-0.5 ${
-                            activeReviewTab === 'received' ? 'bg-blue-600' : 'bg-gray-200'
-                          }`}>
-                          <Text
-                            className={`text-xs font-semibold ${
-                              activeReviewTab === 'received' ? 'text-white' : 'text-gray-500'
+                          className={`rounded-full px-2 py-0.5 ${activeReviewTab === 'received' ? 'bg-blue-600' : 'bg-gray-200'
                             }`}>
+                          <Text
+                            className={`text-xs font-semibold ${activeReviewTab === 'received' ? 'text-white' : 'text-gray-500'
+                              }`}>
                             {receivedReviews.length}
                           </Text>
                         </View>
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${
-                          activeReviewTab === 'given' ? 'bg-blue-50' : ''
-                        }`}
+                        className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${activeReviewTab === 'given' ? 'bg-blue-50' : ''
+                          }`}
                         onPress={() => setActiveReviewTab('given')}>
                         <Ionicons
                           name="arrow-up-circle"
@@ -258,21 +255,18 @@ export default function ProfilTab() {
                           color={activeReviewTab === 'given' ? COLORS.primary : '#9CA3AF'}
                         />
                         <Text
-                          className={`text-sm font-medium ${
-                            activeReviewTab === 'given'
-                              ? 'font-semibold text-blue-600'
-                              : 'text-gray-400'
-                          }`}>
+                          className={`text-sm font-medium ${activeReviewTab === 'given'
+                            ? 'font-semibold text-blue-600'
+                            : 'text-gray-400'
+                            }`}>
                           Donnés
                         </Text>
                         <View
-                          className={`rounded-full px-2 py-0.5 ${
-                            activeReviewTab === 'given' ? 'bg-blue-600' : 'bg-gray-200'
-                          }`}>
-                          <Text
-                            className={`text-xs font-semibold ${
-                              activeReviewTab === 'given' ? 'text-white' : 'text-gray-500'
+                          className={`rounded-full px-2 py-0.5 ${activeReviewTab === 'given' ? 'bg-blue-600' : 'bg-gray-200'
                             }`}>
+                          <Text
+                            className={`text-xs font-semibold ${activeReviewTab === 'given' ? 'text-white' : 'text-gray-500'
+                              }`}>
                             {givenReviews.length}
                           </Text>
                         </View>
