@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { UserRole } from '../../types';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface ModeTransitionProps {
   visible: boolean;
@@ -41,10 +41,10 @@ export function ModeTransition({ visible, role, onComplete, quick = false }: Mod
   const title = isClient ? 'Mode Client' : 'Mode Chauffeur';
   const subtitle = isClient
     ? 'Commandez vos trajets et livraisons'
-    : 'Acceptez des courses et gagnez de l\'argent';
+    : "Acceptez des courses et gagnez de l'argent";
   const gradientColors: readonly [string, string] = isClient
-    ? ['#4F46E5', '#7C3AED'] as const // Indigo to purple for client
-    : ['#F59E0B', '#EF4444'] as const; // Amber to red for driver
+    ? (['#4F46E5', '#7C3AED'] as const) // Indigo to purple for client
+    : (['#F59E0B', '#EF4444'] as const); // Amber to red for driver
 
   useEffect(() => {
     if (visible) {

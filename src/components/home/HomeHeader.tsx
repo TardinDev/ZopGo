@@ -1,21 +1,49 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Modal,
+  Pressable,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { userInfo } from '../../data';
 import { COLORS } from '../../constants';
+import { useAuthStore } from '../../stores/authStore';
 
 interface HomeHeaderProps {
   userName: string;
 }
 
 export function HomeHeader({ userName }: HomeHeaderProps) {
+  const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
-  const [userRole, setUserRole] = useState<'client' | 'driver'>('client');
+  const { user, logout } = useAuthStore();
+  const userRole = user?.role === 'chauffeur' ? 'driver' : 'client';
 
   const handleRoleSelect = (role: 'client' | 'driver') => {
-    setUserRole(role);
     setModalVisible(false);
-    // TODO: Mettre à jour le store global et l'interface
+    // Le changement de rôle nécessite une nouvelle connexion
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Déconnexion',
+        style: 'destructive',
+        onPress: () => {
+          setModalVisible(false);
+          logout();
+          router.dismissAll();
+          router.replace('/auth');
+        },
+      },
+    ]);
   };
 
   return (
@@ -82,6 +110,21 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
               {userRole === 'driver' && (
                 <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
               )}
+            </TouchableOpacity>
+
+            {/* Bouton de déconnexion */}
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              activeOpacity={0.7}>
+              <View style={[styles.roleIcon, { backgroundColor: '#FEE2E2' }]}>
+                <Ionicons name="log-out-outline" size={24} color="#DC2626" />
+              </View>
+              <View style={styles.roleTextContainer}>
+                <Text style={styles.logoutTitle}>Se déconnecter</Text>
+                <Text style={styles.roleSubtitle}>Quitter votre session</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -198,5 +241,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginTop: 2,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 8,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  logoutTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC2626',
   },
 });

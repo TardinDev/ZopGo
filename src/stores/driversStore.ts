@@ -25,9 +25,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
       const exists = state.connectedDrivers.find((d) => d.id === driver.id);
       if (exists) {
         return {
-          connectedDrivers: state.connectedDrivers.map((d) =>
-            d.id === driver.id ? driver : d
-          ),
+          connectedDrivers: state.connectedDrivers.map((d) => (d.id === driver.id ? driver : d)),
         };
       }
       return {
