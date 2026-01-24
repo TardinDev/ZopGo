@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export function HomeActions() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export function HomeActions() {
                 <Text style={styles.subtitle}>Transporter des passagers</Text>
               </View>
               <View style={styles.iconCircle}>
-                <Text style={styles.emoji}>🚕</Text>
+                <Ionicons name="car-sport" size={32} color="white" />
               </View>
             </View>
           </LinearGradient>
@@ -69,7 +70,7 @@ export function HomeActions() {
                 <Text style={styles.subtitle}>Livrer des colis rapidement</Text>
               </View>
               <View style={styles.iconCircle}>
-                <Text style={styles.emoji}>📦</Text>
+                <Ionicons name="cube" size={32} color="white" />
               </View>
             </View>
           </LinearGradient>
@@ -98,7 +99,7 @@ export function HomeActions() {
                 <Text style={styles.subtitle}>Voitures, Utilitaires, Motos</Text>
               </View>
               <View style={styles.iconCircle}>
-                <Text style={styles.emoji}>🔑</Text>
+                <Ionicons name="key" size={32} color="white" />
               </View>
             </View>
           </LinearGradient>
@@ -127,7 +128,7 @@ export function HomeActions() {
                 <Text style={styles.subtitle}>Hôtels, Auberges et plus</Text>
               </View>
               <View style={styles.iconCircle}>
-                <Text style={styles.emoji}>🏨</Text>
+                <Ionicons name="bed" size={32} color="white" />
               </View>
             </View>
           </LinearGradient>
@@ -190,10 +191,7 @@ const styles = StyleSheet.create({
     width: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 32, // rounded-full
+    borderRadius: 32,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  emoji: {
-    fontSize: 32, // text-4xl
   },
 });
