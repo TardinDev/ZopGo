@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import { AuthUser, UserRole, ChauffeurProfile, UserInfo, VehicleType, VehicleInfo, Livreur } from '../types';
+import {
+  AuthUser,
+  UserRole,
+  ChauffeurProfile,
+  UserInfo,
+  VehicleType,
+  VehicleInfo,
+  Livreur,
+} from '../types';
 import { useDriversStore } from './driversStore';
 
 // Mapping des types de véhicules
@@ -16,7 +24,12 @@ interface AuthState {
   isLoading: boolean;
 
   // Actions
-  login: (email: string, password: string, role: UserRole, vehicleType?: VehicleType) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    role: UserRole,
+    vehicleType?: VehicleType
+  ) => Promise<void>;
   register: (
     name: string,
     email: string,
@@ -34,7 +47,8 @@ const defaultClientProfile: UserInfo = {
   name: 'Pierre Ondo Mba',
   email: 'pierre.ondo@gmail.com',
   phone: '+241 06 12 34 56',
-  avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+  avatar:
+    'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
   rating: 4.8,
   totalTrips: 156,
   totalDeliveries: 89,
@@ -46,7 +60,8 @@ const defaultChauffeurProfile: ChauffeurProfile = {
   name: 'Pierre Ondo Mba',
   email: 'pierre.ondo@gmail.com',
   phone: '+241 06 12 34 56',
-  avatar: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+  avatar:
+    'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
   rating: 4.8,
   totalTrips: 156,
   totalDeliveries: 89,
@@ -104,7 +119,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       name,
       email,
       phone: '',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+      avatar:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
       rating: 5.0,
       totalTrips: 0,
       totalDeliveries: 0,
@@ -182,7 +198,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }));
 
 // Helper pour vérifier si l'utilisateur est un chauffeur
-export const isChauffeur = (user: AuthUser | null): user is AuthUser & { profile: ChauffeurProfile } => {
+export const isChauffeur = (
+  user: AuthUser | null
+): user is AuthUser & { profile: ChauffeurProfile } => {
   return user?.role === 'chauffeur';
 };
 

@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { userInfo, generateActivities } from '../../../data';
-import { COLORS } from '../../../constants';
 import SearchBar from '../../../components/SearchBar';
 import { AnimatedTabScreen } from '../../../components/ui';
 
