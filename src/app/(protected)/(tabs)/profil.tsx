@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,7 +20,7 @@ export default function ProfilTab() {
   const [activeMainTab, setActiveMainTab] = useState<MainTabType>('reviews');
   const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabType>('received');
   const { receivedReviews, givenReviews, ratingSummary } = useRatingsStore();
-  const { user, setDisponible } = useAuthStore();
+  const { user } = useAuthStore();
 
   // Utilise les données du store auth si disponibles, sinon fallback sur userInfo
   const profile = user?.profile || userInfo;
@@ -62,10 +62,6 @@ export default function ProfilTab() {
       default:
         break;
     }
-  };
-
-  const handleToggleDisponible = (value: boolean) => {
-    setDisponible(value);
   };
 
   return (
@@ -110,25 +106,6 @@ export default function ProfilTab() {
                 </View>
               )}
 
-              {/* Toggle disponibilité pour les chauffeurs */}
-              {isUserChauffeur && chauffeurProfile && (
-                <View className="mt-4 flex-row items-center rounded-2xl bg-white/10 px-5 py-3">
-                  <View
-                    className={`mr-3 h-3 w-3 rounded-full ${
-                      chauffeurProfile.disponible ? 'bg-green-400' : 'bg-red-400'
-                    }`}
-                  />
-                  <Text className="mr-3 font-medium text-white">
-                    {chauffeurProfile.disponible ? 'Disponible' : 'Indisponible'}
-                  </Text>
-                  <Switch
-                    value={chauffeurProfile.disponible}
-                    onValueChange={handleToggleDisponible}
-                    trackColor={{ false: 'rgba(255,255,255,0.3)', true: '#10B981' }}
-                    thumbColor="white"
-                  />
-                </View>
-              )}
             </View>
 
             {/* Statistiques */}
