@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@clerk/clerk-expo';
 import { userInfo } from '../../data';
 import { COLORS } from '../../constants';
 import { useAuthStore } from '../../stores/authStore';
@@ -22,13 +23,9 @@ interface HomeHeaderProps {
 export function HomeHeader({ userName }: HomeHeaderProps) {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
+  const { signOut } = useAuth();
   const { user, logout } = useAuthStore();
   const userRole = user?.role === 'chauffeur' ? 'driver' : 'client';
-
-  const handleRoleSelect = (role: 'client' | 'driver') => {
-    setModalVisible(false);
-    // Le changement de rôle nécessite une nouvelle connexion
-  };
 
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
@@ -36,10 +33,13 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
       {
         text: 'Déconnexion',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
           setModalVisible(false);
+          // Déconnexion Clerk (session distante)
+          await signOut();
+          // Déconnexion locale (store Zustand)
           logout();
-          router.dismissAll();
+          // Redirection vers la page de connexion
           router.replace('/auth');
         },
       },
@@ -70,7 +70,7 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
         </TouchableOpacity>
       </View>
 
-      {/* Modal de sélection du rôle */}
+      {/* Modal profil */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -78,39 +78,38 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
         onRequestClose={() => setModalVisible(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Se connecter en tant que</Text>
-
-            <TouchableOpacity
-              style={[styles.roleOption, userRole === 'client' && styles.roleOptionActive]}
-              onPress={() => handleRoleSelect('client')}
-              activeOpacity={0.7}>
-              <View style={[styles.roleIcon, { backgroundColor: COLORS.primary + '20' }]}>
-                <Ionicons name="person" size={24} color={COLORS.primary} />
+            {/* Rôle actuel */}
+            <View style={styles.currentRole}>
+              <View
+                style={[
+                  styles.roleIcon,
+                  {
+                    backgroundColor:
+                      userRole === 'client' ? COLORS.primary + '20' : COLORS.success + '20',
+                  },
+                ]}>
+                <Ionicons
+                  name={userRole === 'client' ? 'person' : 'car'}
+                  size={24}
+                  color={userRole === 'client' ? COLORS.primary : COLORS.success}
+                />
               </View>
               <View style={styles.roleTextContainer}>
-                <Text style={styles.roleTitle}>Client</Text>
-                <Text style={styles.roleSubtitle}>Commander des courses et livraisons</Text>
+                <Text style={styles.roleTitle}>
+                  {userRole === 'client' ? 'Client' : 'Chauffeur / Livreur'}
+                </Text>
+                <Text style={styles.roleSubtitle}>
+                  {userRole === 'client'
+                    ? 'Commander des courses et livraisons'
+                    : 'Accepter des courses et livraisons'}
+                </Text>
               </View>
-              {userRole === 'client' && (
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.roleOption, userRole === 'driver' && styles.roleOptionActive]}
-              onPress={() => handleRoleSelect('driver')}
-              activeOpacity={0.7}>
-              <View style={[styles.roleIcon, { backgroundColor: COLORS.success + '20' }]}>
-                <Ionicons name="car" size={24} color={COLORS.success} />
-              </View>
-              <View style={styles.roleTextContainer}>
-                <Text style={styles.roleTitle}>Chauffeur / Livreur</Text>
-                <Text style={styles.roleSubtitle}>Accepter des courses et livraisons</Text>
-              </View>
-              {userRole === 'driver' && (
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
-              )}
-            </TouchableOpacity>
+              <Ionicons
+                name="checkmark-circle"
+                size={24}
+                color={userRole === 'client' ? COLORS.primary : COLORS.success}
+              />
+            </View>
 
             {/* Bouton de déconnexion */}
             <TouchableOpacity
@@ -200,26 +199,15 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  roleOption: {
+  currentRole: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderRadius: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     backgroundColor: '#F9FAFB',
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  roleOptionActive: {
     borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '08',
   },
   roleIcon: {
     height: 48,

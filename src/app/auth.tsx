@@ -13,12 +13,20 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSignIn, useSignUp } from '@clerk/clerk-expo';
 import { useAuthStore, VEHICLE_TYPES } from '../stores/authStore';
 import { UserRole, VehicleType } from '../types';
 import { ModeTransition } from '../components/ui';
 
 export default function AuthScreen() {
+  const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
+  const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
+  const { setupProfile } = useAuthStore();
+
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -30,8 +38,6 @@ export default function AuthScreen() {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole>('client');
   const [isRoleSwitch, setIsRoleSwitch] = useState(false);
-
-  const { login, register, isLoading } = useAuthStore();
 
   const handleRoleChange = (newRole: UserRole) => {
     if (newRole !== selectedRole) {
@@ -48,45 +54,68 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.email || !formData.password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-      return;
-    }
+    // TODO: Réactiver la validation quand Clerk sera intégré
+    // if (!formData.email || !formData.password) {
+    //   Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+    //   return;
+    // }
+    // if (!isLogin && !formData.name) {
+    //   Alert.alert('Erreur', 'Veuillez entrer votre nom');
+    //   return;
+    // }
+    // if (!isLogin && formData.password !== formData.confirmPassword) {
+    //   Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+    //   return;
+    // }
 
-    if (!isLogin && !formData.name) {
-      Alert.alert('Erreur', 'Veuillez entrer votre nom');
-      return;
-    }
+    // Pour le moment, on configure le profil localement et on navigue
+    const name = formData.name || formData.email.split('@')[0] || 'Utilisateur';
+    const email = formData.email || 'demo@zopgo.com';
+    setupProfile(
+      selectedRole,
+      name,
+      email,
+      selectedRole === 'chauffeur' ? selectedVehicle : undefined
+    );
 
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
-      return;
-    }
+    setTransitionRole(selectedRole);
+    setIsRoleSwitch(false);
+    setShowTransition(true);
+  };
 
+  const handleVerifyEmail = async () => {
+    if (!isSignUpLoaded || !signUp) return;
+
+    setIsLoading(true);
     try {
-      if (isLogin) {
-        await login(
-          formData.email,
-          formData.password,
+      const result = await signUp.attemptEmailAddressVerification({
+        code: verificationCode,
+      });
+
+      if (result.status === 'complete') {
+        await setSignUpActive({ session: result.createdSessionId });
+
+        // Configurer le profil local
+        setupProfile(
           selectedRole,
-          selectedRole === 'chauffeur' ? selectedVehicle : undefined
-        );
-      } else {
-        await register(
           formData.name,
           formData.email,
-          formData.password,
-          selectedRole,
           selectedRole === 'chauffeur' ? selectedVehicle : undefined
         );
-      }
 
-      // Afficher la transition animée
-      setTransitionRole(selectedRole);
-      setIsRoleSwitch(false);
-      setShowTransition(true);
-    } catch {
-      Alert.alert('Erreur', "Une erreur s'est produite. Veuillez réessayer.");
+        // Afficher la transition animée
+        setTransitionRole(selectedRole);
+        setIsRoleSwitch(false);
+        setShowTransition(true);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.errors?.[0]?.longMessage ||
+        err?.errors?.[0]?.message ||
+        'Code de vérification invalide';
+      Alert.alert('Erreur', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -97,13 +126,92 @@ export default function AuthScreen() {
 
   const vehicleOptions = Object.values(VEHICLE_TYPES);
 
+  // --- Écran de vérification email ---
+  if (pendingVerification) {
+    return (
+      <SafeAreaView className="flex-1">
+        <LinearGradient
+          colors={['#4FA5CF', '#2162FE']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            className="flex-1">
+            <View className="flex-1 items-center justify-center px-6">
+              <View className="w-full rounded-3xl bg-white/10 p-6 backdrop-blur">
+                <View className="mb-6 items-center">
+                  <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-white/20">
+                    <Ionicons name="mail-outline" size={32} color="white" />
+                  </View>
+                  <Text className="mb-2 text-center text-2xl font-bold text-white">
+                    Vérification email
+                  </Text>
+                  <Text className="text-center text-base text-white/80">
+                    Un code a été envoyé à{'\n'}
+                    <Text className="font-semibold">{formData.email}</Text>
+                  </Text>
+                </View>
+
+                <View className="mb-5">
+                  <Text className="mb-2 text-base text-white/90">Code de vérification</Text>
+                  <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-3">
+                    <Ionicons name="key-outline" size={20} color="white" />
+                    <TextInput
+                      placeholder="123456"
+                      placeholderTextColor="rgba(255,255,255,0.6)"
+                      value={verificationCode}
+                      onChangeText={setVerificationCode}
+                      keyboardType="number-pad"
+                      className="ml-3 flex-1 text-center text-xl tracking-widest text-white"
+                      maxLength={6}
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  onPress={handleVerifyEmail}
+                  disabled={isLoading || verificationCode.length < 6}
+                  className={`mb-4 rounded-2xl bg-white py-4 ${
+                    isLoading || verificationCode.length < 6 ? 'opacity-50' : ''
+                  }`}>
+                  <Text className="text-center text-lg font-bold text-[#2162FE]">
+                    {isLoading ? 'Vérification...' : 'Vérifier'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setPendingVerification(false);
+                    setVerificationCode('');
+                  }}>
+                  <Text className="text-center text-white/80">
+                    <Text className="font-bold text-white">Retour</Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </LinearGradient>
+
+        <ModeTransition
+          visible={showTransition}
+          role={selectedRole}
+          onComplete={handleTransitionComplete}
+          quick={false}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // --- Écran principal login/register ---
   return (
     <SafeAreaView className="flex-1">
       <LinearGradient
         colors={['#4FA5CF', '#2162FE']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        className="flex-1">
+        style={{ flex: 1 }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1">

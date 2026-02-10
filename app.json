@@ -16,7 +16,9 @@
           "root": "./src/app"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -30,7 +32,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#0E1218"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zopgo.app"

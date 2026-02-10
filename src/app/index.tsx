@@ -2,12 +2,15 @@ import { useEffect, useState, useRef } from 'react';
 import { View, Image, Text, Animated, Dimensions, StatusBar } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/clerk-expo';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen() {
+  const { isSignedIn, isLoaded } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [animationDone, setAnimationDone] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -28,48 +31,42 @@ export default function SplashScreen() {
       }),
     ]).start();
 
-    // Simuler une vérification d'authentification avec barre de progression
-    const checkAuth = async () => {
-      try {
-        // Simulation du chargement avec progression
-        for (let i = 0; i <= 100; i += 10) {
-          setLoadingProgress(i);
-          Animated.timing(progressAnim, {
-            toValue: i / 100,
-            duration: 200,
-            useNativeDriver: false,
-          }).start();
-          await new Promise((resolve) => setTimeout(resolve, 200));
-        }
-
-        // Pause finale
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Pour cette démo, on considère l'utilisateur comme connecté
-        const isAuthenticated = true; // Simulé
-
-        // Animation de sortie avant navigation
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }).start(() => {
-          if (isAuthenticated) {
-            router.replace('/(protected)/(tabs)');
-          } else {
-            router.replace('/onboarding');
-          }
-        });
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.replace('/onboarding');
-      } finally {
-        setIsLoading(false);
+    // Barre de progression
+    const runProgress = async () => {
+      for (let i = 0; i <= 100; i += 10) {
+        setLoadingProgress(i);
+        Animated.timing(progressAnim, {
+          toValue: i / 100,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setAnimationDone(true);
     };
 
-    checkAuth();
+    runProgress();
   }, [fadeAnim, progressAnim, scaleAnim]);
+
+  // Naviguer une fois l'animation terminée ET Clerk chargé
+  useEffect(() => {
+    if (!animationDone || !isLoaded) return;
+
+    setIsLoading(false);
+
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      if (isSignedIn) {
+        router.replace('/(protected)/(tabs)');
+      } else {
+        router.replace('/onboarding');
+      }
+    });
+  }, [animationDone, isLoaded, isSignedIn, fadeAnim]);
 
   return (
     <View className="flex-1 bg-white">
