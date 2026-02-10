@@ -96,6 +96,19 @@ export interface RatingSummaryData {
   };
 }
 
+// Types pour les trajets proposés par les chauffeurs
+export interface Trajet {
+  id: string;
+  chauffeurId: string;
+  villeDepart: string;
+  villeArrivee: string;
+  prix: number;
+  vehicule: VehicleType;
+  date: string; // ISO string
+  placesDisponibles: number;
+  createdAt: string; // ISO string
+}
+
 // Types pour l'authentification et les rôles
 export type UserRole = 'client' | 'chauffeur';
 

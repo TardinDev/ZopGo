@@ -116,6 +116,21 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
+        name="trajets"
+        options={{
+          title: 'Mes trajets',
+          href: isChauffeur ? undefined : null, // Visible uniquement pour les chauffeurs
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'map-marker-path' : 'map-marker-outline'}
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="voyages"
         options={{
           title: 'Voyages',
