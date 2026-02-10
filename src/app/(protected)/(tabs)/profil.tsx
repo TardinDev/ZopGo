@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { userInfo, menuItems } from '../../../data';
+import { menuItems } from '../../../data';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { RatingSummary, ReviewCard } from '../../../components/ratings';
 import { useRatingsStore } from '../../../stores/ratingsStore';
@@ -22,8 +22,8 @@ export default function ProfilTab() {
   const { receivedReviews, givenReviews, ratingSummary } = useRatingsStore();
   const { user } = useAuthStore();
 
-  // Utilise les données du store auth si disponibles, sinon fallback sur userInfo
-  const profile = user?.profile || userInfo;
+  const profile = user?.profile;
+  if (!profile) return null;
   const isUserChauffeur = isChauffeur(user);
   const chauffeurProfile = isUserChauffeur ? (user.profile as ChauffeurProfile) : null;
 

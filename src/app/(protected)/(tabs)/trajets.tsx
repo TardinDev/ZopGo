@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,10 +15,17 @@ const VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [
 ];
 
 export default function TrajetsTab() {
-  const { user } = useAuthStore();
-  const { trajets, formData, addTrajet, removeTrajet, updateForm } = useTrajetsStore();
+  const { user, supabaseProfileId } = useAuthStore();
+  const { trajets, formData, addTrajet, removeTrajet, markEffectue, updateForm, loadTrajets } = useTrajetsStore();
 
-  const mesTrajets = trajets.filter((t) => t.chauffeurId === user?.id);
+  // Charger les trajets au montage
+  useEffect(() => {
+    if (supabaseProfileId) {
+      loadTrajets(supabaseProfileId);
+    }
+  }, [supabaseProfileId]);
+
+  const mesTrajetsEnAttente = trajets.filter((t) => t.status === 'en_attente');
 
   const handlePublish = () => {
     if (!formData.villeDepart.trim() || !formData.villeArrivee.trim() || !formData.prix.trim()) {
@@ -25,7 +33,7 @@ export default function TrajetsTab() {
       return;
     }
     if (!user) return;
-    addTrajet(user.id);
+    addTrajet(user.id, supabaseProfileId || undefined);
     Alert.alert('Trajet publié', 'Votre trajet a été publié avec succès !');
   };
 
@@ -223,13 +231,13 @@ export default function TrajetsTab() {
               </TouchableOpacity>
             </View>
 
-            {/* Liste des trajets publiés */}
-            {mesTrajets.length > 0 && (
+            {/* Liste des trajets en attente */}
+            {mesTrajetsEnAttente.length > 0 && (
               <View style={{ marginTop: 24 }}>
                 <Text style={{ fontSize: 18, fontWeight: '700', color: 'white', marginBottom: 12 }}>
-                  Trajets publiés ({mesTrajets.length})
+                  Trajets en attente ({mesTrajetsEnAttente.length})
                 </Text>
-                {mesTrajets.map((trajet) => (
+                {mesTrajetsEnAttente.map((trajet) => (
                   <View
                     key={trajet.id}
                     style={{
@@ -272,16 +280,23 @@ export default function TrajetsTab() {
                       <Text style={{ fontSize: 16, fontWeight: '700', color: '#2162FE' }}>
                         {trajet.prix.toLocaleString()} FCFA
                       </Text>
-                      <View style={{
-                        backgroundColor: '#ECFDF5',
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 8,
-                      }}>
+                      <TouchableOpacity
+                        onPress={() => markEffectue(trajet.id)}
+                        style={{
+                          backgroundColor: '#ECFDF5',
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 8,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <MaterialCommunityIcons name="check-circle-outline" size={14} color="#059669" />
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#059669' }}>
-                          Actif
+                          Marquer effectué
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 ))}
@@ -289,7 +304,7 @@ export default function TrajetsTab() {
             )}
 
             {/* Empty state */}
-            {mesTrajets.length === 0 && (
+            {mesTrajetsEnAttente.length === 0 && (
               <View style={{ alignItems: 'center', marginTop: 32, paddingHorizontal: 20 }}>
                 <MaterialCommunityIcons name="road-variant" size={48} color="rgba(255,255,255,0.6)" />
                 <Text style={{ fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.8)', marginTop: 12, textAlign: 'center' }}>

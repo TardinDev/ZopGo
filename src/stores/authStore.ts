@@ -9,6 +9,7 @@ import {
   Livreur,
 } from '../types';
 import { useDriversStore } from './driversStore';
+import { upsertProfile, fetchProfileByClerkId, updateProfile as updateSupabaseProfile } from '../lib/supabaseProfile';
 
 // Mapping des types de véhicules
 export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
@@ -20,13 +21,16 @@ export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
 
 interface AuthState {
   user: AuthUser | null;
+  clerkId: string | null;
+  supabaseProfileId: string | null;
 
   // Actions
   setupProfile: (
     role: UserRole,
     name: string,
     email: string,
-    vehicleType?: VehicleType
+    vehicleType?: VehicleType,
+    clerkId?: string
   ) => void;
   logout: () => void;
   updateProfile: (profile: Partial<UserInfo | ChauffeurProfile>) => void;
@@ -67,25 +71,67 @@ const createChauffeurProfile = (
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
+  clerkId: null,
+  supabaseProfileId: null,
 
-  setupProfile: (role, name, email, vehicleType) => {
+  setupProfile: (role, name, email, vehicleType, clerkId) => {
     const profile =
       role === 'chauffeur'
         ? createChauffeurProfile(name, email, vehicleType)
         : createClientProfile(name, email);
 
     const newUser: AuthUser = {
-      id: Date.now().toString(),
+      id: clerkId || Date.now().toString(),
       role,
       profile,
     };
 
-    set({ user: newUser });
+    set({ user: newUser, clerkId: clerkId || null });
 
     // Si c'est un chauffeur, l'ajouter à la liste des chauffeurs disponibles
     if (role === 'chauffeur') {
       const livreur = chauffeurToLivreur(newUser);
       useDriversStore.getState().addConnectedDriver(livreur);
+    }
+
+    // Persister en Supabase de manière async
+    if (clerkId) {
+      (async () => {
+        try {
+          const existing = await fetchProfileByClerkId(clerkId);
+          if (existing) {
+            // Hydrater les stats depuis Supabase
+            set((state) => {
+              if (!state.user) return state;
+              return {
+                supabaseProfileId: existing.id,
+                user: {
+                  ...state.user,
+                  profile: {
+                    ...state.user.profile,
+                    rating: existing.rating,
+                    totalTrips: existing.total_trips,
+                    totalDeliveries: existing.total_deliveries,
+                    memberSince: new Date(existing.member_since).getFullYear().toString(),
+                  },
+                },
+              };
+            });
+          } else {
+            const created = await upsertProfile(clerkId, {
+              role,
+              name,
+              email,
+              disponible: role === 'chauffeur',
+            });
+            if (created) {
+              set({ supabaseProfileId: created.id });
+            }
+          }
+        } catch (err) {
+          console.error('Supabase sync error:', err);
+        }
+      })();
     }
   },
 
@@ -97,11 +143,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       useDriversStore.getState().removeConnectedDriver(parseInt(user.id) || 0);
     }
 
-    set({ user: null });
+    set({ user: null, clerkId: null, supabaseProfileId: null });
   },
 
   updateProfile: (updates) => {
-    const { user } = get();
+    const { user, clerkId } = get();
     if (!user) return;
 
     set({
@@ -110,10 +156,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         profile: { ...user.profile, ...updates },
       },
     });
+
+    // Sync avec Supabase
+    if (clerkId) {
+      const supabaseUpdates: Record<string, any> = {};
+      if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
+      if ('phone' in updates && updates.phone) supabaseUpdates.phone = updates.phone;
+      if ('avatar' in updates && updates.avatar) supabaseUpdates.avatar = updates.avatar;
+      if (Object.keys(supabaseUpdates).length > 0) {
+        updateSupabaseProfile(clerkId, supabaseUpdates);
+      }
+    }
   },
 
   setDisponible: (disponible) => {
-    const { user } = get();
+    const { user, clerkId } = get();
     if (!user || user.role !== 'chauffeur') return;
 
     set({
@@ -125,6 +182,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // Mettre à jour la disponibilité dans le driversStore
     useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
+
+    // Sync avec Supabase
+    if (clerkId) {
+      updateSupabaseProfile(clerkId, { disponible });
+    }
   },
 }));
 

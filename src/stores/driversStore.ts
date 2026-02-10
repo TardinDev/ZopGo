@@ -1,15 +1,17 @@
 import { create } from 'zustand';
 import { Livreur } from '../types';
-import { livreurs } from '../data/livreurs';
+import { supabase } from '../lib/supabase';
 
 interface DriversState {
   // Chauffeurs connectés (ajoutés dynamiquement)
   connectedDrivers: Livreur[];
+  isLoading: boolean;
 
   // Actions
   addConnectedDriver: (driver: Livreur) => void;
   removeConnectedDriver: (driverId: number) => void;
   updateDriverAvailability: (driverId: number, disponible: boolean) => void;
+  loadDrivers: () => Promise<void>;
 
   // Getters
   getAllDrivers: () => Livreur[];
@@ -18,6 +20,7 @@ interface DriversState {
 
 export const useDriversStore = create<DriversState>((set, get) => ({
   connectedDrivers: [],
+  isLoading: false,
 
   addConnectedDriver: (driver) => {
     set((state) => {
@@ -48,20 +51,43 @@ export const useDriversStore = create<DriversState>((set, get) => ({
     }));
   },
 
+  loadDrivers: async () => {
+    set({ isLoading: true });
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'chauffeur')
+        .eq('disponible', true);
+
+      if (error) {
+        console.error('Error loading drivers:', error.message);
+        return;
+      }
+
+      if (data) {
+        const drivers: Livreur[] = data.map((d: any) => ({
+          id: parseInt(d.clerk_id) || Date.now(),
+          prenom: d.name.split(' ')[0],
+          vehicule: '🚗 Voiture',
+          etoiles: d.rating || 5.0,
+          disponible: d.disponible,
+          photo: d.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+          commentaires: [],
+          distance: Math.random() * 3 + 0.5,
+        }));
+        set({ connectedDrivers: drivers });
+      }
+    } catch (err) {
+      console.error('Error loading drivers:', err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
   getAllDrivers: () => {
     const { connectedDrivers } = get();
-    // Combiner les livreurs statiques avec les chauffeurs connectés
-    const allDrivers = [...livreurs];
-
-    // Ajouter les chauffeurs connectés qui ne sont pas déjà dans la liste
-    connectedDrivers.forEach((driver) => {
-      if (!allDrivers.find((d) => d.id === driver.id)) {
-        allDrivers.push(driver);
-      }
-    });
-
-    // Trier par distance
-    return allDrivers.sort((a, b) => a.distance - b.distance);
+    return [...connectedDrivers].sort((a, b) => a.distance - b.distance);
   },
 
   getAvailableDrivers: () => {

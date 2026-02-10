@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { notificationsData, messagesData } from '../data';
+import { supabase } from '../lib/supabase';
 
 type MessageTab = 'notifications' | 'messages';
 
@@ -13,6 +13,8 @@ export interface Notification {
   icon: string;
   iconColor: string;
   iconBg: string;
+  recipientRole?: 'client' | 'chauffeur' | 'all';
+  recipientId?: string;
 }
 
 export interface Message {
@@ -30,6 +32,7 @@ interface MessagesState {
   selectedTab: MessageTab;
   notifications: Notification[];
   messages: Message[];
+  isLoading: boolean;
 
   // Actions
   setSelectedTab: (tab: MessageTab) => void;
@@ -37,13 +40,15 @@ interface MessagesState {
   markMessageAsRead: (id: string) => void;
   addNotification: (notification: Notification) => void;
   addMessage: (message: Message) => void;
+  loadNotifications: (userId: string, userRole: string) => Promise<void>;
 }
 
 export const useMessagesStore = create<MessagesState>((set) => ({
-  // État initial
+  // État initial — vide, plus de mocks
   selectedTab: 'notifications',
-  notifications: notificationsData,
-  messages: messagesData,
+  notifications: [],
+  messages: [],
+  isLoading: false,
 
   // Actions
   setSelectedTab: (tab) => set({ selectedTab: tab }),
@@ -67,4 +72,55 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     set((state) => ({
       messages: [message, ...state.messages],
     })),
+
+  loadNotifications: async (userId: string, userRole: string) => {
+    set({ isLoading: true });
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .or(`recipient_id.eq.${userId},recipient_role.eq.${userRole},recipient_role.eq.all`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading notifications:', error.message);
+        return;
+      }
+
+      if (data) {
+        const notifications: Notification[] = data.map((n: any) => ({
+          id: n.id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          time: formatTimeAgo(new Date(n.created_at)),
+          read: n.read,
+          icon: n.icon || 'information-circle',
+          iconColor: n.icon_color || '#6366F1',
+          iconBg: n.icon_bg || '#E0E7FF',
+          recipientRole: n.recipient_role,
+          recipientId: n.recipient_id,
+        }));
+        set({ notifications });
+      }
+    } catch (err) {
+      console.error('Error loading notifications:', err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));
+
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH = Math.floor(diffMin / 60);
+  const diffD = Math.floor(diffH / 24);
+
+  if (diffMin < 1) return "À l'instant";
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  if (diffH < 24) return `Il y a ${diffH}h`;
+  if (diffD === 1) return 'Hier';
+  return `Il y a ${diffD} jours`;
+}

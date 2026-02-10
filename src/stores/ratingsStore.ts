@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Review, RatingSummaryData } from '../types';
-import { receivedReviews, givenReviews, userRatingSummary } from '../data/ratings';
 
 interface RatingsState {
   receivedReviews: Review[];
@@ -13,10 +12,16 @@ interface RatingsState {
   setSubmitting: (value: boolean) => void;
 }
 
+const emptyRatingSummary: RatingSummaryData = {
+  average: 0,
+  total: 0,
+  distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+};
+
 export const useRatingsStore = create<RatingsState>((set, get) => ({
-  receivedReviews: receivedReviews,
-  givenReviews: givenReviews,
-  ratingSummary: userRatingSummary,
+  receivedReviews: [],
+  givenReviews: [],
+  ratingSummary: emptyRatingSummary,
   isSubmitting: false,
 
   addReview: (review) => {

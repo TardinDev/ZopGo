@@ -97,6 +97,8 @@ export interface RatingSummaryData {
 }
 
 // Types pour les trajets proposés par les chauffeurs
+export type TrajetStatus = 'en_attente' | 'effectue';
+
 export interface Trajet {
   id: string;
   chauffeurId: string;
@@ -106,6 +108,7 @@ export interface Trajet {
   vehicule: VehicleType;
   date: string; // ISO string
   placesDisponibles: number;
+  status: TrajetStatus;
   createdAt: string; // ISO string
 }
 
