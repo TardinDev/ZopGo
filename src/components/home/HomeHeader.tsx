@@ -8,6 +8,7 @@ import {
   Modal,
   Pressable,
   Alert,
+  Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,8 +25,10 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const { signOut } = useAuth();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setDisponible } = useAuthStore();
   const userRole = user?.role === 'chauffeur' ? 'driver' : 'client';
+  const isChauffeur = userRole === 'driver';
+  const isDisponible = isChauffeur && user?.profile && 'disponible' in user.profile && user.profile.disponible;
 
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
@@ -59,13 +62,17 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
           style={styles.avatarButton}
           activeOpacity={0.8}>
           <Image source={{ uri: userInfo.avatar }} style={styles.avatar} />
-          {/* Indicateur du rôle actuel */}
+          {/* Indicateur du rôle / disponibilité */}
           <View
             style={[
               styles.roleIndicator,
-              { backgroundColor: userRole === 'client' ? COLORS.primary : COLORS.success },
+              {
+                backgroundColor: isChauffeur
+                  ? isDisponible ? COLORS.success : '#9CA3AF'
+                  : COLORS.primary,
+              },
             ]}>
-            <Ionicons name={userRole === 'client' ? 'person' : 'car'} size={10} color="white" />
+            <Ionicons name={isChauffeur ? 'car' : 'person'} size={10} color="white" />
           </View>
         </TouchableOpacity>
       </View>
@@ -79,36 +86,52 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
           <View style={styles.modalContent}>
             {/* Rôle actuel */}
-            <View style={styles.currentRole}>
+            <View
+              style={[
+                styles.currentRole,
+                {
+                  borderColor: isChauffeur
+                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    : COLORS.primary,
+                },
+              ]}>
               <View
                 style={[
                   styles.roleIcon,
                   {
-                    backgroundColor:
-                      userRole === 'client' ? COLORS.primary + '20' : COLORS.success + '20',
+                    backgroundColor: isChauffeur
+                      ? isDisponible ? COLORS.success + '20' : '#F3F4F6'
+                      : COLORS.primary + '20',
                   },
                 ]}>
                 <Ionicons
-                  name={userRole === 'client' ? 'person' : 'car'}
+                  name={isChauffeur ? 'car' : 'person'}
                   size={24}
-                  color={userRole === 'client' ? COLORS.primary : COLORS.success}
+                  color={isChauffeur
+                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    : COLORS.primary}
                 />
               </View>
               <View style={styles.roleTextContainer}>
                 <Text style={styles.roleTitle}>
-                  {userRole === 'client' ? 'Client' : 'Chauffeur / Livreur'}
+                  {isChauffeur ? 'Chauffeur / Livreur' : 'Client'}
                 </Text>
                 <Text style={styles.roleSubtitle}>
-                  {userRole === 'client'
-                    ? 'Commander des courses et livraisons'
-                    : 'Accepter des courses et livraisons'}
+                  {isChauffeur
+                    ? isDisponible ? 'En ligne - Vous recevez des demandes' : 'Hors ligne'
+                    : 'Commander des courses et livraisons'}
                 </Text>
               </View>
-              <Ionicons
-                name="checkmark-circle"
-                size={24}
-                color={userRole === 'client' ? COLORS.primary : COLORS.success}
-              />
+              {isChauffeur ? (
+                <Switch
+                  value={!!isDisponible}
+                  onValueChange={setDisponible}
+                  trackColor={{ false: '#D1D5DB', true: COLORS.success + '60' }}
+                  thumbColor={isDisponible ? COLORS.success : '#F9FAFB'}
+                />
+              ) : (
+                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
+              )}
             </View>
 
             {/* Bouton de déconnexion */}
