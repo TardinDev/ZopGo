@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { stats } from '../../data';
 import { COLORS } from '../../constants';
+import { Stat } from '../../types';
 
 // Le rideau commence en couvrant 4/5 de la carte (96px sur 120px)
 // revealOffset: 0 = rideau en position haute (4/5 couvert), 96 = rideau complètement descendu (tout révélé)
@@ -13,7 +13,7 @@ const INITIAL_OFFSET = 0; // Position initiale
 const MAX_OFFSET = 96; // Maximum de déplacement vers le bas
 
 // Composant pour la carte avec le rideau flou
-function RevenueCard({ stat }: { stat: (typeof stats)[0] }) {
+function RevenueCard({ stat }: { stat: Stat }) {
   const offset = useSharedValue(INITIAL_OFFSET);
   const startOffset = useSharedValue(0);
 
@@ -68,7 +68,40 @@ function RevenueCard({ stat }: { stat: (typeof stats)[0] }) {
   );
 }
 
-export function StatsCards() {
+interface StatsCardsProps {
+  totalTrips: number;
+  rating: number;
+  totalDeliveries: number;
+}
+
+export function StatsCards({ totalTrips, rating, totalDeliveries }: StatsCardsProps) {
+  const stats: Stat[] = [
+    {
+      id: 1,
+      title: 'Gains',
+      value: '0',
+      subtitle: "FCFA aujourd'hui",
+      icon: 'cash-outline',
+      color: 'green',
+    },
+    {
+      id: 2,
+      title: 'Courses',
+      value: totalTrips.toString(),
+      subtitle: 'Courses totales',
+      icon: 'car-outline',
+      color: 'blue',
+    },
+    {
+      id: 3,
+      title: 'Note',
+      value: rating.toFixed(1),
+      subtitle: 'Note moyenne',
+      icon: 'star-outline',
+      color: 'yellow',
+    },
+  ];
+
   return (
     <View style={styles.container}>
       <ScrollView

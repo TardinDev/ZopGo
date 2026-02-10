@@ -1,8 +1,8 @@
 import { View, Text, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback } from 'react';
-import { useMessagesStore } from '../../../stores';
+import { useCallback, useEffect } from 'react';
+import { useMessagesStore, useAuthStore } from '../../../stores';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { TabSelector } from '../../../components/voyages';
 import { NotificationCard, MessageCard } from '../../../components/messages';
@@ -14,6 +14,7 @@ const TABS = [
 ];
 
 export default function MessagesTab() {
+  const { user, supabaseProfileId } = useAuthStore();
   // État global Zustand
   const {
     selectedTab,
@@ -22,7 +23,15 @@ export default function MessagesTab() {
     setSelectedTab,
     markNotificationAsRead,
     markMessageAsRead,
+    loadNotifications,
   } = useMessagesStore();
+
+  // Charger les notifications au montage
+  useEffect(() => {
+    if (supabaseProfileId && user) {
+      loadNotifications(supabaseProfileId, user.role);
+    }
+  }, [supabaseProfileId, user?.role]);
 
   // Handlers
   const handleTabChange = useCallback(

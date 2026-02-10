@@ -13,7 +13,6 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
-import { userInfo } from '../../data';
 import { COLORS } from '../../constants';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -61,7 +60,7 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
           onPress={() => setModalVisible(true)}
           style={styles.avatarButton}
           activeOpacity={0.8}>
-          <Image source={{ uri: userInfo.avatar }} style={styles.avatar} />
+          <Image source={{ uri: user?.profile?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face' }} style={styles.avatar} />
           {/* Indicateur du rôle / disponibilité */}
           <View
             style={[

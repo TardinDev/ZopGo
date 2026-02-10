@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { getSortedLivreursByDistance } from '../../../data';
+import { useDriversStore } from '../../../stores/driversStore';
 
 export default function Delivery() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function Delivery() {
   const [dropoffLocation, setDropoffLocation] = useState('');
   const [expandedLivreur, setExpandedLivreur] = useState<number | null>(null);
 
-  const livreurs = getSortedLivreursByDistance();
+  const livreurs = useDriversStore().getAllDrivers();
 
   return (
     <KeyboardAvoidingView

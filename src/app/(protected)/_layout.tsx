@@ -3,6 +3,7 @@ import { Stack, Redirect } from 'expo-router';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { TabAnimationProvider } from '../../hooks/useTabAnimation';
 import { useAuthStore } from '../../stores/authStore';
+import { UserRole, VehicleType } from '../../types';
 
 export default function ProtectedLayout() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -19,7 +20,10 @@ export default function ProtectedLayout() {
         clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] ||
         'Utilisateur';
       const email = clerkUser.primaryEmailAddress?.emailAddress || '';
-      setupProfile('client', name, email);
+      const metadata = clerkUser.unsafeMetadata as { role?: string; vehicleType?: string } | undefined;
+      const role = (metadata?.role as UserRole) || 'client';
+      const vehicleType = metadata?.vehicleType as VehicleType | undefined;
+      setupProfile(role, name, email, role === 'chauffeur' ? vehicleType : undefined, clerkUser.id);
     }
   }, [isSignedIn, clerkUser, localUser, setupProfile]);
 

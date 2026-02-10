@@ -1,10 +1,9 @@
 import { View, StatusBar, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { userInfo, generateActivities } from '../../../data';
+import { useAuthStore } from '../../../stores/authStore';
 import SearchBar from '../../../components/SearchBar';
 import { AnimatedTabScreen } from '../../../components/ui';
 
@@ -21,7 +20,9 @@ const INITIAL_POSITION = SCREEN_HEIGHT * 0.75; // Position de départ (25% de l'
 const MIN_TRANSLATE_Y = 100; // Position maximale (reste 100px en haut)
 
 export default function HomeTab() {
-  const activities = useMemo(() => generateActivities(10), []);
+  const { user } = useAuthStore();
+  const userName = user?.profile?.name || 'Utilisateur';
+  const activities: any[] = [];
   const translateY = useSharedValue(INITIAL_POSITION);
   const startY = useSharedValue(0);
 
@@ -77,10 +78,14 @@ export default function HomeTab() {
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
             {/* En-tête */}
-            <HomeHeader userName={userInfo.name} />
+            <HomeHeader userName={userName} />
 
             {/* Statistiques */}
-            <StatsCards />
+            <StatsCards
+              totalTrips={user?.profile?.totalTrips || 0}
+              rating={user?.profile?.rating || 0}
+              totalDeliveries={user?.profile?.totalDeliveries || 0}
+            />
 
             {/* Actions Principales */}
             <HomeActions />

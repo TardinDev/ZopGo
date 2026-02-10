@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useSignIn, useSignUp } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
 import { useAuthStore, VEHICLE_TYPES } from '../stores/authStore';
 import { UserRole, VehicleType } from '../types';
 import { ModeTransition } from '../components/ui';
@@ -21,6 +21,7 @@ import { ModeTransition } from '../components/ui';
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
+  const { user: clerkUser } = useUser();
   const { setupProfile } = useAuthStore();
 
   const [isLogin, setIsLogin] = useState(true);
@@ -38,6 +39,51 @@ export default function AuthScreen() {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole>('client');
   const [isRoleSwitch, setIsRoleSwitch] = useState(false);
+  const hasSetupProfile = useRef(false);
+
+  // Après sign-in/sign-up, clerkUser se met à jour → configurer le profil
+  useEffect(() => {
+    if (clerkUser && showTransition && !isRoleSwitch && !hasSetupProfile.current) {
+      hasSetupProfile.current = true;
+
+      const metadata = clerkUser.unsafeMetadata as { role?: string; vehicleType?: string } | undefined;
+      const hasMetadata = !!metadata?.role;
+
+      // Sign-in: lire le rôle depuis les metadata existantes
+      // Sign-up: utiliser le rôle sélectionné dans le formulaire et sauvegarder les metadata
+      const role = hasMetadata ? (metadata.role as UserRole) : selectedRole;
+      const vehicleType = hasMetadata
+        ? (metadata.vehicleType as VehicleType | undefined)
+        : selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+
+      const name =
+        clerkUser.fullName ||
+        clerkUser.firstName ||
+        formData.name ||
+        formData.email.split('@')[0] ||
+        'Utilisateur';
+      const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
+
+      // Si sign-up (pas de metadata), sauvegarder le rôle dans Clerk
+      if (!hasMetadata) {
+        clerkUser.update({
+          unsafeMetadata: {
+            role: selectedRole,
+            vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
+          },
+        }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
+      }
+
+      setupProfile(
+        role,
+        name,
+        email,
+        role === 'chauffeur' ? vehicleType || selectedVehicle : undefined,
+        clerkUser.id
+      );
+      setTransitionRole(role);
+    }
+  }, [clerkUser, showTransition, isRoleSwitch]);
 
   const handleRoleChange = (newRole: UserRole) => {
     if (newRole !== selectedRole) {
@@ -54,33 +100,57 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
-    // TODO: Réactiver la validation quand Clerk sera intégré
-    // if (!formData.email || !formData.password) {
-    //   Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-    //   return;
-    // }
-    // if (!isLogin && !formData.name) {
-    //   Alert.alert('Erreur', 'Veuillez entrer votre nom');
-    //   return;
-    // }
-    // if (!isLogin && formData.password !== formData.confirmPassword) {
-    //   Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
-    //   return;
-    // }
+    if (!formData.email || !formData.password) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+      return;
+    }
+    if (!isLogin && !formData.name) {
+      Alert.alert('Erreur', 'Veuillez entrer votre nom');
+      return;
+    }
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      return;
+    }
 
-    // Pour le moment, on configure le profil localement et on navigue
-    const name = formData.name || formData.email.split('@')[0] || 'Utilisateur';
-    const email = formData.email || 'demo@zopgo.com';
-    setupProfile(
-      selectedRole,
-      name,
-      email,
-      selectedRole === 'chauffeur' ? selectedVehicle : undefined
-    );
+    setIsLoading(true);
+    try {
+      if (isLogin) {
+        // --- Connexion ---
+        if (!isSignInLoaded || !signIn) return;
+        const result = await signIn.create({
+          identifier: formData.email,
+          password: formData.password,
+        });
 
-    setTransitionRole(selectedRole);
-    setIsRoleSwitch(false);
-    setShowTransition(true);
+        if (result.status === 'complete') {
+          await setActive({ session: result.createdSessionId });
+
+          // Le profil sera configuré via handleSignInComplete ci-dessous
+          // une fois que clerkUser sera mis à jour par Clerk
+          setTransitionRole(selectedRole);
+          setIsRoleSwitch(false);
+          setShowTransition(true);
+        }
+      } else {
+        // --- Inscription ---
+        if (!isSignUpLoaded || !signUp) return;
+        await signUp.create({
+          emailAddress: formData.email,
+          password: formData.password,
+        });
+        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+        setPendingVerification(true);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.errors?.[0]?.longMessage ||
+        err?.errors?.[0]?.message ||
+        'Une erreur est survenue';
+      Alert.alert('Erreur', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyEmail = async () => {
@@ -95,15 +165,8 @@ export default function AuthScreen() {
       if (result.status === 'complete') {
         await setSignUpActive({ session: result.createdSessionId });
 
-        // Configurer le profil local
-        setupProfile(
-          selectedRole,
-          formData.name,
-          formData.email,
-          selectedRole === 'chauffeur' ? selectedVehicle : undefined
-        );
-
         // Afficher la transition animée
+        // Le profil sera configuré via le useEffect clerkUser ci-dessus
         setTransitionRole(selectedRole);
         setIsRoleSwitch(false);
         setShowTransition(true);
