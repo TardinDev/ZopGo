@@ -83,6 +83,7 @@ export function ModeTransition({ visible, role, onComplete, quick = false }: Mod
       rotation.value = 0;
       checkScale.value = 0;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const containerStyle = useAnimatedStyle(() => ({

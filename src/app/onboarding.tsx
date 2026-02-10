@@ -54,7 +54,7 @@ export default function OnboardingScreen() {
         colors={currentData.color as [string, string]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        className="flex-1">
+        style={{ flex: 1 }}>
         {/* Skip Button */}
         <View className="flex-row justify-end p-6">
           <TouchableOpacity onPress={handleSkip}>
