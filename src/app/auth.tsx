@@ -204,7 +204,7 @@ export default function AuthScreen() {
           <View style={styles.bgContainer} pointerEvents="none">
             <Image source={SPLASH_IMAGE} style={styles.bgImage} />
             <LinearGradient
-              colors={['rgba(0, 0, 0, 0.20)', 'rgba(0, 0, 0, 0.55)']}
+              colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
               style={styles.bgOverlay}
@@ -331,7 +331,8 @@ export default function AuthScreen() {
         <View style={styles.bgContainer} pointerEvents="none">
           <Image source={SPLASH_IMAGE} style={styles.bgImage} />
           <LinearGradient
-            colors={['rgba(0, 0, 0, 0.20)', 'rgba(0, 0, 0, 0.55)']}
+            colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
+            locations={[0, 0.4, 1]}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
             style={styles.bgOverlay}
@@ -355,10 +356,10 @@ export default function AuthScreen() {
 
             {/* Card */}
             <View style={styles.cardContainer}>
-              <View style={styles.card}>
+              <View style={[styles.card, { borderColor: selectedRole === 'chauffeur' ? GOLD : 'rgba(255, 255, 255, 0.4)' }]}>
                 {/* Accent bar top */}
                 <LinearGradient
-                  colors={[ACCENT, GOLD]}
+                  colors={selectedRole === 'chauffeur' ? [GOLD, '#D97706'] : [ACCENT, GOLD]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cardAccentBar}
@@ -391,17 +392,17 @@ export default function AuthScreen() {
                       onPress={() => handleRoleChange('chauffeur')}
                       style={[
                         styles.rolePill,
-                        selectedRole === 'chauffeur' ? styles.rolePillActive : styles.rolePillInactive,
+                        selectedRole === 'chauffeur' ? styles.rolePillActiveChauffeur : styles.rolePillInactive,
                       ]}>
                       <Ionicons
                         name="car"
                         size={20}
-                        color={selectedRole === 'chauffeur' ? ACCENT : COLORS.gray[400]}
+                        color={selectedRole === 'chauffeur' ? GOLD : COLORS.gray[400]}
                       />
                       <Text
                         style={[
                           styles.rolePillText,
-                          selectedRole === 'chauffeur' ? styles.rolePillTextActive : styles.rolePillTextInactive,
+                          selectedRole === 'chauffeur' ? styles.rolePillTextActiveChauffeur : styles.rolePillTextInactive,
                         ]}>
                         Chauffeur
                       </Text>
@@ -611,7 +612,8 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   bgImage: {
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
     resizeMode: 'cover',
   },
   bgOverlay: {
@@ -619,7 +621,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    justifyContent: 'flex-end',
+    paddingBottom: 24,
   },
   verificationScrollContent: {
     flexGrow: 1,
@@ -629,8 +632,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 32,
+    paddingBottom: 16,
     alignItems: 'center',
     zIndex: 1,
   },
@@ -657,10 +659,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
     borderRadius: 24,
-    padding: 24,
-    paddingTop: 28,
+    padding: 20,
+    paddingTop: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,
@@ -686,7 +688,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   roleSection: {
-    marginBottom: 20,
+    marginBottom: 14,
   },
   roleRow: {
     flexDirection: 'row',
@@ -698,7 +700,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 16,
     borderWidth: 2,
   },
@@ -722,11 +724,23 @@ const styles = StyleSheet.create({
   rolePillTextActive: {
     color: ACCENT,
   },
+  rolePillActiveChauffeur: {
+    borderColor: GOLD,
+    backgroundColor: 'rgba(232, 168, 50, 0.15)',
+    shadowColor: GOLD,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  rolePillTextActiveChauffeur: {
+    color: GOLD,
+  },
   rolePillTextInactive: {
     color: COLORS.gray[500],
   },
   vehicleSection: {
-    marginBottom: 20,
+    marginBottom: 14,
   },
   vehicleRow: {
     flexDirection: 'row',
@@ -764,15 +778,15 @@ const styles = StyleSheet.create({
     color: COLORS.gray[500],
   },
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
@@ -796,7 +810,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     borderRadius: 16,
-    paddingVertical: 17,
+    paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: ACCENT,
@@ -817,7 +831,7 @@ const styles = StyleSheet.create({
   separator: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 14,
   },
   separatorLine: {
     flex: 1,
