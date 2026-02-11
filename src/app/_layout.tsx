@@ -15,11 +15,11 @@ export default function RootLayout() {
   const appContent = (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
+        <Stack initialRouteName="index" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000' } }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="auth" />
-          <Stack.Screen name="(protected)" />
+          <Stack.Screen name="(protected)" options={{ contentStyle: { backgroundColor: '#fff' } }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

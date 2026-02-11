@@ -69,7 +69,7 @@ export default function SplashScreen() {
   }, [animationDone, isLoaded, isSignedIn, fadeAnim]);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-black">
       <StatusBar hidden />
 
       {/* Image de fond */}

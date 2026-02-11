@@ -8,6 +8,9 @@ import {
   Platform,
   Alert,
   ScrollView,
+  StyleSheet,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +20,15 @@ import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
 import { useAuthStore, VEHICLE_TYPES } from '../stores/authStore';
 import { UserRole, VehicleType } from '../types';
 import { ModeTransition } from '../components/ui';
+import { COLORS } from '../constants/colors';
+
+const AUTH_IMAGES = {
+  taxi: require('../../assets/auth/luxury_cars.jpg'),
+  transport: require('../../assets/auth/city_traffic.jpg'),
+  passengers: require('../../assets/auth/nairobi_city.jpg'),
+};
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
@@ -40,6 +52,12 @@ export default function AuthScreen() {
   const [transitionRole, setTransitionRole] = useState<UserRole>('client');
   const [isRoleSwitch, setIsRoleSwitch] = useState(false);
   const hasSetupProfile = useRef(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const verificationInputRef = useRef<TextInput>(null);
 
   // Après sign-in/sign-up, clerkUser se met à jour → configurer le profil
   useEffect(() => {
@@ -81,7 +99,6 @@ export default function AuthScreen() {
         role === 'chauffeur' ? vehicleType || selectedVehicle : undefined,
         clerkUser.id
       );
-      setTransitionRole(role);
     }
   }, [clerkUser, showTransition, isRoleSwitch]);
 
@@ -125,9 +142,6 @@ export default function AuthScreen() {
 
         if (result.status === 'complete') {
           await setActive({ session: result.createdSessionId });
-
-          // Le profil sera configuré via handleSignInComplete ci-dessous
-          // une fois que clerkUser sera mis à jour par Clerk
           setTransitionRole(selectedRole);
           setIsRoleSwitch(false);
           setShowTransition(true);
@@ -189,73 +203,134 @@ export default function AuthScreen() {
 
   const vehicleOptions = Object.values(VEHICLE_TYPES);
 
+  const codeDigits = verificationCode.split('');
+
   // --- Écran de vérification email ---
   if (pendingVerification) {
     return (
-      <SafeAreaView className="flex-1">
-        <LinearGradient
-          colors={['#4FA5CF', '#2162FE']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ flex: 1 }}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.background}>
+          {/* Arc décoratif avec images */}
+          <View style={styles.arcContainer}>
+            <View style={styles.arcImageWrapper}>
+              <View style={styles.imageRow}>
+                <Image source={AUTH_IMAGES.taxi} style={styles.arcImageLeft} />
+                <View style={styles.imageColRight}>
+                  <Image source={AUTH_IMAGES.transport} style={styles.arcImageTopRight} />
+                  <Image source={AUTH_IMAGES.passengers} style={styles.arcImageBottomRight} />
+                </View>
+              </View>
+              {/* Gradient overlay */}
+              <LinearGradient
+                colors={['rgba(0, 0, 0, 0.30)', 'rgba(0, 0, 0, 0.60)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.arcOverlay}
+              />
+            </View>
+          </View>
+
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1">
-            <View className="flex-1 items-center justify-center px-6">
-              <View className="w-full rounded-3xl bg-white/10 p-6 backdrop-blur">
-                <View className="mb-6 items-center">
-                  <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-white/20">
-                    <Ionicons name="mail-outline" size={32} color="white" />
-                  </View>
-                  <Text className="mb-2 text-center text-2xl font-bold text-white">
-                    Vérification email
-                  </Text>
-                  <Text className="text-center text-base text-white/80">
-                    Un code a été envoyé à{'\n'}
-                    <Text className="font-semibold">{formData.email}</Text>
-                  </Text>
+            style={styles.flex1}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.verificationScrollContent}
+              keyboardShouldPersistTaps="handled">
+              {/* Icon */}
+              <View style={styles.verificationIconContainer}>
+                <View style={styles.verificationIconCircle}>
+                  <Ionicons name="mail-outline" size={36} color={COLORS.white} />
                 </View>
+              </View>
 
-                <View className="mb-5">
-                  <Text className="mb-2 text-base text-white/90">Code de vérification</Text>
-                  <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-3">
-                    <Ionicons name="key-outline" size={20} color="white" />
-                    <TextInput
-                      placeholder="123456"
-                      placeholderTextColor="rgba(255,255,255,0.6)"
-                      value={verificationCode}
-                      onChangeText={setVerificationCode}
-                      keyboardType="number-pad"
-                      className="ml-3 flex-1 text-center text-xl tracking-widest text-white"
-                      maxLength={6}
-                    />
-                  </View>
-                </View>
+              {/* Title */}
+              <Text style={styles.verificationTitle}>Vérification email</Text>
+              <Text style={styles.verificationSubtitle}>
+                Un code a été envoyé à{'\n'}
+                <Text style={styles.verificationEmail}>{formData.email}</Text>
+              </Text>
 
+              {/* Card */}
+              <View style={styles.card}>
+                {/* Accent bar top */}
+                <LinearGradient
+                  colors={[COLORS.primary, '#7C3AED']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.cardAccentBar}
+                />
+                {/* 6 digit boxes */}
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={() => verificationInputRef.current?.focus()}
+                  style={styles.codeBoxesRow}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.codeBox,
+                        codeDigits[i] ? styles.codeBoxFilled : null,
+                        i === codeDigits.length && styles.codeBoxActive,
+                      ]}>
+                      <Text style={styles.codeBoxText}>{codeDigits[i] || ''}</Text>
+                    </View>
+                  ))}
+                </TouchableOpacity>
+
+                {/* Hidden input */}
+                <TextInput
+                  ref={verificationInputRef}
+                  value={verificationCode}
+                  onChangeText={(text) => setVerificationCode(text.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  style={styles.hiddenInput}
+                  autoFocus
+                />
+
+                {/* Submit button */}
                 <TouchableOpacity
                   onPress={handleVerifyEmail}
                   disabled={isLoading || verificationCode.length < 6}
-                  className={`mb-4 rounded-2xl bg-white py-4 ${
-                    isLoading || verificationCode.length < 6 ? 'opacity-50' : ''
-                  }`}>
-                  <Text className="text-center text-lg font-bold text-[#2162FE]">
-                    {isLoading ? 'Vérification...' : 'Vérifier'}
-                  </Text>
+                  style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
+                  <LinearGradient
+                    colors={[COLORS.primary, COLORS.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.submitButton}>
+                    <Text style={styles.submitText}>
+                      {isLoading ? 'Vérification...' : 'Vérifier'}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
 
+                {/* Resend */}
+                <TouchableOpacity
+                  onPress={() => {
+                    if (signUp) {
+                      signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+                      Alert.alert('Succès', 'Un nouveau code a été envoyé');
+                    }
+                  }}
+                  style={styles.resendButton}>
+                  <Text style={styles.resendText}>Renvoyer le code</Text>
+                </TouchableOpacity>
+
+                {/* Back */}
                 <TouchableOpacity
                   onPress={() => {
                     setPendingVerification(false);
                     setVerificationCode('');
-                  }}>
-                  <Text className="text-center text-white/80">
-                    <Text className="font-bold text-white">Retour</Text>
-                  </Text>
+                  }}
+                  style={styles.backButton}>
+                  <Ionicons name="arrow-back" size={16} color={COLORS.gray[500]} />
+                  <Text style={styles.backText}>Retour</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </ScrollView>
           </KeyboardAvoidingView>
-        </LinearGradient>
+        </View>
 
         <ModeTransition
           visible={showTransition}
@@ -269,86 +344,125 @@ export default function AuthScreen() {
 
   // --- Écran principal login/register ---
   return (
-    <SafeAreaView className="flex-1">
-      <LinearGradient
-        colors={['#4FA5CF', '#2162FE']}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.background}>
+        {/* Arc décoratif avec images */}
+        <View style={styles.arcContainer} pointerEvents="none">
+          <View style={styles.arcImageWrapper}>
+            <View style={styles.imageRow}>
+              <Image source={AUTH_IMAGES.taxi} style={styles.arcImageLeft} />
+              <View style={styles.imageColRight}>
+                <Image source={AUTH_IMAGES.transport} style={styles.arcImageTopRight} />
+                <Image source={AUTH_IMAGES.passengers} style={styles.arcImageBottomRight} />
+              </View>
+            </View>
+            {/* Gradient overlay */}
+            <LinearGradient
+              colors={['rgba(0, 0, 0, 0.30)', 'rgba(0, 0, 0, 0.60)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.arcOverlay}
+              pointerEvents="none"
+            />
+          </View>
+        </View>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1">
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+          style={styles.flex1}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled">
             {/* Header */}
-            <View className="px-8 pb-6 pt-12">
-              <Text className="mb-2 text-center text-4xl font-bold text-white">ZopGo</Text>
-              <Text className="text-center text-lg text-white/80">
+            <View style={styles.header}>
+              <Text style={styles.logo}>ZopGo</Text>
+              <Text style={styles.subtitle}>
                 {isLogin ? 'Bon retour parmi nous' : 'Créez votre compte'}
               </Text>
             </View>
 
-            {/* Form */}
-            <View className="flex-1 px-6 pb-8">
-              <View className="rounded-3xl bg-white/10 p-6 backdrop-blur">
-                {/* Sélecteur de rôle */}
-                <View className="mb-6">
-                  <Text className="mb-3 text-lg font-semibold text-white">Je suis</Text>
-                  <View className="flex-row gap-3">
-                    <TouchableOpacity
-                      onPress={() => handleRoleChange('client')}
-                      className={`flex-1 flex-row items-center justify-center gap-2 rounded-2xl py-4 ${
-                        selectedRole === 'client' ? 'bg-white' : 'bg-white/20'
-                      }`}>
-                      <Ionicons
-                        name="person"
-                        size={22}
-                        color={selectedRole === 'client' ? '#2162FE' : 'white'}
-                      />
-                      <Text
-                        className={`text-base font-semibold ${
-                          selectedRole === 'client' ? 'text-[#2162FE]' : 'text-white'
-                        }`}>
-                        Client
-                      </Text>
-                    </TouchableOpacity>
+            {/* Card */}
+            <View style={styles.cardContainer}>
+              <View style={styles.card}>
+                {/* Accent bar top */}
+                <LinearGradient
+                  colors={[COLORS.primary, '#7C3AED']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.cardAccentBar}
+                />
+                {/* Sélecteur de rôle (uniquement pour inscription) */}
+                {!isLogin && (
+                  <View style={styles.roleSection}>
+                    <Text style={styles.sectionLabel}>Je suis</Text>
+                    <View style={styles.roleRow}>
+                      <TouchableOpacity
+                        onPress={() => handleRoleChange('client')}
+                        style={[
+                          styles.rolePill,
+                          selectedRole === 'client' ? styles.rolePillActive : styles.rolePillInactive,
+                        ]}>
+                        <Ionicons
+                          name="person"
+                          size={20}
+                          color={selectedRole === 'client' ? COLORS.primary : COLORS.gray[400]}
+                        />
+                        <Text
+                          style={[
+                            styles.rolePillText,
+                            selectedRole === 'client' ? styles.rolePillTextActive : styles.rolePillTextInactive,
+                          ]}>
+                          Client
+                        </Text>
+                      </TouchableOpacity>
 
-                    <TouchableOpacity
-                      onPress={() => handleRoleChange('chauffeur')}
-                      className={`flex-1 flex-row items-center justify-center gap-2 rounded-2xl py-4 ${
-                        selectedRole === 'chauffeur' ? 'bg-white' : 'bg-white/20'
-                      }`}>
-                      <Ionicons
-                        name="car"
-                        size={22}
-                        color={selectedRole === 'chauffeur' ? '#2162FE' : 'white'}
-                      />
-                      <Text
-                        className={`text-base font-semibold ${
-                          selectedRole === 'chauffeur' ? 'text-[#2162FE]' : 'text-white'
-                        }`}>
-                        Chauffeur
-                      </Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleRoleChange('chauffeur')}
+                        style={[
+                          styles.rolePill,
+                          selectedRole === 'chauffeur' ? styles.rolePillActive : styles.rolePillInactive,
+                        ]}>
+                        <Ionicons
+                          name="car"
+                          size={20}
+                          color={selectedRole === 'chauffeur' ? COLORS.primary : COLORS.gray[400]}
+                        />
+                        <Text
+                          style={[
+                            styles.rolePillText,
+                            selectedRole === 'chauffeur' ? styles.rolePillTextActive : styles.rolePillTextInactive,
+                          ]}>
+                          Chauffeur
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
+                )}
 
-                {/* Sélecteur de véhicule (uniquement pour chauffeur) */}
-                {selectedRole === 'chauffeur' && (
-                  <View className="mb-6">
-                    <Text className="mb-3 text-lg font-semibold text-white">Mon véhicule</Text>
-                    <View className="flex-row flex-wrap gap-2">
+                {/* Sélecteur de véhicule (uniquement pour chauffeur en inscription) */}
+                {!isLogin && selectedRole === 'chauffeur' && (
+                  <View style={styles.vehicleSection}>
+                    <Text style={styles.sectionLabel}>Mon véhicule</Text>
+                    <View style={styles.vehicleRow}>
                       {vehicleOptions.map((vehicle) => (
                         <TouchableOpacity
                           key={vehicle.type}
                           onPress={() => setSelectedVehicle(vehicle.type)}
-                          className={`flex-row items-center gap-2 rounded-xl px-4 py-3 ${
-                            selectedVehicle === vehicle.type ? 'bg-white' : 'bg-white/20'
-                          }`}>
-                          <Text className="text-lg">{vehicle.icon}</Text>
+                          style={[
+                            styles.vehicleChip,
+                            selectedVehicle === vehicle.type
+                              ? styles.vehicleChipActive
+                              : styles.vehicleChipInactive,
+                          ]}>
+                          <Text style={styles.vehicleIcon}>{vehicle.icon}</Text>
                           <Text
-                            className={`font-medium ${
-                              selectedVehicle === vehicle.type ? 'text-[#2162FE]' : 'text-white'
-                            }`}>
+                            style={[
+                              styles.vehicleLabel,
+                              selectedVehicle === vehicle.type
+                                ? styles.vehicleLabelActive
+                                : styles.vehicleLabelInactive,
+                            ]}>
                             {vehicle.label}
                           </Text>
                         </TouchableOpacity>
@@ -359,68 +473,106 @@ export default function AuthScreen() {
 
                 {/* Name field (only for register) */}
                 {!isLogin && (
-                  <View className="mb-5">
-                    <Text className="mb-2 text-base text-white/90">Nom complet</Text>
-                    <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-3">
-                      <Ionicons name="person-outline" size={20} color="white" />
+                  <View style={styles.fieldGroup}>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        focusedField === 'name' && styles.inputFocused,
+                      ]}>
+                      <Ionicons name="person-outline" size={20} color={COLORS.gray[400]} />
                       <TextInput
-                        placeholder="Votre nom"
-                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        placeholder="Nom complet"
+                        placeholderTextColor={COLORS.gray[400]}
                         value={formData.name}
                         onChangeText={(text) => setFormData({ ...formData, name: text })}
-                        className="ml-3 flex-1 text-base text-white"
+                        onFocus={() => setFocusedField('name')}
+                        onBlur={() => setFocusedField(null)}
+                        style={styles.input}
                       />
                     </View>
                   </View>
                 )}
 
                 {/* Email */}
-                <View className="mb-5">
-                  <Text className="mb-2 text-base text-white/90">Email</Text>
-                  <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-3">
-                    <Ionicons name="mail-outline" size={20} color="white" />
+                <View style={styles.fieldGroup}>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      focusedField === 'email' && styles.inputFocused,
+                    ]}>
+                    <Ionicons name="mail-outline" size={20} color={COLORS.gray[400]} />
                     <TextInput
                       placeholder="votre.email@example.com"
-                      placeholderTextColor="rgba(255,255,255,0.6)"
+                      placeholderTextColor={COLORS.gray[400]}
                       value={formData.email}
                       onChangeText={(text) => setFormData({ ...formData, email: text })}
                       keyboardType="email-address"
                       autoCapitalize="none"
-                      className="ml-3 flex-1 text-base text-white"
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
+                      style={styles.input}
                     />
                   </View>
                 </View>
 
                 {/* Password */}
-                <View className="mb-5">
-                  <Text className="mb-2 text-base text-white/90">Mot de passe</Text>
-                  <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-3">
-                    <Ionicons name="lock-closed-outline" size={20} color="white" />
+                <View style={styles.fieldGroup}>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      focusedField === 'password' && styles.inputFocused,
+                    ]}>
+                    <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
                     <TextInput
-                      placeholder="********"
-                      placeholderTextColor="rgba(255,255,255,0.6)"
+                      placeholder="Mot de passe"
+                      placeholderTextColor={COLORS.gray[400]}
                       value={formData.password}
                       onChangeText={(text) => setFormData({ ...formData, password: text })}
-                      secureTextEntry
-                      className="ml-3 flex-1 text-base text-white"
+                      secureTextEntry={!showPassword}
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
+                      style={styles.input}
                     />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color={COLORS.gray[400]}
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Confirm Password (only for register) */}
                 {!isLogin && (
-                  <View className="mb-6">
-                    <Text className="mb-2 text-base text-white/90">Confirmer le mot de passe</Text>
-                    <View className="flex-row items-center rounded-2xl bg-white/20 px-4 py-3">
-                      <Ionicons name="lock-closed-outline" size={20} color="white" />
+                  <View style={styles.fieldGroup}>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        focusedField === 'confirmPassword' && styles.inputFocused,
+                      ]}>
+                      <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
                       <TextInput
-                        placeholder="********"
-                        placeholderTextColor="rgba(255,255,255,0.6)"
+                        placeholder="Confirmer le mot de passe"
+                        placeholderTextColor={COLORS.gray[400]}
                         value={formData.confirmPassword}
                         onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-                        secureTextEntry
-                        className="ml-3 flex-1 text-base text-white"
+                        secureTextEntry={!showConfirmPassword}
+                        onFocus={() => setFocusedField('confirmPassword')}
+                        onBlur={() => setFocusedField(null)}
+                        style={styles.input}
                       />
+                      <TouchableOpacity
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <Ionicons
+                          name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={20}
+                          color={COLORS.gray[400]}
+                        />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 )}
@@ -429,17 +581,30 @@ export default function AuthScreen() {
                 <TouchableOpacity
                   onPress={handleSubmit}
                   disabled={isLoading}
-                  className={`mb-5 rounded-2xl bg-white py-4 ${isLoading ? 'opacity-50' : ''}`}>
-                  <Text className="text-center text-lg font-bold text-[#2162FE]">
-                    {isLoading ? 'Chargement...' : isLogin ? 'Se connecter' : 'Créer le compte'}
-                  </Text>
+                  style={[styles.submitTouchable, isLoading && styles.buttonDisabled]}>
+                  <LinearGradient
+                    colors={[COLORS.primary, COLORS.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.submitButton}>
+                    <Text style={styles.submitText}>
+                      {isLoading ? 'Chargement...' : isLogin ? 'Se connecter' : 'Créer le compte'}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
 
+                {/* Separator */}
+                <View style={styles.separator}>
+                  <View style={styles.separatorLine} />
+                  <Text style={styles.separatorText}>ou</Text>
+                  <View style={styles.separatorLine} />
+                </View>
+
                 {/* Toggle */}
-                <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-                  <Text className="text-center text-white/80">
+                <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.toggleButton}>
+                  <Text style={styles.toggleText}>
                     {isLogin ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
-                    <Text className="font-bold text-white">
+                    <Text style={styles.toggleTextBold}>
                       {isLogin ? 'Créer un compte' : 'Se connecter'}
                     </Text>
                   </Text>
@@ -456,7 +621,373 @@ export default function AuthScreen() {
           onComplete={isRoleSwitch ? handleRoleSwitchComplete : handleTransitionComplete}
           quick={isRoleSwitch}
         />
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  background: {
+    flex: 1,
+  },
+  flex1: {
+    flex: 1,
+  },
+  arcContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  arcImageWrapper: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  imageRow: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  arcImageLeft: {
+    width: SCREEN_WIDTH * 0.55,
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageColRight: {
+    flex: 1,
+  },
+  arcImageTopRight: {
+    width: '100%',
+    height: '50%',
+    resizeMode: 'cover',
+  },
+  arcImageBottomRight: {
+    width: '100%',
+    height: '50%',
+    resizeMode: 'cover',
+  },
+  arcOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  verificationScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 32,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  logo: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: COLORS.white,
+    marginBottom: 8,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  cardContainer: {
+    paddingHorizontal: 20,
+    zIndex: 1,
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.93)',
+    borderRadius: 24,
+    padding: 24,
+    paddingTop: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 12,
+    overflow: 'hidden',
+  },
+  cardAccentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  sectionLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.gray[700],
+    marginBottom: 12,
+  },
+  roleSection: {
+    marginBottom: 20,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  rolePill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  rolePillActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: `${COLORS.primary}18`,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  rolePillInactive: {
+    borderColor: COLORS.gray[200],
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  rolePillText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  rolePillTextActive: {
+    color: COLORS.primary,
+  },
+  rolePillTextInactive: {
+    color: COLORS.gray[500],
+  },
+  vehicleSection: {
+    marginBottom: 20,
+  },
+  vehicleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  vehicleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  vehicleChipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: `${COLORS.primary}18`,
+  },
+  vehicleChipInactive: {
+    borderColor: COLORS.gray[200],
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  vehicleIcon: {
+    fontSize: 16,
+  },
+  vehicleLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  vehicleLabelActive: {
+    color: COLORS.primary,
+  },
+  vehicleLabelInactive: {
+    color: COLORS.gray[500],
+  },
+  fieldGroup: {
+    marginBottom: 14,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(243, 244, 246, 0.8)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: COLORS.gray[200],
+  },
+  inputFocused: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.gray[900],
+    marginLeft: 12,
+  },
+  submitTouchable: {
+    marginTop: 6,
+  },
+  submitButton: {
+    borderRadius: 16,
+    paddingVertical: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  submitText: {
+    color: COLORS.white,
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.gray[300],
+  },
+  separatorText: {
+    marginHorizontal: 16,
+    fontSize: 13,
+    color: COLORS.gray[500],
+    fontWeight: '600',
+    textTransform: 'lowercase',
+  },
+  toggleButton: {
+    alignItems: 'center',
+  },
+  toggleText: {
+    fontSize: 14,
+    color: COLORS.gray[500],
+  },
+  toggleTextBold: {
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  // Verification screen
+  verificationIconContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  verificationIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verificationTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  verificationSubtitle: {
+    fontSize: 15,
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 22,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  verificationEmail: {
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  codeBoxesRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 24,
+  },
+  codeBox: {
+    width: 48,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: COLORS.gray[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  codeBoxFilled: {
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.primary,
+  },
+  codeBoxActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.white,
+  },
+  codeBoxText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: COLORS.gray[900],
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    height: 0,
+    width: 0,
+  },
+  resendButton: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  resendText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+  },
+  backText: {
+    fontSize: 14,
+    color: COLORS.gray[500],
+    fontWeight: '500',
+  },
+});
