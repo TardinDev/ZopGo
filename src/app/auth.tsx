@@ -10,7 +10,6 @@ import {
   ScrollView,
   StyleSheet,
   Image,
-  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,13 +21,12 @@ import { UserRole, VehicleType } from '../types';
 import { ModeTransition } from '../components/ui';
 import { COLORS } from '../constants/colors';
 
-const AUTH_IMAGES = {
-  taxi: require('../../assets/auth/luxury_cars.jpg'),
-  transport: require('../../assets/auth/city_traffic.jpg'),
-  passengers: require('../../assets/auth/nairobi_city.jpg'),
-};
+const SPLASH_IMAGE = require('../../assets/splashScreen.jpg');
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Couleurs harmonisées avec l'illustration ZopGo
+const ACCENT = '#0B8457';       // vert profond (voiture/logo)
+const ACCENT_LIGHT = '#10B981'; // vert clair
+const GOLD = '#E8A832';         // doré (motifs véhicule)
 
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
@@ -202,24 +200,15 @@ export default function AuthScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.background}>
-          {/* Arc décoratif avec images */}
-          <View style={styles.arcContainer}>
-            <View style={styles.arcImageWrapper}>
-              <View style={styles.imageRow}>
-                <Image source={AUTH_IMAGES.taxi} style={styles.arcImageLeft} />
-                <View style={styles.imageColRight}>
-                  <Image source={AUTH_IMAGES.transport} style={styles.arcImageTopRight} />
-                  <Image source={AUTH_IMAGES.passengers} style={styles.arcImageBottomRight} />
-                </View>
-              </View>
-              {/* Gradient overlay */}
-              <LinearGradient
-                colors={['rgba(0, 0, 0, 0.30)', 'rgba(0, 0, 0, 0.60)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.arcOverlay}
-              />
-            </View>
+          {/* Background image */}
+          <View style={styles.bgContainer} pointerEvents="none">
+            <Image source={SPLASH_IMAGE} style={styles.bgImage} />
+            <LinearGradient
+              colors={['rgba(0, 0, 0, 0.20)', 'rgba(0, 0, 0, 0.55)']}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={styles.bgOverlay}
+            />
           </View>
 
           <KeyboardAvoidingView
@@ -247,7 +236,7 @@ export default function AuthScreen() {
               <View style={styles.card}>
                 {/* Accent bar top */}
                 <LinearGradient
-                  colors={[COLORS.primary, '#7C3AED']}
+                  colors={[ACCENT, GOLD]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cardAccentBar}
@@ -287,7 +276,7 @@ export default function AuthScreen() {
                   disabled={isLoading || verificationCode.length < 6}
                   style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
                   <LinearGradient
-                    colors={[COLORS.primary, COLORS.primaryDark]}
+                    colors={[ACCENT, '#065F46']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.submitButton}>
@@ -338,25 +327,15 @@ export default function AuthScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.background}>
-        {/* Arc décoratif avec images */}
-        <View style={styles.arcContainer} pointerEvents="none">
-          <View style={styles.arcImageWrapper}>
-            <View style={styles.imageRow}>
-              <Image source={AUTH_IMAGES.taxi} style={styles.arcImageLeft} />
-              <View style={styles.imageColRight}>
-                <Image source={AUTH_IMAGES.transport} style={styles.arcImageTopRight} />
-                <Image source={AUTH_IMAGES.passengers} style={styles.arcImageBottomRight} />
-              </View>
-            </View>
-            {/* Gradient overlay */}
-            <LinearGradient
-              colors={['rgba(0, 0, 0, 0.30)', 'rgba(0, 0, 0, 0.60)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.arcOverlay}
-              pointerEvents="none"
-            />
-          </View>
+        {/* Background image */}
+        <View style={styles.bgContainer} pointerEvents="none">
+          <Image source={SPLASH_IMAGE} style={styles.bgImage} />
+          <LinearGradient
+            colors={['rgba(0, 0, 0, 0.20)', 'rgba(0, 0, 0, 0.55)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.bgOverlay}
+          />
         </View>
 
         <KeyboardAvoidingView
@@ -379,7 +358,7 @@ export default function AuthScreen() {
               <View style={styles.card}>
                 {/* Accent bar top */}
                 <LinearGradient
-                  colors={[COLORS.primary, '#7C3AED']}
+                  colors={[ACCENT, GOLD]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cardAccentBar}
@@ -397,7 +376,7 @@ export default function AuthScreen() {
                       <Ionicons
                         name="person"
                         size={20}
-                        color={selectedRole === 'client' ? COLORS.primary : COLORS.gray[400]}
+                        color={selectedRole === 'client' ? ACCENT : COLORS.gray[400]}
                       />
                       <Text
                         style={[
@@ -417,7 +396,7 @@ export default function AuthScreen() {
                       <Ionicons
                         name="car"
                         size={20}
-                        color={selectedRole === 'chauffeur' ? COLORS.primary : COLORS.gray[400]}
+                        color={selectedRole === 'chauffeur' ? ACCENT : COLORS.gray[400]}
                       />
                       <Text
                         style={[
@@ -573,7 +552,7 @@ export default function AuthScreen() {
                   disabled={isLoading}
                   style={[styles.submitTouchable, isLoading && styles.buttonDisabled]}>
                   <LinearGradient
-                    colors={[COLORS.primary, COLORS.primaryDark]}
+                    colors={[ACCENT, '#065F46']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.submitButton}>
@@ -627,41 +606,15 @@ const styles = StyleSheet.create({
   flex1: {
     flex: 1,
   },
-  arcContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  bgContainer: {
+    ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
-  arcImageWrapper: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  imageRow: {
-    flexDirection: 'row',
-    flex: 1,
-  },
-  arcImageLeft: {
-    width: SCREEN_WIDTH * 0.55,
-    height: '100%',
+  bgImage: {
+    ...StyleSheet.absoluteFillObject,
     resizeMode: 'cover',
   },
-  imageColRight: {
-    flex: 1,
-  },
-  arcImageTopRight: {
-    width: '100%',
-    height: '50%',
-    resizeMode: 'cover',
-  },
-  arcImageBottomRight: {
-    width: '100%',
-    height: '50%',
-    resizeMode: 'cover',
-  },
-  arcOverlay: {
+  bgOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
   scrollContent: {
@@ -704,16 +657,18 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.93)',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: 24,
     padding: 24,
     paddingTop: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 30,
     elevation: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   cardAccentBar: {
     position: 'absolute',
@@ -748,24 +703,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   rolePillActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: `${COLORS.primary}18`,
-    shadowColor: COLORS.primary,
+    borderColor: ACCENT,
+    backgroundColor: 'rgba(11, 132, 87, 0.15)',
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 2,
   },
   rolePillInactive: {
-    borderColor: COLORS.gray[200],
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   rolePillText: {
     fontSize: 15,
     fontWeight: '600',
   },
   rolePillTextActive: {
-    color: COLORS.primary,
+    color: ACCENT,
   },
   rolePillTextInactive: {
     color: COLORS.gray[500],
@@ -788,12 +743,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   vehicleChipActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: `${COLORS.primary}18`,
+    borderColor: ACCENT,
+    backgroundColor: 'rgba(11, 132, 87, 0.15)',
   },
   vehicleChipInactive: {
-    borderColor: COLORS.gray[200],
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   vehicleIcon: {
     fontSize: 16,
@@ -803,7 +758,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   vehicleLabelActive: {
-    color: COLORS.primary,
+    color: ACCENT,
   },
   vehicleLabelInactive: {
     color: COLORS.gray[500],
@@ -814,19 +769,19 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(243, 244, 246, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1.5,
-    borderColor: COLORS.gray[200],
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   inputFocused: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
-    shadowColor: COLORS.primary,
+    borderColor: ACCENT,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -844,9 +799,9 @@ const styles = StyleSheet.create({
     paddingVertical: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 6,
   },
@@ -867,12 +822,12 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.gray[300],
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   separatorText: {
     marginHorizontal: 16,
     fontSize: 13,
-    color: COLORS.gray[500],
+    color: COLORS.gray[600],
     fontWeight: '600',
     textTransform: 'lowercase',
   },
@@ -881,11 +836,11 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 14,
-    color: COLORS.gray[500],
+    color: COLORS.gray[600],
   },
   toggleTextBold: {
     fontWeight: '700',
-    color: COLORS.primary,
+    color: ACCENT,
   },
   // Verification screen
   verificationIconContainer: {
@@ -942,10 +897,10 @@ const styles = StyleSheet.create({
   },
   codeBoxFilled: {
     backgroundColor: COLORS.white,
-    borderColor: COLORS.primary,
+    borderColor: ACCENT,
   },
   codeBoxActive: {
-    borderColor: COLORS.primary,
+    borderColor: GOLD,
     backgroundColor: COLORS.white,
   },
   codeBoxText: {
@@ -966,7 +921,7 @@ const styles = StyleSheet.create({
   resendText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: GOLD,
   },
   backButton: {
     flexDirection: 'row',
