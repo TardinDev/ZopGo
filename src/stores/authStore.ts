@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   AuthUser,
   UserRole,
@@ -23,8 +25,10 @@ interface AuthState {
   user: AuthUser | null;
   clerkId: string | null;
   supabaseProfileId: string | null;
+  _hasHydrated: boolean;
 
   // Actions
+  setHasHydrated: (value: boolean) => void;
   setupProfile: (
     role: UserRole,
     name: string,
@@ -69,126 +73,145 @@ const createChauffeurProfile = (
   disponible: true,
 });
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  clerkId: null,
-  supabaseProfileId: null,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      clerkId: null,
+      supabaseProfileId: null,
+      _hasHydrated: false,
 
-  setupProfile: (role, name, email, vehicleType, clerkId) => {
-    const profile =
-      role === 'chauffeur'
-        ? createChauffeurProfile(name, email, vehicleType)
-        : createClientProfile(name, email);
+      setHasHydrated: (value) => set({ _hasHydrated: value }),
 
-    const newUser: AuthUser = {
-      id: clerkId || Date.now().toString(),
-      role,
-      profile,
-    };
+      setupProfile: (role, name, email, vehicleType, clerkId) => {
+        const profile =
+          role === 'chauffeur'
+            ? createChauffeurProfile(name, email, vehicleType)
+            : createClientProfile(name, email);
 
-    set({ user: newUser, clerkId: clerkId || null });
+        const newUser: AuthUser = {
+          id: clerkId || Date.now().toString(),
+          role,
+          profile,
+        };
 
-    // Si c'est un chauffeur, l'ajouter à la liste des chauffeurs disponibles
-    if (role === 'chauffeur') {
-      const livreur = chauffeurToLivreur(newUser);
-      useDriversStore.getState().addConnectedDriver(livreur);
-    }
+        set({ user: newUser, clerkId: clerkId || null });
 
-    // Persister en Supabase de manière async
-    if (clerkId) {
-      (async () => {
-        try {
-          const existing = await fetchProfileByClerkId(clerkId);
-          if (existing) {
-            // Hydrater les stats depuis Supabase
-            set((state) => {
-              if (!state.user) return state;
-              return {
-                supabaseProfileId: existing.id,
-                user: {
-                  ...state.user,
-                  profile: {
-                    ...state.user.profile,
-                    rating: existing.rating,
-                    totalTrips: existing.total_trips,
-                    totalDeliveries: existing.total_deliveries,
-                    memberSince: new Date(existing.member_since).getFullYear().toString(),
-                  },
-                },
-              };
-            });
-          } else {
-            const created = await upsertProfile(clerkId, {
-              role,
-              name,
-              email,
-              disponible: role === 'chauffeur',
-            });
-            if (created) {
-              set({ supabaseProfileId: created.id });
-            }
-          }
-        } catch (err) {
-          console.error('Supabase sync error:', err);
+        // Si c'est un chauffeur, l'ajouter à la liste des chauffeurs disponibles
+        if (role === 'chauffeur') {
+          const livreur = chauffeurToLivreur(newUser);
+          useDriversStore.getState().addConnectedDriver(livreur);
         }
-      })();
-    }
-  },
 
-  logout: () => {
-    const { user } = get();
-
-    // Si c'était un chauffeur, le retirer de la liste des chauffeurs disponibles
-    if (user && user.role === 'chauffeur') {
-      useDriversStore.getState().removeConnectedDriver(parseInt(user.id) || 0);
-    }
-
-    set({ user: null, clerkId: null, supabaseProfileId: null });
-  },
-
-  updateProfile: (updates) => {
-    const { user, clerkId } = get();
-    if (!user) return;
-
-    set({
-      user: {
-        ...user,
-        profile: { ...user.profile, ...updates },
+        // Persister en Supabase de manière async
+        if (clerkId) {
+          (async () => {
+            try {
+              const existing = await fetchProfileByClerkId(clerkId);
+              if (existing) {
+                // Hydrater les stats depuis Supabase
+                set((state) => {
+                  if (!state.user) return state;
+                  return {
+                    supabaseProfileId: existing.id,
+                    user: {
+                      ...state.user,
+                      profile: {
+                        ...state.user.profile,
+                        rating: existing.rating,
+                        totalTrips: existing.total_trips,
+                        totalDeliveries: existing.total_deliveries,
+                        memberSince: new Date(existing.member_since).getFullYear().toString(),
+                      },
+                    },
+                  };
+                });
+              } else {
+                const created = await upsertProfile(clerkId, {
+                  role,
+                  name,
+                  email,
+                  disponible: role === 'chauffeur',
+                });
+                if (created) {
+                  set({ supabaseProfileId: created.id });
+                }
+              }
+            } catch (err) {
+              console.error('Supabase sync error:', err);
+            }
+          })();
+        }
       },
-    });
 
-    // Sync avec Supabase
-    if (clerkId) {
-      const supabaseUpdates: Record<string, any> = {};
-      if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
-      if ('phone' in updates && updates.phone) supabaseUpdates.phone = updates.phone;
-      if ('avatar' in updates && updates.avatar) supabaseUpdates.avatar = updates.avatar;
-      if (Object.keys(supabaseUpdates).length > 0) {
-        updateSupabaseProfile(clerkId, supabaseUpdates);
-      }
-    }
-  },
+      logout: () => {
+        const { user } = get();
 
-  setDisponible: (disponible) => {
-    const { user, clerkId } = get();
-    if (!user || user.role !== 'chauffeur') return;
+        // Si c'était un chauffeur, le retirer de la liste des chauffeurs disponibles
+        if (user && user.role === 'chauffeur') {
+          useDriversStore.getState().removeConnectedDriver(parseInt(user.id) || 0);
+        }
 
-    set({
-      user: {
-        ...user,
-        profile: { ...(user.profile as ChauffeurProfile), disponible },
+        set({ user: null, clerkId: null, supabaseProfileId: null });
       },
-    });
 
-    // Mettre à jour la disponibilité dans le driversStore
-    useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
+      updateProfile: (updates) => {
+        const { user, clerkId } = get();
+        if (!user) return;
 
-    // Sync avec Supabase
-    if (clerkId) {
-      updateSupabaseProfile(clerkId, { disponible });
+        set({
+          user: {
+            ...user,
+            profile: { ...user.profile, ...updates },
+          },
+        });
+
+        // Sync avec Supabase
+        if (clerkId) {
+          const supabaseUpdates: Record<string, any> = {};
+          if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
+          if ('phone' in updates && updates.phone) supabaseUpdates.phone = updates.phone;
+          if ('avatar' in updates && updates.avatar) supabaseUpdates.avatar = updates.avatar;
+          if (Object.keys(supabaseUpdates).length > 0) {
+            updateSupabaseProfile(clerkId, supabaseUpdates);
+          }
+        }
+      },
+
+      setDisponible: (disponible) => {
+        const { user, clerkId } = get();
+        if (!user || user.role !== 'chauffeur') return;
+
+        set({
+          user: {
+            ...user,
+            profile: { ...(user.profile as ChauffeurProfile), disponible },
+          },
+        });
+
+        // Mettre à jour la disponibilité dans le driversStore
+        useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
+
+        // Sync avec Supabase
+        if (clerkId) {
+          updateSupabaseProfile(clerkId, { disponible });
+        }
+      },
+    }),
+    {
+      name: 'zopgo-auth-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        user: state.user,
+        clerkId: state.clerkId,
+        supabaseProfileId: state.supabaseProfileId,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
-  },
-}));
+  )
+);
 
 // Helper pour vérifier si l'utilisateur est un chauffeur
 export const isChauffeur = (

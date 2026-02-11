@@ -1,9 +1,20 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageSourcePropType,
+} from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../constants/colors';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const onboardingData = [
   {
@@ -12,7 +23,8 @@ const onboardingData = [
     subtitle: 'Votre solution de transport et livraison',
     description: 'Commandez facilement vos trajets et livraisons en quelques clics',
     icon: '🚗',
-    color: ['#4FA5CF', '#2162FE'],
+    image: require('../../assets/auth/luxury_cars.jpg'),
+    overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
   {
     id: 2,
@@ -20,7 +32,8 @@ const onboardingData = [
     subtitle: 'Voyagez en toute sécurité',
     description: 'Des conducteurs vérifiés et des véhicules de qualité à votre service',
     icon: '⚡',
-    color: ['#FCA91A', '#F59E0B'],
+    image: require('../../assets/auth/nairobi_city.jpg'),
+    overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
   {
     id: 3,
@@ -28,16 +41,18 @@ const onboardingData = [
     subtitle: 'Envoyez vos colis partout',
     description: 'Service de livraison rapide et sécurisé dans tout le Gabon',
     icon: '📦',
-    color: ['#10B981', '#059669'],
+    image: require('../../assets/auth/libreville_street.jpg'),
+    overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
 ];
 
 export default function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const currentData = onboardingData[currentStep];
+  const isLastStep = currentStep === onboardingData.length - 1;
 
   const handleNext = () => {
-    if (currentStep < onboardingData.length - 1) {
+    if (!isLastStep) {
       setCurrentStep(currentStep + 1);
     } else {
       router.replace('/auth');
@@ -49,65 +64,245 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1">
+    <View style={styles.container}>
+      {/* Background image */}
+      <Image
+        source={currentData.image as ImageSourcePropType}
+        style={styles.backgroundImage}
+      />
+
+      {/* Gradient overlay */}
       <LinearGradient
-        colors={currentData.color as [string, string]}
+        colors={['rgba(0,0,0,0.15)', currentData.overlay[0], currentData.overlay[1]]}
+        locations={[0, 0.45, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        style={{ flex: 1 }}>
-        {/* Skip Button */}
-        <View className="flex-row justify-end p-6">
-          <TouchableOpacity onPress={handleSkip}>
-            <Text className="text-lg text-white/80">Passer</Text>
-          </TouchableOpacity>
+        style={styles.overlay}
+      />
+
+      <SafeAreaView style={styles.flex1}>
+        {/* Top Row: Skip button */}
+        <View style={styles.topRow}>
+          <View style={styles.stepBadge}>
+            <Text style={styles.stepBadgeText}>{currentStep + 1}/{onboardingData.length}</Text>
+          </View>
+          {!isLastStep && (
+            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+              <Text style={styles.skipText}>Passer</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.9)" />
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Content */}
-        <ScrollView className="flex-1 px-8" showsVerticalScrollIndicator={false}>
-          <View className="flex-1 items-center justify-center">
-            {/* Icon */}
-            <View className="mb-12">
-              <Text className="text-center text-8xl">{currentData.icon}</Text>
-            </View>
+        {/* Spacer */}
+        <View style={styles.flex1} />
 
-            {/* Text Content */}
-            <View className="mb-16 items-center">
-              <Text className="mb-4 text-center text-4xl font-bold text-white">
-                {currentData.title}
-              </Text>
-              <Text className="mb-6 text-center text-xl text-white/90">{currentData.subtitle}</Text>
-              <Text className="text-center text-lg leading-6 text-white/70">
-                {currentData.description}
-              </Text>
-            </View>
+        {/* Content — bottom half */}
+        <View style={styles.contentSection}>
+          {/* Icon */}
+          <View style={styles.iconCircle}>
+            <Text style={styles.iconText}>{currentData.icon}</Text>
           </View>
-        </ScrollView>
+
+          {/* Text */}
+          <Text style={styles.title}>{currentData.title}</Text>
+          <Text style={styles.subtitle}>{currentData.subtitle}</Text>
+          <Text style={styles.description}>{currentData.description}</Text>
+        </View>
 
         {/* Bottom Section */}
-        <View className="px-8 pb-12">
+        <View style={styles.bottomSection}>
           {/* Pagination Dots */}
-          <View className="mb-8 flex-row justify-center">
+          <View style={styles.dotsRow}>
             {onboardingData.map((_, index) => (
               <View
                 key={index}
-                className={`mx-1 h-2 w-8 rounded-full ${
-                  index === currentStep ? 'bg-white' : 'bg-white/30'
-                }`}
+                style={[
+                  styles.dot,
+                  index === currentStep ? styles.dotActive : styles.dotInactive,
+                ]}
               />
             ))}
           </View>
 
-          {/* Next Button */}
-          <TouchableOpacity
-            onPress={handleNext}
-            className="flex-row items-center justify-center rounded-2xl bg-white/20 px-8 py-4 backdrop-blur">
-            <Text className="mr-2 text-lg font-semibold text-white">
-              {currentStep === onboardingData.length - 1 ? 'Commencer' : 'Suivant'}
-            </Text>
-            <Ionicons name="arrow-forward" size={20} color="white" />
+          {/* Main Button */}
+          <TouchableOpacity onPress={handleNext} activeOpacity={0.85}>
+            <LinearGradient
+              colors={isLastStep ? [COLORS.primary, '#1E40AF'] : ['#FFFFFF', '#F3F4F6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.nextButton}
+            >
+              <Text style={[styles.nextText, isLastStep && styles.nextTextWhite]}>
+                {isLastStep ? 'Commencer' : 'Suivant'}
+              </Text>
+              <View style={[styles.nextIconCircle, isLastStep && styles.nextIconCircleWhite]}>
+                <Ionicons
+                  name="arrow-forward"
+                  size={20}
+                  color={isLastStep ? COLORS.primary : COLORS.white}
+                />
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  flex1: {
+    flex: 1,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    resizeMode: 'cover',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  stepBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  stepBadgeText: {
+    fontSize: 13,
+    color: COLORS.white,
+    fontWeight: '700',
+  },
+  skipButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 4,
+  },
+  skipText: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+  },
+  contentSection: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    marginBottom: 40,
+  },
+  iconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  iconText: {
+    fontSize: 48,
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.95)',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  description: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    lineHeight: 22,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  bottomSection: {
+    paddingHorizontal: 28,
+    paddingBottom: 40,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  dotActive: {
+    width: 32,
+    backgroundColor: COLORS.white,
+  },
+  dotInactive: {
+    width: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 18,
+    borderRadius: 22,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  nextText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.primary,
+    marginRight: 12,
+    letterSpacing: 0.3,
+  },
+  nextTextWhite: {
+    color: COLORS.white,
+  },
+  nextIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextIconCircleWhite: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+});
