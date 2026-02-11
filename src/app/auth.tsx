@@ -60,19 +60,13 @@ export default function AuthScreen() {
   const verificationInputRef = useRef<TextInput>(null);
 
   // Après sign-in/sign-up, clerkUser se met à jour → configurer le profil
+  // Le rôle sélectionné dans le formulaire est TOUJOURS utilisé (même compte = client ou chauffeur)
   useEffect(() => {
     if (clerkUser && showTransition && !isRoleSwitch && !hasSetupProfile.current) {
       hasSetupProfile.current = true;
 
-      const metadata = clerkUser.unsafeMetadata as { role?: string; vehicleType?: string } | undefined;
-      const hasMetadata = !!metadata?.role;
-
-      // Sign-in: lire le rôle depuis les metadata existantes
-      // Sign-up: utiliser le rôle sélectionné dans le formulaire et sauvegarder les metadata
-      const role = hasMetadata ? (metadata.role as UserRole) : selectedRole;
-      const vehicleType = hasMetadata
-        ? (metadata.vehicleType as VehicleType | undefined)
-        : selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+      const role = selectedRole;
+      const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
 
       const name =
         clerkUser.fullName ||
@@ -82,21 +76,19 @@ export default function AuthScreen() {
         'Utilisateur';
       const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
 
-      // Si sign-up (pas de metadata), sauvegarder le rôle dans Clerk
-      if (!hasMetadata) {
-        clerkUser.update({
-          unsafeMetadata: {
-            role: selectedRole,
-            vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
-          },
-        }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
-      }
+      // Toujours sauvegarder le rôle choisi dans Clerk metadata
+      clerkUser.update({
+        unsafeMetadata: {
+          role,
+          vehicleType: role === 'chauffeur' ? selectedVehicle : undefined,
+        },
+      }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
 
       setupProfile(
         role,
         name,
         email,
-        role === 'chauffeur' ? vehicleType || selectedVehicle : undefined,
+        vehicleType,
         clerkUser.id
       );
     }
@@ -392,56 +384,54 @@ export default function AuthScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.cardAccentBar}
                 />
-                {/* Sélecteur de rôle (uniquement pour inscription) */}
-                {!isLogin && (
-                  <View style={styles.roleSection}>
-                    <Text style={styles.sectionLabel}>Je suis</Text>
-                    <View style={styles.roleRow}>
-                      <TouchableOpacity
-                        onPress={() => handleRoleChange('client')}
+                {/* Sélecteur de rôle */}
+                <View style={styles.roleSection}>
+                  <Text style={styles.sectionLabel}>Je suis</Text>
+                  <View style={styles.roleRow}>
+                    <TouchableOpacity
+                      onPress={() => handleRoleChange('client')}
+                      style={[
+                        styles.rolePill,
+                        selectedRole === 'client' ? styles.rolePillActive : styles.rolePillInactive,
+                      ]}>
+                      <Ionicons
+                        name="person"
+                        size={20}
+                        color={selectedRole === 'client' ? COLORS.primary : COLORS.gray[400]}
+                      />
+                      <Text
                         style={[
-                          styles.rolePill,
-                          selectedRole === 'client' ? styles.rolePillActive : styles.rolePillInactive,
+                          styles.rolePillText,
+                          selectedRole === 'client' ? styles.rolePillTextActive : styles.rolePillTextInactive,
                         ]}>
-                        <Ionicons
-                          name="person"
-                          size={20}
-                          color={selectedRole === 'client' ? COLORS.primary : COLORS.gray[400]}
-                        />
-                        <Text
-                          style={[
-                            styles.rolePillText,
-                            selectedRole === 'client' ? styles.rolePillTextActive : styles.rolePillTextInactive,
-                          ]}>
-                          Client
-                        </Text>
-                      </TouchableOpacity>
+                        Client
+                      </Text>
+                    </TouchableOpacity>
 
-                      <TouchableOpacity
-                        onPress={() => handleRoleChange('chauffeur')}
+                    <TouchableOpacity
+                      onPress={() => handleRoleChange('chauffeur')}
+                      style={[
+                        styles.rolePill,
+                        selectedRole === 'chauffeur' ? styles.rolePillActive : styles.rolePillInactive,
+                      ]}>
+                      <Ionicons
+                        name="car"
+                        size={20}
+                        color={selectedRole === 'chauffeur' ? COLORS.primary : COLORS.gray[400]}
+                      />
+                      <Text
                         style={[
-                          styles.rolePill,
-                          selectedRole === 'chauffeur' ? styles.rolePillActive : styles.rolePillInactive,
+                          styles.rolePillText,
+                          selectedRole === 'chauffeur' ? styles.rolePillTextActive : styles.rolePillTextInactive,
                         ]}>
-                        <Ionicons
-                          name="car"
-                          size={20}
-                          color={selectedRole === 'chauffeur' ? COLORS.primary : COLORS.gray[400]}
-                        />
-                        <Text
-                          style={[
-                            styles.rolePillText,
-                            selectedRole === 'chauffeur' ? styles.rolePillTextActive : styles.rolePillTextInactive,
-                          ]}>
-                          Chauffeur
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                        Chauffeur
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                )}
+                </View>
 
-                {/* Sélecteur de véhicule (uniquement pour chauffeur en inscription) */}
-                {!isLogin && selectedRole === 'chauffeur' && (
+                {/* Sélecteur de véhicule (chauffeur) */}
+                {selectedRole === 'chauffeur' && (
                   <View style={styles.vehicleSection}>
                     <Text style={styles.sectionLabel}>Mon véhicule</Text>
                     <View style={styles.vehicleRow}>
