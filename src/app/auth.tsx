@@ -62,8 +62,18 @@ export default function AuthScreen() {
   const confirmPasswordRef = useRef<TextInput>(null);
   const verificationInputRef = useRef<TextInput>(null);
 
-  // Après sign-in/sign-up, clerkUser se met à jour → configurer le profil
-  // Le rôle sélectionné dans le formulaire est TOUJOURS utilisé (même compte = client ou chauffeur)
+  // Focus le champ de vérification dès qu'on arrive sur cet écran
+  useEffect(() => {
+    if (pendingVerification) {
+      const timer = setTimeout(() => {
+        verificationInputRef.current?.focus();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingVerification]);
+
+  // Après sign-in, clerkUser se met à jour → configurer le profil
+  // (Pour sign-up, le profil est déjà configuré dans handleVerifyEmail)
   useEffect(() => {
     if (clerkUser && showTransition && !isRoleSwitch && !hasSetupProfile.current) {
       hasSetupProfile.current = true;
@@ -79,7 +89,7 @@ export default function AuthScreen() {
         'Utilisateur';
       const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
 
-      // Toujours sauvegarder le rôle choisi dans Clerk metadata
+      // Sauvegarder le rôle choisi dans Clerk metadata
       clerkUser.update({
         unsafeMetadata: {
           role,
@@ -87,13 +97,7 @@ export default function AuthScreen() {
         },
       }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
 
-      setupProfile(
-        role,
-        name,
-        email,
-        vehicleType,
-        clerkUser.id
-      );
+      setupProfile(role, name, email, vehicleType, clerkUser.id);
     }
   }, [clerkUser, showTransition, isRoleSwitch]);
 
@@ -147,6 +151,8 @@ export default function AuthScreen() {
         await signUp.create({
           emailAddress: formData.email,
           password: formData.password,
+          firstName: formData.name.split(' ')[0],
+          lastName: formData.name.split(' ').slice(1).join(' ') || undefined,
         });
         await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
         setPendingVerification(true);
@@ -174,8 +180,24 @@ export default function AuthScreen() {
       if (result.status === 'complete') {
         await setSignUpActive({ session: result.createdSessionId });
 
-        // Afficher la transition animée
-        // Le profil sera configuré via le useEffect clerkUser ci-dessus
+        // Configurer le profil immédiatement avec les données du formulaire
+        // (ne pas attendre le useEffect clerkUser qui a une race condition)
+        const userId = result.createdUserId || Date.now().toString();
+        const name = formData.name || formData.email.split('@')[0] || 'Utilisateur';
+        const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+        hasSetupProfile.current = true;
+        setupProfile(selectedRole, name, formData.email, vehicleType, userId);
+
+        // Sauvegarder le rôle dans Clerk metadata (async, non bloquant)
+        if (result.createdUserId) {
+          signUp.update?.({
+            unsafeMetadata: {
+              role: selectedRole,
+              vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
+            },
+          }).catch(() => {});
+        }
+
         setTransitionRole(selectedRole);
         setIsRoleSwitch(false);
         setShowTransition(true);
@@ -223,13 +245,6 @@ export default function AuthScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.verificationScrollContent}
             keyboardShouldPersistTaps="handled">
-            {/* Icon */}
-            <View style={styles.verificationIconContainer}>
-              <View style={styles.verificationIconCircle}>
-                <Ionicons name="mail-outline" size={36} color={COLORS.white} />
-              </View>
-            </View>
-
             {/* Title */}
             <Text style={styles.verificationTitle}>Vérification email</Text>
             <Text style={styles.verificationSubtitle}>
@@ -246,9 +261,8 @@ export default function AuthScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.cardAccentBar}
               />
-              {/* 6 digit boxes */}
-              <TouchableOpacity
-                activeOpacity={1}
+              {/* Visual code boxes */}
+              <Pressable
                 onPress={() => verificationInputRef.current?.focus()}
                 style={styles.codeBoxesRow}>
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -262,17 +276,19 @@ export default function AuthScreen() {
                     <Text style={styles.codeBoxText}>{codeDigits[i] || ''}</Text>
                   </View>
                 ))}
-              </TouchableOpacity>
+              </Pressable>
 
-              {/* Hidden input */}
+              {/* Visible text input */}
               <TextInput
                 ref={verificationInputRef}
                 value={verificationCode}
                 onChangeText={(text) => setVerificationCode(text.replace(/[^0-9]/g, ''))}
                 keyboardType="number-pad"
                 maxLength={6}
-                style={styles.hiddenInput}
                 autoFocus
+                placeholder="000000"
+                placeholderTextColor={COLORS.gray[300]}
+                style={styles.codeInput}
               />
 
               {/* Submit button */}
@@ -627,7 +643,7 @@ const styles = StyleSheet.create({
   },
   verificationScrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: 24,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -856,18 +872,6 @@ const styles = StyleSheet.create({
     color: ACCENT,
   },
   // Verification screen
-  verificationIconContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  verificationIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   verificationTitle: {
     fontSize: 26,
     fontWeight: '800',
@@ -896,7 +900,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   codeBox: {
     width: 48,
@@ -921,11 +925,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.gray[900],
   },
-  hiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    height: 0,
-    width: 0,
+  codeInput: {
+    width: '100%',
+    height: 50,
+    backgroundColor: COLORS.gray[100],
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.gray[900],
+    textAlign: 'center',
+    letterSpacing: 16,
   },
   resendButton: {
     alignItems: 'center',
