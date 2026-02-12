@@ -22,7 +22,6 @@ const onboardingData = [
     title: 'Bienvenue sur ZopGo',
     subtitle: 'Votre solution de transport et livraison',
     description: 'Commandez facilement vos trajets et livraisons en quelques clics',
-    icon: '🚗',
     image: require('../../assets/auth/luxury_cars.jpg'),
     overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
@@ -31,7 +30,6 @@ const onboardingData = [
     title: 'Transport Rapide',
     subtitle: 'Voyagez en toute sécurité',
     description: 'Des conducteurs vérifiés et des véhicules de qualité à votre service',
-    icon: '⚡',
     image: require('../../assets/auth/nairobi_city.jpg'),
     overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
@@ -40,7 +38,6 @@ const onboardingData = [
     title: 'Livraison Express',
     subtitle: 'Envoyez vos colis partout',
     description: 'Service de livraison rapide et sécurisé dans tout le Gabon',
-    icon: '📦',
     image: require('../../assets/auth/libreville_street.jpg'),
     overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
@@ -99,11 +96,6 @@ export default function OnboardingScreen() {
 
         {/* Content — bottom half */}
         <View style={styles.contentSection}>
-          {/* Icon */}
-          <View style={styles.iconCircle}>
-            <Text style={styles.iconText}>{currentData.icon}</Text>
-          </View>
-
           {/* Text */}
           <Text style={styles.title}>{currentData.title}</Text>
           <Text style={styles.subtitle}>{currentData.subtitle}</Text>
@@ -204,21 +196,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
     marginBottom: 40,
-  },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 28,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  iconText: {
-    fontSize: 48,
-    textAlign: 'center',
   },
   title: {
     fontSize: 32,

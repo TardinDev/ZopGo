@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -55,6 +56,10 @@ export default function AuthScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  const nameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
   const verificationInputRef = useRef<TextInput>(null);
 
   // Après sign-in/sign-up, clerkUser se met à jour → configurer le profil
@@ -199,119 +204,118 @@ export default function AuthScreen() {
   if (pendingVerification) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.background}>
-          {/* Background image */}
-          <View style={styles.bgContainer} pointerEvents="none">
-            <Image source={SPLASH_IMAGE} style={styles.bgImage} />
-            <LinearGradient
-              colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.bgOverlay}
-            />
-          </View>
+        {/* Background layer — completely non-interactive */}
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <Image source={SPLASH_IMAGE} style={styles.bgImage} />
+          <LinearGradient
+            colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </View>
 
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.flex1}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.verificationScrollContent}
-              keyboardShouldPersistTaps="handled">
-              {/* Icon */}
-              <View style={styles.verificationIconContainer}>
-                <View style={styles.verificationIconCircle}>
-                  <Ionicons name="mail-outline" size={36} color={COLORS.white} />
-                </View>
+        {/* Content layer — interactive */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.flex1}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.verificationScrollContent}
+            keyboardShouldPersistTaps="handled">
+            {/* Icon */}
+            <View style={styles.verificationIconContainer}>
+              <View style={styles.verificationIconCircle}>
+                <Ionicons name="mail-outline" size={36} color={COLORS.white} />
               </View>
+            </View>
 
-              {/* Title */}
-              <Text style={styles.verificationTitle}>Vérification email</Text>
-              <Text style={styles.verificationSubtitle}>
-                Un code a été envoyé à{'\n'}
-                <Text style={styles.verificationEmail}>{formData.email}</Text>
-              </Text>
+            {/* Title */}
+            <Text style={styles.verificationTitle}>Vérification email</Text>
+            <Text style={styles.verificationSubtitle}>
+              Un code a été envoyé à{'\n'}
+              <Text style={styles.verificationEmail}>{formData.email}</Text>
+            </Text>
 
-              {/* Card */}
-              <View style={styles.card}>
-                {/* Accent bar top */}
+            {/* Card */}
+            <View style={styles.card}>
+              {/* Accent bar top */}
+              <LinearGradient
+                colors={[ACCENT, GOLD]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.cardAccentBar}
+              />
+              {/* 6 digit boxes */}
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => verificationInputRef.current?.focus()}
+                style={styles.codeBoxesRow}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.codeBox,
+                      codeDigits[i] ? styles.codeBoxFilled : null,
+                      i === codeDigits.length && styles.codeBoxActive,
+                    ]}>
+                    <Text style={styles.codeBoxText}>{codeDigits[i] || ''}</Text>
+                  </View>
+                ))}
+              </TouchableOpacity>
+
+              {/* Hidden input */}
+              <TextInput
+                ref={verificationInputRef}
+                value={verificationCode}
+                onChangeText={(text) => setVerificationCode(text.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={6}
+                style={styles.hiddenInput}
+                autoFocus
+              />
+
+              {/* Submit button */}
+              <TouchableOpacity
+                onPress={handleVerifyEmail}
+                disabled={isLoading || verificationCode.length < 6}
+                style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
                 <LinearGradient
-                  colors={[ACCENT, GOLD]}
+                  colors={[ACCENT, '#065F46']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.cardAccentBar}
-                />
-                {/* 6 digit boxes */}
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={() => verificationInputRef.current?.focus()}
-                  style={styles.codeBoxesRow}>
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.codeBox,
-                        codeDigits[i] ? styles.codeBoxFilled : null,
-                        i === codeDigits.length && styles.codeBoxActive,
-                      ]}>
-                      <Text style={styles.codeBoxText}>{codeDigits[i] || ''}</Text>
-                    </View>
-                  ))}
-                </TouchableOpacity>
+                  style={styles.submitButton}>
+                  <Text style={styles.submitText}>
+                    {isLoading ? 'Vérification...' : 'Vérifier'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
 
-                {/* Hidden input */}
-                <TextInput
-                  ref={verificationInputRef}
-                  value={verificationCode}
-                  onChangeText={(text) => setVerificationCode(text.replace(/[^0-9]/g, ''))}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  style={styles.hiddenInput}
-                  autoFocus
-                />
+              {/* Resend */}
+              <TouchableOpacity
+                onPress={() => {
+                  if (signUp) {
+                    signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+                    Alert.alert('Succès', 'Un nouveau code a été envoyé');
+                  }
+                }}
+                style={styles.resendButton}>
+                <Text style={styles.resendText}>Renvoyer le code</Text>
+              </TouchableOpacity>
 
-                {/* Submit button */}
-                <TouchableOpacity
-                  onPress={handleVerifyEmail}
-                  disabled={isLoading || verificationCode.length < 6}
-                  style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
-                  <LinearGradient
-                    colors={[ACCENT, '#065F46']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.submitButton}>
-                    <Text style={styles.submitText}>
-                      {isLoading ? 'Vérification...' : 'Vérifier'}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                {/* Resend */}
-                <TouchableOpacity
-                  onPress={() => {
-                    if (signUp) {
-                      signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-                      Alert.alert('Succès', 'Un nouveau code a été envoyé');
-                    }
-                  }}
-                  style={styles.resendButton}>
-                  <Text style={styles.resendText}>Renvoyer le code</Text>
-                </TouchableOpacity>
-
-                {/* Back */}
-                <TouchableOpacity
-                  onPress={() => {
-                    setPendingVerification(false);
-                    setVerificationCode('');
-                  }}
-                  style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color={COLORS.gray[500]} />
-                  <Text style={styles.backText}>Retour</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </View>
+              {/* Back */}
+              <TouchableOpacity
+                onPress={() => {
+                  setPendingVerification(false);
+                  setVerificationCode('');
+                }}
+                style={styles.backButton}>
+                <Ionicons name="arrow-back" size={16} color={COLORS.gray[500]} />
+                <Text style={styles.backText}>Retour</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
 
         <ModeTransition
           visible={showTransition}
@@ -326,26 +330,26 @@ export default function AuthScreen() {
   // --- Écran principal login/register ---
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.background}>
-        {/* Background image */}
-        <View style={styles.bgContainer} pointerEvents="none">
-          <Image source={SPLASH_IMAGE} style={styles.bgImage} />
-          <LinearGradient
-            colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
-            locations={[0, 0.4, 1]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.bgOverlay}
-          />
-        </View>
+      {/* Background layer — completely non-interactive */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <Image source={SPLASH_IMAGE} style={styles.bgImage} />
+        <LinearGradient
+          colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
+          locations={[0, 0.4, 1]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+      </View>
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.flex1}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled">
+      {/* Content layer — interactive */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex1}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled">
             {/* Header */}
             <View style={styles.header}>
               <Text style={styles.logo}>ZopGo</Text>
@@ -444,13 +448,15 @@ export default function AuthScreen() {
                 {/* Name field (only for register) */}
                 {!isLogin && (
                   <View style={styles.fieldGroup}>
-                    <View
+                    <Pressable
+                      onPress={() => nameRef.current?.focus()}
                       style={[
                         styles.inputContainer,
                         focusedField === 'name' && styles.inputFocused,
                       ]}>
                       <Ionicons name="person-outline" size={20} color={COLORS.gray[400]} />
                       <TextInput
+                        ref={nameRef}
                         placeholder="Nom complet"
                         placeholderTextColor={COLORS.gray[400]}
                         value={formData.name}
@@ -459,19 +465,21 @@ export default function AuthScreen() {
                         onBlur={() => setFocusedField(null)}
                         style={styles.input}
                       />
-                    </View>
+                    </Pressable>
                   </View>
                 )}
 
                 {/* Email */}
                 <View style={styles.fieldGroup}>
-                  <View
+                  <Pressable
+                    onPress={() => emailRef.current?.focus()}
                     style={[
                       styles.inputContainer,
                       focusedField === 'email' && styles.inputFocused,
                     ]}>
                     <Ionicons name="mail-outline" size={20} color={COLORS.gray[400]} />
                     <TextInput
+                      ref={emailRef}
                       placeholder="votre.email@example.com"
                       placeholderTextColor={COLORS.gray[400]}
                       value={formData.email}
@@ -482,18 +490,20 @@ export default function AuthScreen() {
                       onBlur={() => setFocusedField(null)}
                       style={styles.input}
                     />
-                  </View>
+                  </Pressable>
                 </View>
 
                 {/* Password */}
                 <View style={styles.fieldGroup}>
-                  <View
+                  <Pressable
+                    onPress={() => passwordRef.current?.focus()}
                     style={[
                       styles.inputContainer,
                       focusedField === 'password' && styles.inputFocused,
                     ]}>
                     <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
                     <TextInput
+                      ref={passwordRef}
                       placeholder="Mot de passe"
                       placeholderTextColor={COLORS.gray[400]}
                       value={formData.password}
@@ -512,19 +522,21 @@ export default function AuthScreen() {
                         color={COLORS.gray[400]}
                       />
                     </TouchableOpacity>
-                  </View>
+                  </Pressable>
                 </View>
 
                 {/* Confirm Password (only for register) */}
                 {!isLogin && (
                   <View style={styles.fieldGroup}>
-                    <View
+                    <Pressable
+                      onPress={() => confirmPasswordRef.current?.focus()}
                       style={[
                         styles.inputContainer,
                         focusedField === 'confirmPassword' && styles.inputFocused,
                       ]}>
                       <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
                       <TextInput
+                        ref={confirmPasswordRef}
                         placeholder="Confirmer le mot de passe"
                         placeholderTextColor={COLORS.gray[400]}
                         value={formData.confirmPassword}
@@ -543,7 +555,7 @@ export default function AuthScreen() {
                           color={COLORS.gray[400]}
                         />
                       </TouchableOpacity>
-                    </View>
+                    </Pressable>
                   </View>
                 )}
 
@@ -581,17 +593,16 @@ export default function AuthScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-        {/* Mode Transition Overlay */}
-        <ModeTransition
-          visible={showTransition}
-          role={isRoleSwitch ? transitionRole : selectedRole}
-          onComplete={isRoleSwitch ? handleRoleSwitchComplete : handleTransitionComplete}
-          quick={isRoleSwitch}
-        />
-      </View>
+      {/* Mode Transition Overlay */}
+      <ModeTransition
+        visible={showTransition}
+        role={isRoleSwitch ? transitionRole : selectedRole}
+        onComplete={isRoleSwitch ? handleRoleSwitchComplete : handleTransitionComplete}
+        quick={isRoleSwitch}
+      />
     </SafeAreaView>
   );
 }
@@ -601,23 +612,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  background: {
-    flex: 1,
-  },
   flex1: {
     flex: 1,
-  },
-  bgContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
   },
   bgImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-  },
-  bgOverlay: {
-    ...StyleSheet.absoluteFillObject,
   },
   scrollContent: {
     flexGrow: 1,
@@ -634,7 +635,6 @@ const styles = StyleSheet.create({
   header: {
     paddingBottom: 16,
     alignItems: 'center',
-    zIndex: 1,
   },
   logo: {
     fontSize: 40,
@@ -656,10 +656,9 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     paddingHorizontal: 20,
-    zIndex: 1,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.70)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: 24,
     padding: 20,
     paddingTop: 24,
@@ -668,18 +667,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 30,
     elevation: 12,
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   cardAccentBar: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
+    top: -1,
+    left: -1,
+    right: -1,
+    height: 5,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    overflow: 'hidden',
   },
   sectionLabel: {
     fontSize: 15,
