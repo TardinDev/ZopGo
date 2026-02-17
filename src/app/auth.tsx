@@ -38,7 +38,12 @@ export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [pendingSecondFactor, setPendingSecondFactor] = useState(false);
+  const [secondFactorStrategy, setSecondFactorStrategy] = useState<'totp' | 'phone_code' | 'email_code'>('totp');
+  const [pendingPasswordReset, setPendingPasswordReset] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -61,43 +66,53 @@ export default function AuthScreen() {
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
   const verificationInputRef = useRef<TextInput>(null);
+  const secondFactorInputRef = useRef<TextInput>(null);
+  const resetCodeInputRef = useRef<TextInput>(null);
+  const newPasswordRef = useRef<TextInput>(null);
 
   // Focus le champ de vérification dès qu'on arrive sur cet écran
   useEffect(() => {
-    if (pendingVerification) {
+    if (pendingVerification || pendingSecondFactor || pendingPasswordReset) {
       const timer = setTimeout(() => {
-        verificationInputRef.current?.focus();
+        if (pendingSecondFactor) {
+          secondFactorInputRef.current?.focus();
+        } else if (pendingPasswordReset) {
+          resetCodeInputRef.current?.focus();
+        } else {
+          verificationInputRef.current?.focus();
+        }
       }, 400);
       return () => clearTimeout(timer);
     }
-  }, [pendingVerification]);
+  }, [pendingVerification, pendingSecondFactor, pendingPasswordReset]);
 
-  // Après sign-in, clerkUser se met à jour → configurer le profil
-  // (Pour sign-up, le profil est déjà configuré dans handleVerifyEmail)
+  // Après auth, clerkUser se met à jour → configurer le profil + sauvegarder metadata
   useEffect(() => {
-    if (clerkUser && showTransition && !isRoleSwitch && !hasSetupProfile.current) {
-      hasSetupProfile.current = true;
-
-      const role = selectedRole;
-      const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
-
-      const name =
-        clerkUser.fullName ||
-        clerkUser.firstName ||
-        formData.name ||
-        formData.email.split('@')[0] ||
-        'Utilisateur';
-      const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
-
-      // Sauvegarder le rôle choisi dans Clerk metadata
+    if (clerkUser && showTransition && !isRoleSwitch) {
+      // Sauvegarder le rôle choisi dans Clerk metadata (idempotent, fonctionne pour sign-in et sign-up)
       clerkUser.update({
         unsafeMetadata: {
-          role,
-          vehicleType: role === 'chauffeur' ? selectedVehicle : undefined,
+          role: selectedRole,
+          vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
         },
       }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
 
-      setupProfile(role, name, email, vehicleType, clerkUser.id);
+      // Configurer le profil local uniquement si pas déjà fait
+      // (sign-up le fait directement dans handleVerifyEmail)
+      if (!hasSetupProfile.current) {
+        hasSetupProfile.current = true;
+
+        const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+        const name =
+          clerkUser.fullName ||
+          clerkUser.firstName ||
+          formData.name ||
+          formData.email.split('@')[0] ||
+          'Utilisateur';
+        const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
+
+        setupProfile(selectedRole, name, email, vehicleType, clerkUser.id);
+      }
     }
   }, [clerkUser, showTransition, isRoleSwitch]);
 
@@ -116,11 +131,12 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.email || !formData.password) {
+    const email = formData.email.trim();
+    if (!email || !formData.password) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
-    if (!isLogin && !formData.name) {
+    if (!isLogin && !formData.name.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer votre nom');
       return;
     }
@@ -129,32 +145,65 @@ export default function AuthScreen() {
       return;
     }
 
+    if (isLogin && (!isSignInLoaded || !signIn)) {
+      Alert.alert('Erreur', 'Le service d\'authentification n\'est pas encore prêt. Réessayez.');
+      return;
+    }
+    if (!isLogin && (!isSignUpLoaded || !signUp)) {
+      Alert.alert('Erreur', 'Le service d\'authentification n\'est pas encore prêt. Réessayez.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (isLogin) {
         // --- Connexion ---
-        if (!isSignInLoaded || !signIn) return;
-        const result = await signIn.create({
-          identifier: formData.email,
+        const result = await signIn!.create({
+          identifier: email,
           password: formData.password,
         });
 
         if (result.status === 'complete') {
-          await setActive({ session: result.createdSessionId });
+          await setActive!({ session: result.createdSessionId });
           setTransitionRole(selectedRole);
           setIsRoleSwitch(false);
           setShowTransition(true);
+        } else if (result.status === 'needs_second_factor') {
+          // 2FA requis — déterminer la stratégie disponible
+          const supported = result.supportedSecondFactors;
+          console.log('2FA strategies:', JSON.stringify(supported));
+          const emailFactor = supported?.find((f: any) => f.strategy === 'email_code');
+          const phoneFactor = supported?.find((f: any) => f.strategy === 'phone_code');
+          const hasTotp = supported?.some((f: any) => f.strategy === 'totp');
+
+          if (emailFactor && 'emailAddressId' in emailFactor) {
+            setSecondFactorStrategy('email_code');
+            await signIn!.prepareSecondFactor({
+              strategy: 'email_code',
+              emailAddressId: emailFactor.emailAddressId,
+            } as any);
+          } else if (phoneFactor) {
+            setSecondFactorStrategy('phone_code');
+            await signIn!.prepareSecondFactor({ strategy: 'phone_code' });
+          } else if (hasTotp) {
+            setSecondFactorStrategy('totp');
+          }
+
+          setVerificationCode('');
+          setPendingSecondFactor(true);
+        } else {
+          console.warn('Sign-in status:', result.status);
+          Alert.alert('Erreur', `Authentification incomplète (${result.status}). Veuillez réessayer.`);
         }
       } else {
         // --- Inscription ---
-        if (!isSignUpLoaded || !signUp) return;
-        await signUp.create({
-          emailAddress: formData.email,
+        await signUp!.create({
+          emailAddress: email,
           password: formData.password,
-          firstName: formData.name.split(' ')[0],
-          lastName: formData.name.split(' ').slice(1).join(' ') || undefined,
+          firstName: formData.name.trim().split(' ')[0],
+          lastName: formData.name.trim().split(' ').slice(1).join(' ') || undefined,
         });
-        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+        await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' });
         setPendingVerification(true);
       }
     } catch (err: any) {
@@ -188,15 +237,7 @@ export default function AuthScreen() {
         hasSetupProfile.current = true;
         setupProfile(selectedRole, name, formData.email, vehicleType, userId);
 
-        // Sauvegarder le rôle dans Clerk metadata (async, non bloquant)
-        if (result.createdUserId) {
-          signUp.update?.({
-            unsafeMetadata: {
-              role: selectedRole,
-              vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
-            },
-          }).catch(() => {});
-        }
+        // Le metadata Clerk sera sauvegardé par le useEffect quand clerkUser sera disponible
 
         setTransitionRole(selectedRole);
         setIsRoleSwitch(false);
@@ -213,6 +254,144 @@ export default function AuthScreen() {
     }
   };
 
+  const handleVerifySecondFactor = async () => {
+    if (!isSignInLoaded || !signIn) return;
+
+    setIsLoading(true);
+    try {
+      const result = await signIn.attemptSecondFactor({
+        strategy: secondFactorStrategy,
+        code: verificationCode,
+      });
+
+      if (result.status === 'complete') {
+        await setActive!({ session: result.createdSessionId });
+        setPendingSecondFactor(false);
+        setVerificationCode('');
+        setTransitionRole(selectedRole);
+        setIsRoleSwitch(false);
+        setShowTransition(true);
+      } else {
+        Alert.alert('Erreur', `Statut inattendu: ${result.status}`);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.errors?.[0]?.longMessage ||
+        err?.errors?.[0]?.message ||
+        'Code de vérification invalide';
+      Alert.alert('Erreur', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Mot de passe oublié ---
+  const handleForgotPassword = async () => {
+    const email = formData.email.trim();
+    if (!email) {
+      Alert.alert('Erreur', 'Veuillez d\'abord entrer votre email');
+      return;
+    }
+    if (!isSignInLoaded || !signIn) {
+      Alert.alert('Erreur', 'Le service d\'authentification n\'est pas encore prêt.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await signIn.create({
+        strategy: 'reset_password_email_code',
+        identifier: email,
+      });
+      console.log('=== FORGOT PASSWORD ===');
+      console.log('Status:', result.status);
+      console.log('Supported 1st factors:', JSON.stringify(result.supportedFirstFactors));
+      console.log('First factor verification:', JSON.stringify(result.firstFactorVerification));
+
+      setVerificationCode('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setPendingPasswordReset(true);
+      Alert.alert('Code envoyé', `Un code de réinitialisation a été envoyé à ${email}. Vérifiez aussi vos spams.`);
+    } catch (err: any) {
+      console.error('=== FORGOT PASSWORD ERROR ===', JSON.stringify(err?.errors || err));
+      const errorMessage =
+        err?.errors?.[0]?.longMessage ||
+        err?.errors?.[0]?.message ||
+        'Une erreur est survenue';
+      Alert.alert('Erreur', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Vérifie le code ET change le mot de passe en un seul appel
+  const handleResetPassword = async () => {
+    if (verificationCode.length < 6) {
+      Alert.alert('Erreur', 'Veuillez entrer le code à 6 chiffres');
+      return;
+    }
+    if (!newPassword) {
+      Alert.alert('Erreur', 'Veuillez entrer un nouveau mot de passe');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      return;
+    }
+    if (!isSignInLoaded || !signIn) return;
+
+    setIsLoading(true);
+    try {
+      const result = await signIn.attemptFirstFactor({
+        strategy: 'reset_password_email_code',
+        code: verificationCode,
+        password: newPassword,
+      });
+
+      if (result.status === 'complete') {
+        await setActive!({ session: result.createdSessionId });
+        setPendingPasswordReset(false);
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setVerificationCode('');
+        setTransitionRole(selectedRole);
+        setIsRoleSwitch(false);
+        setShowTransition(true);
+      } else if (result.status === 'needs_second_factor') {
+        setPendingPasswordReset(false);
+        setNewPassword('');
+        setConfirmNewPassword('');
+        const supported = result.supportedSecondFactors;
+        const emailFactor = supported?.find((f: any) => f.strategy === 'email_code');
+        const phoneFactor = supported?.find((f: any) => f.strategy === 'phone_code');
+        const hasTotp = supported?.some((f: any) => f.strategy === 'totp');
+        if (emailFactor && 'emailAddressId' in emailFactor) {
+          setSecondFactorStrategy('email_code');
+          await signIn.prepareSecondFactor({
+            strategy: 'email_code',
+            emailAddressId: emailFactor.emailAddressId,
+          } as any);
+        } else if (phoneFactor) {
+          setSecondFactorStrategy('phone_code');
+          await signIn.prepareSecondFactor({ strategy: 'phone_code' });
+        } else if (hasTotp) {
+          setSecondFactorStrategy('totp');
+        }
+        setVerificationCode('');
+        setPendingSecondFactor(true);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.errors?.[0]?.longMessage ||
+        err?.errors?.[0]?.message ||
+        'Code invalide ou mot de passe trop faible';
+      Alert.alert('Erreur', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleTransitionComplete = () => {
     setShowTransition(false);
     router.replace('/(protected)/(tabs)');
@@ -221,6 +400,297 @@ export default function AuthScreen() {
   const vehicleOptions = Object.values(VEHICLE_TYPES);
 
   const codeDigits = verificationCode.split('');
+
+  // --- Écran de réinitialisation du mot de passe ---
+  if (pendingPasswordReset) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <Image source={SPLASH_IMAGE} style={styles.bgImage} />
+          <LinearGradient
+            colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </View>
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.flex1}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.verificationScrollContent}
+            keyboardShouldPersistTaps="handled">
+            <Text style={styles.verificationTitle}>Réinitialisation</Text>
+            <Text style={styles.verificationSubtitle}>
+              Un code a été envoyé à{'\n'}
+              <Text style={styles.verificationEmail}>{formData.email.trim()}</Text>
+            </Text>
+
+            <View style={styles.card}>
+              <LinearGradient
+                colors={[ACCENT, GOLD]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.cardAccentBar}
+              />
+
+              {/* Code — hidden input + visual boxes */}
+              <Text style={styles.sectionLabel}>Code de vérification</Text>
+              <Pressable
+                onPress={() => resetCodeInputRef.current?.focus()}
+                style={styles.codeBoxesRow}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.codeBox,
+                      codeDigits[i] ? styles.codeBoxFilled : null,
+                      i === codeDigits.length && styles.codeBoxActive,
+                    ]}>
+                    <Text style={styles.codeBoxText}>{codeDigits[i] || ''}</Text>
+                  </View>
+                ))}
+              </Pressable>
+              <TextInput
+                ref={resetCodeInputRef}
+                value={verificationCode}
+                onChangeText={(text) => setVerificationCode(text.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+                style={styles.hiddenInput}
+              />
+
+              {/* Nouveau mot de passe */}
+              <Text style={[styles.sectionLabel, { marginTop: 16 }]}>Nouveau mot de passe</Text>
+              <View style={styles.fieldGroup}>
+                <Pressable
+                  onPress={() => newPasswordRef.current?.focus()}
+                  style={[
+                    styles.inputContainer,
+                    focusedField === 'newPassword' && styles.inputFocused,
+                  ]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
+                  <TextInput
+                    ref={newPasswordRef}
+                    placeholder="Nouveau mot de passe"
+                    placeholderTextColor={COLORS.gray[400]}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry
+                    onFocus={() => setFocusedField('newPassword')}
+                    onBlur={() => setFocusedField(null)}
+                    style={styles.input}
+                  />
+                </Pressable>
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Pressable
+                  style={[
+                    styles.inputContainer,
+                    focusedField === 'confirmNewPassword' && styles.inputFocused,
+                  ]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
+                  <TextInput
+                    placeholder="Confirmer le mot de passe"
+                    placeholderTextColor={COLORS.gray[400]}
+                    value={confirmNewPassword}
+                    onChangeText={setConfirmNewPassword}
+                    secureTextEntry
+                    onFocus={() => setFocusedField('confirmNewPassword')}
+                    onBlur={() => setFocusedField(null)}
+                    style={styles.input}
+                  />
+                </Pressable>
+              </View>
+
+              {/* Bouton réinitialiser */}
+              <TouchableOpacity
+                onPress={handleResetPassword}
+                disabled={isLoading}
+                style={isLoading ? styles.buttonDisabled : undefined}>
+                <LinearGradient
+                  colors={[ACCENT, '#065F46']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.submitButton}>
+                  <Text style={styles.submitText}>
+                    {isLoading ? 'Chargement...' : 'Réinitialiser'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Renvoyer le code */}
+              <TouchableOpacity
+                onPress={() => {
+                  setPendingPasswordReset(false);
+                  setVerificationCode('');
+                  setTimeout(() => handleForgotPassword(), 100);
+                }}
+                style={styles.resendButton}>
+                <Text style={styles.resendText}>Renvoyer le code</Text>
+              </TouchableOpacity>
+
+              {/* Retour */}
+              <TouchableOpacity
+                onPress={() => {
+                  setPendingPasswordReset(false);
+                  setVerificationCode('');
+                  setNewPassword('');
+                  setConfirmNewPassword('');
+                }}
+                style={styles.backButton}>
+                <Ionicons name="arrow-back" size={16} color={COLORS.gray[500]} />
+                <Text style={styles.backText}>Retour à la connexion</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        <ModeTransition
+          visible={showTransition}
+          role={selectedRole}
+          onComplete={handleTransitionComplete}
+          quick={false}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // --- Écran de vérification 2FA ---
+  if (pendingSecondFactor) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <Image source={SPLASH_IMAGE} style={styles.bgImage} />
+          <LinearGradient
+            colors={['rgba(0, 0, 0, 0.05)', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.75)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </View>
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.flex1}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.verificationScrollContent}
+            keyboardShouldPersistTaps="handled">
+            <Text style={styles.verificationTitle}>Vérification 2FA</Text>
+            <Text style={styles.verificationSubtitle}>
+              {secondFactorStrategy === 'email_code'
+                ? `Un code a été envoyé à\n`
+                : secondFactorStrategy === 'phone_code'
+                ? 'Un code a été envoyé par SMS\nà votre numéro de téléphone'
+                : 'Entrez le code à 6 chiffres de votre\napp (Google Authenticator, Authy...)'}
+            </Text>
+            {secondFactorStrategy === 'email_code' && (
+              <Text style={[styles.verificationSubtitle, { marginTop: -20 }]}>
+                <Text style={styles.verificationEmail}>{formData.email.trim()}</Text>
+              </Text>
+            )}
+
+            <View style={styles.card}>
+              <LinearGradient
+                colors={[ACCENT, GOLD]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.cardAccentBar}
+              />
+
+              {/* Visual code boxes */}
+              <Pressable
+                onPress={() => secondFactorInputRef.current?.focus()}
+                style={styles.codeBoxesRow}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.codeBox,
+                      codeDigits[i] ? styles.codeBoxFilled : null,
+                      i === codeDigits.length && styles.codeBoxActive,
+                    ]}>
+                    <Text style={styles.codeBoxText}>{codeDigits[i] || ''}</Text>
+                  </View>
+                ))}
+              </Pressable>
+
+              <TextInput
+                ref={secondFactorInputRef}
+                value={verificationCode}
+                onChangeText={(text) => setVerificationCode(text.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+                style={styles.hiddenInput}
+              />
+
+              <TouchableOpacity
+                onPress={handleVerifySecondFactor}
+                disabled={isLoading || verificationCode.length < 6}
+                style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
+                <LinearGradient
+                  colors={[ACCENT, '#065F46']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.submitButton}>
+                  <Text style={styles.submitText}>
+                    {isLoading ? 'Vérification...' : 'Vérifier'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {(secondFactorStrategy === 'phone_code' || secondFactorStrategy === 'email_code') && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (signIn) {
+                      try {
+                        await signIn.prepareSecondFactor({
+                          strategy: secondFactorStrategy,
+                          ...(secondFactorStrategy === 'email_code' ? {
+                            emailAddressId: (signIn.supportedSecondFactors?.find(
+                              (f: any) => f.strategy === 'email_code'
+                            ) as any)?.emailAddressId,
+                          } : {}),
+                        } as any);
+                        Alert.alert('Succès', 'Un nouveau code a été envoyé');
+                      } catch {
+                        Alert.alert('Erreur', 'Impossible de renvoyer le code');
+                      }
+                    }
+                  }}
+                  style={styles.resendButton}>
+                  <Text style={styles.resendText}>Renvoyer le code</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                onPress={() => {
+                  setPendingSecondFactor(false);
+                  setVerificationCode('');
+                }}
+                style={styles.backButton}>
+                <Ionicons name="arrow-back" size={16} color={COLORS.gray[500]} />
+                <Text style={styles.backText}>Retour</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        <ModeTransition
+          visible={showTransition}
+          role={selectedRole}
+          onComplete={handleTransitionComplete}
+          quick={false}
+        />
+      </SafeAreaView>
+    );
+  }
 
   // --- Écran de vérification email ---
   if (pendingVerification) {
@@ -278,7 +748,6 @@ export default function AuthScreen() {
                 ))}
               </Pressable>
 
-              {/* Visible text input */}
               <TextInput
                 ref={verificationInputRef}
                 value={verificationCode}
@@ -286,9 +755,7 @@ export default function AuthScreen() {
                 keyboardType="number-pad"
                 maxLength={6}
                 autoFocus
-                placeholder="000000"
-                placeholderTextColor={COLORS.gray[300]}
-                style={styles.codeInput}
+                style={styles.hiddenInput}
               />
 
               {/* Submit button */}
@@ -573,6 +1040,16 @@ export default function AuthScreen() {
                       </TouchableOpacity>
                     </Pressable>
                   </View>
+                )}
+
+                {/* Forgot password (login only) */}
+                {isLogin && (
+                  <TouchableOpacity
+                    onPress={handleForgotPassword}
+                    disabled={isLoading}
+                    style={styles.forgotPasswordButton}>
+                    <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
+                  </TouchableOpacity>
                 )}
 
                 {/* Submit Button */}
@@ -925,18 +1402,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.gray[900],
   },
-  codeInput: {
-    width: '100%',
-    height: 50,
-    backgroundColor: COLORS.gray[100],
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.gray[900],
-    textAlign: 'center',
-    letterSpacing: 16,
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+    height: 1,
+    width: 1,
   },
   resendButton: {
     alignItems: 'center',
@@ -958,5 +1428,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.gray[500],
     fontWeight: '500',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 6,
+    paddingVertical: 4,
+  },
+  forgotPasswordText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: ACCENT,
   },
 });

@@ -30,8 +30,8 @@ export default function ProtectedLayout() {
   // Attendre que Clerk soit chargé
   if (!isLoaded) return null;
 
-  // Rediriger vers /auth si non connecté (Clerk OU profil local)
-  if (!isSignedIn && !localUser) return <Redirect href="/auth" />;
+  // Rediriger vers /auth si pas de session Clerk valide
+  if (!isSignedIn) return <Redirect href="/auth" />;
 
   return (
     <TabAnimationProvider>
