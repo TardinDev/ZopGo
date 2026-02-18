@@ -3,3 +3,4 @@
  */
 
 export * from './useTabAnimation';
+export { usePushNotifications } from './usePushNotifications';

@@ -130,6 +130,14 @@ export interface ChauffeurProfile extends UserInfo {
   distance?: number; // Distance par rapport au client (calculée dynamiquement)
 }
 
+// Types pour les préférences de notifications push
+export interface NotificationPreferences {
+  courses: boolean;
+  trajets: boolean;
+  promotions: boolean;
+}
+export type NotificationCategory = keyof NotificationPreferences;
+
 // Utilisateur authentifié (peut être client ou chauffeur)
 export interface AuthUser {
   id: string;

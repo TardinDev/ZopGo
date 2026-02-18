@@ -3,6 +3,7 @@ import { Stack, Redirect, useRouter } from 'expo-router';
 import { AppState, AppStateStatus } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { TabAnimationProvider } from '../../hooks/useTabAnimation';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { useAuthStore } from '../../stores/authStore';
 import { setClerkTokenProvider } from '../../lib/supabase';
 import { UserRole, VehicleType } from '../../types';
@@ -15,6 +16,9 @@ export default function ProtectedLayout() {
   const { user: localUser, setupProfile, logout } = useAuthStore();
   const router = useRouter();
   const backgroundTimestamp = useRef<number | null>(null);
+
+  // Register push notifications when signed in
+  usePushNotifications(isSignedIn ? clerkUser?.id ?? null : null);
 
   // Auto-logout after 15 min of inactivity (app in background)
   const handleAppStateChange = useCallback(

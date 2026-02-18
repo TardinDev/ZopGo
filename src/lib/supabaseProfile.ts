@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
 import { sanitizeInput } from '../utils/validation';
+import type { NotificationPreferences } from '../types';
 
 export interface SupabaseProfile {
   id: string;
@@ -15,6 +16,8 @@ export interface SupabaseProfile {
   total_deliveries: number;
   disponible: boolean;
   member_since: string;
+  push_token: string | null;
+  notification_preferences: NotificationPreferences | null;
 }
 
 export async function fetchProfileByClerkId(clerkId: string): Promise<SupabaseProfile | null> {
