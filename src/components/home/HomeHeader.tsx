@@ -43,7 +43,7 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
           // Purge des tokens du SecureStore
           try {
             await SecureStore.deleteItemAsync('__clerk_client_jwt');
-          } catch (_) { /* ignore if key doesn't exist */ }
+          } catch { /* ignore if key doesn't exist */ }
           // Déconnexion locale (store Zustand)
           logout();
           // Redirection vers la page de connexion
