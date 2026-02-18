@@ -31,3 +31,6 @@ android
 
 # MCP config (contains secrets)
 .mcp.json
+
+# Supabase CLI temp files
+supabase/.temp/

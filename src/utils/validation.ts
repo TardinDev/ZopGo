@@ -17,9 +17,35 @@ export const validateLocation = (location: string): boolean => {
 
 /**
  * Nettoie et sanitise une entrée utilisateur
+ * Strip HTML tags, script injections, SQL keywords dangereux
  */
 export const sanitizeInput = (input: string): string => {
-  return input.trim().replace(/[<>]/g, '');
+  return input
+    .trim()
+    .replace(/<[^>]*>/g, '') // Strip HTML tags
+    .replace(/[<>&"']/g, '') // Remove dangerous chars
+    .replace(/\b(DROP|DELETE|INSERT|UPDATE|ALTER|EXEC|UNION|SELECT)\b/gi, '') // SQL keywords
+    .replace(/javascript:/gi, '') // JS protocol
+    .replace(/on\w+\s*=/gi, '') // Event handlers (onclick=, etc.)
+    .trim();
+};
+
+export const validateName = (name: string): boolean => {
+  if (!name || name.trim().length < 2 || name.trim().length > 50) return false;
+  return /^[a-zA-ZÀ-ÿ\s'-]+$/.test(name.trim());
+};
+
+export const validateCity = (city: string): boolean => {
+  if (!city || city.trim().length < 2 || city.trim().length > 50) return false;
+  return /^[a-zA-ZÀ-ÿ\s'-]+$/.test(city.trim());
+};
+
+export const validatePrice = (price: number): boolean => {
+  return typeof price === 'number' && !isNaN(price) && price > 0 && price <= 1_000_000;
+};
+
+export const validatePlaces = (n: number): boolean => {
+  return Number.isInteger(n) && n >= 1 && n <= 8;
 };
 
 /**

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 
@@ -80,10 +81,11 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         .from('notifications')
         .select('*')
         .or(`recipient_id.eq.${userId},recipient_role.eq.${userRole},recipient_role.eq.all`)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) {
-        console.error('Error loading notifications:', error.message);
+        Sentry.captureException(new Error(`Error loading notifications: ${error.message}`));
         return;
       }
 
@@ -104,7 +106,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         set({ notifications });
       }
     } catch (err) {
-      console.error('Error loading notifications:', err);
+      Sentry.captureException(err);
     } finally {
       set({ isLoading: false });
     }

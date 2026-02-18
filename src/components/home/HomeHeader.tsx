@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
+import * as SecureStore from 'expo-secure-store';
 import { COLORS } from '../../constants';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -39,6 +40,10 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
           setModalVisible(false);
           // Déconnexion Clerk (session distante)
           await signOut();
+          // Purge des tokens du SecureStore
+          try {
+            await SecureStore.deleteItemAsync('__clerk_client_jwt');
+          } catch (_) { /* ignore if key doesn't exist */ }
           // Déconnexion locale (store Zustand)
           logout();
           // Redirection vers la page de connexion

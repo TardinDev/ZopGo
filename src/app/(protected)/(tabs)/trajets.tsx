@@ -99,7 +99,7 @@ export default function TrajetsTab() {
 
               {/* Ville d'arrivée */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
-                Ville d'arrivée
+                Ville d&apos;arrivée
               </Text>
               <TextInput
                 style={{
