@@ -54,6 +54,15 @@
         "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
         "backgroundColor": "#FFFFFF"
       }
-    }
+    },
+    "extra": {
+      "router": {
+        "root": "./src/app"
+      },
+      "eas": {
+        "projectId": "9b571b9b-30f7-4b83-92cd-4f0630badaae"
+      }
+    },
+    "owner": "tardin"
   }
 }

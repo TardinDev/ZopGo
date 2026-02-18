@@ -20,17 +20,17 @@ const onboardingData = [
   {
     id: 1,
     title: 'Bienvenue sur ZopGo',
-    subtitle: 'Votre solution de transport et livraison',
+    subtitle: 'Moto, voiture, camionnette et plus',
     description: 'Commandez facilement vos trajets et livraisons en quelques clics',
-    image: require('../../assets/auth/luxury_cars.jpg'),
+    image: require('../../assets/auth/libreville_city.jpg'),
     overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
   {
     id: 2,
     title: 'Transport Rapide',
     subtitle: 'Voyagez en toute sécurité',
-    description: 'Des conducteurs vérifiés et des véhicules de qualité à votre service',
-    image: require('../../assets/auth/nairobi_city.jpg'),
+    description: 'Des conducteurs vérifiés et tous types de véhicules à votre service',
+    image: require('../../assets/auth/passagers_train.jpg'),
     overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
   {
@@ -38,7 +38,7 @@ const onboardingData = [
     title: 'Livraison Express',
     subtitle: 'Envoyez vos colis partout',
     description: 'Service de livraison rapide et sécurisé dans tout le Gabon',
-    image: require('../../assets/auth/libreville_street.jpg'),
+    image: require('../../assets/auth/gabon_road.jpg'),
     overlay: ['rgba(0, 0, 0, 0.25)', 'rgba(0, 0, 0, 0.65)'] as [string, string],
   },
 ];
