@@ -10,9 +10,11 @@ import {
   VehicleType,
   VehicleInfo,
   Livreur,
+  NotificationPreferences,
 } from '../types';
 import { useDriversStore } from './driversStore';
 import { upsertProfile, fetchProfileByClerkId, updateProfile as updateSupabaseProfile } from '../lib/supabaseProfile';
+import { fetchNotificationPreferences, updateNotificationPreferences, updatePushToken } from '../lib/supabaseNotifications';
 
 // Mapping des types de véhicules
 export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
@@ -22,10 +24,17 @@ export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   camionnette: { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
 };
 
+const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  courses: true,
+  trajets: true,
+  promotions: true,
+};
+
 interface AuthState {
   user: AuthUser | null;
   clerkId: string | null;
   supabaseProfileId: string | null;
+  notificationPreferences: NotificationPreferences;
   _hasHydrated: boolean;
 
   // Actions
@@ -40,6 +49,8 @@ interface AuthState {
   logout: () => void;
   updateProfile: (profile: Partial<UserInfo | ChauffeurProfile>) => void;
   setDisponible: (disponible: boolean) => void;
+  loadNotificationPreferences: (clerkId: string) => Promise<void>;
+  setNotificationPreferences: (prefs: NotificationPreferences) => void;
 }
 
 // Profil client par défaut
@@ -80,6 +91,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       clerkId: null,
       supabaseProfileId: null,
+      notificationPreferences: DEFAULT_NOTIFICATION_PREFS,
       _hasHydrated: false,
 
       setHasHydrated: (value) => set({ _hasHydrated: value }),
@@ -127,6 +139,9 @@ export const useAuthStore = create<AuthState>()(
                     },
                   };
                 });
+                // Load notification preferences
+                const prefs = await fetchNotificationPreferences(clerkId);
+                set({ notificationPreferences: prefs });
               } else {
                 const created = await upsertProfile(clerkId, {
                   role,
@@ -146,14 +161,24 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        const { user } = get();
+        const { user, clerkId } = get();
 
         // Si c'était un chauffeur, le retirer de la liste des chauffeurs disponibles
         if (user && user.role === 'chauffeur') {
           useDriversStore.getState().removeConnectedDriver(parseInt(user.id) || 0);
         }
 
-        set({ user: null, clerkId: null, supabaseProfileId: null });
+        // Clear push token in Supabase
+        if (clerkId) {
+          updatePushToken(clerkId, null);
+        }
+
+        set({
+          user: null,
+          clerkId: null,
+          supabaseProfileId: null,
+          notificationPreferences: DEFAULT_NOTIFICATION_PREFS,
+        });
       },
 
       updateProfile: (updates) => {
@@ -198,6 +223,19 @@ export const useAuthStore = create<AuthState>()(
           updateSupabaseProfile(clerkId, { disponible });
         }
       },
+
+      loadNotificationPreferences: async (clerkId: string) => {
+        const prefs = await fetchNotificationPreferences(clerkId);
+        set({ notificationPreferences: prefs });
+      },
+
+      setNotificationPreferences: (prefs: NotificationPreferences) => {
+        const { clerkId } = get();
+        set({ notificationPreferences: prefs });
+        if (clerkId) {
+          updateNotificationPreferences(clerkId, prefs);
+        }
+      },
     }),
     {
       name: 'zopgo-auth-storage',
@@ -206,6 +244,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         clerkId: state.clerkId,
         supabaseProfileId: state.supabaseProfileId,
+        notificationPreferences: state.notificationPreferences,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

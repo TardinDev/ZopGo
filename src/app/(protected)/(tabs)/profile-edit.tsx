@@ -13,29 +13,32 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../../../stores/authStore';
+import type { NotificationPreferences } from '../../../types';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
+  const { user, updateProfile, notificationPreferences, setNotificationPreferences } =
+    useAuthStore();
+
+  const profile = user?.profile;
+
   const [formData, setFormData] = useState({
-    name: 'Pierre Ondo Mba',
-    email: 'pierre.ondo@gmail.com',
-    phone: '+241 06 12 34 56',
-    address: 'Quartier Glass, Libreville',
-    emergencyContact: '+241 07 98 76 54',
-    preferences: {
-      notifications: true,
-      sms: false,
-      email: true,
-    },
+    name: profile?.name || '',
+    email: profile?.email || '',
+    phone: profile?.phone || '',
+    address: '',
+    emergencyContact: '',
   });
 
+  const [localPrefs, setLocalPrefs] = useState<NotificationPreferences>(notificationPreferences);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // Simulation de sauvegarde
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      updateProfile({ name: formData.name, phone: formData.phone });
+      setNotificationPreferences(localPrefs);
 
       Alert.alert('Succès', 'Profil mis à jour avec succès !', [
         { text: 'OK', onPress: () => router.back() },
@@ -140,76 +143,64 @@ export default function ProfileEditScreen() {
             </Text>
 
             <View className="mb-4 flex-row items-center justify-between">
-              <View>
-                <Text className="font-medium text-gray-800">Notifications push</Text>
+              <View className="flex-1 pr-4">
+                <Text className="font-medium text-gray-800">Courses et livraisons</Text>
                 <Text className="text-sm text-gray-500">
-                  Recevoir des notifications sur l&apos;app
+                  Demandes, suivi, confirmations
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
-                  setFormData({
-                    ...formData,
-                    preferences: {
-                      ...formData.preferences,
-                      notifications: !formData.preferences.notifications,
-                    },
-                  })
+                  setLocalPrefs({ ...localPrefs, courses: !localPrefs.courses })
                 }
                 className={`h-6 w-12 rounded-full ${
-                  formData.preferences.notifications ? 'bg-[#2162FE]' : 'bg-gray-300'
+                  localPrefs.courses ? 'bg-[#2162FE]' : 'bg-gray-300'
                 }`}>
                 <View
                   className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-all ${
-                    formData.preferences.notifications ? 'ml-6' : 'ml-0.5'
+                    localPrefs.courses ? 'ml-6' : 'ml-0.5'
                   }`}
                 />
               </TouchableOpacity>
             </View>
 
             <View className="mb-4 flex-row items-center justify-between">
-              <View>
-                <Text className="font-medium text-gray-800">SMS</Text>
+              <View className="flex-1 pr-4">
+                <Text className="font-medium text-gray-800">Trajets</Text>
                 <Text className="text-sm text-gray-500">
-                  Recevoir des SMS pour les confirmations
+                  Réservations passagers, nouveaux trajets
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
-                  setFormData({
-                    ...formData,
-                    preferences: { ...formData.preferences, sms: !formData.preferences.sms },
-                  })
+                  setLocalPrefs({ ...localPrefs, trajets: !localPrefs.trajets })
                 }
                 className={`h-6 w-12 rounded-full ${
-                  formData.preferences.sms ? 'bg-[#2162FE]' : 'bg-gray-300'
+                  localPrefs.trajets ? 'bg-[#2162FE]' : 'bg-gray-300'
                 }`}>
                 <View
                   className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-all ${
-                    formData.preferences.sms ? 'ml-6' : 'ml-0.5'
+                    localPrefs.trajets ? 'ml-6' : 'ml-0.5'
                   }`}
                 />
               </TouchableOpacity>
             </View>
 
             <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="font-medium text-gray-800">Email</Text>
-                <Text className="text-sm text-gray-500">Recevoir des emails promotionnels</Text>
+              <View className="flex-1 pr-4">
+                <Text className="font-medium text-gray-800">Promotions et infos</Text>
+                <Text className="text-sm text-gray-500">Marketing, promos, annonces</Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
-                  setFormData({
-                    ...formData,
-                    preferences: { ...formData.preferences, email: !formData.preferences.email },
-                  })
+                  setLocalPrefs({ ...localPrefs, promotions: !localPrefs.promotions })
                 }
                 className={`h-6 w-12 rounded-full ${
-                  formData.preferences.email ? 'bg-[#2162FE]' : 'bg-gray-300'
+                  localPrefs.promotions ? 'bg-[#2162FE]' : 'bg-gray-300'
                 }`}>
                 <View
                   className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-all ${
-                    formData.preferences.email ? 'ml-6' : 'ml-0.5'
+                    localPrefs.promotions ? 'ml-6' : 'ml-0.5'
                   }`}
                 />
               </TouchableOpacity>

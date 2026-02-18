@@ -48,7 +48,7 @@ export default function ProfilTab() {
         Alert.alert('Adresses favorites', 'Fonctionnalité en développement');
         break;
       case 5:
-        Alert.alert('Notifications', 'Fonctionnalité en développement');
+        router.push('/(protected)/(tabs)/profile-edit');
         break;
       case 6:
         Alert.alert('Sécurité', 'Fonctionnalité en développement');

@@ -19,6 +19,14 @@
       "expo-font",
       "expo-web-browser",
       "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
+          "color": "#2162FE",
+          "defaultChannel": "default"
+        }
+      ],
       "@sentry/react-native"
     ],
     "experiments": {
