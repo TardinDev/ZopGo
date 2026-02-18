@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -138,7 +139,7 @@ export const useAuthStore = create<AuthState>()(
                 }
               }
             } catch (err) {
-              console.error('Supabase sync error:', err);
+              Sentry.captureException(err);
             }
           })();
         }

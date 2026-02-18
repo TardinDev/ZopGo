@@ -26,7 +26,6 @@ const SPLASH_IMAGE = require('../../assets/splashScreen.jpg');
 
 // Couleurs harmonisées avec l'illustration ZopGo
 const ACCENT = '#0B8457';       // vert profond (voiture/logo)
-const ACCENT_LIGHT = '#10B981'; // vert clair
 const GOLD = '#E8A832';         // doré (motifs véhicule)
 
 export default function AuthScreen() {
@@ -171,7 +170,6 @@ export default function AuthScreen() {
         } else if (result.status === 'needs_second_factor') {
           // 2FA requis — déterminer la stratégie disponible
           const supported = result.supportedSecondFactors;
-          console.log('2FA strategies:', JSON.stringify(supported));
           const emailFactor = supported?.find((f: any) => f.strategy === 'email_code');
           const phoneFactor = supported?.find((f: any) => f.strategy === 'phone_code');
           const hasTotp = supported?.some((f: any) => f.strategy === 'totp');
@@ -192,7 +190,6 @@ export default function AuthScreen() {
           setVerificationCode('');
           setPendingSecondFactor(true);
         } else {
-          console.warn('Sign-in status:', result.status);
           Alert.alert('Erreur', `Authentification incomplète (${result.status}). Veuillez réessayer.`);
         }
       } else {
@@ -299,22 +296,16 @@ export default function AuthScreen() {
 
     setIsLoading(true);
     try {
-      const result = await signIn.create({
+      await signIn.create({
         strategy: 'reset_password_email_code',
         identifier: email,
       });
-      console.log('=== FORGOT PASSWORD ===');
-      console.log('Status:', result.status);
-      console.log('Supported 1st factors:', JSON.stringify(result.supportedFirstFactors));
-      console.log('First factor verification:', JSON.stringify(result.firstFactorVerification));
-
       setVerificationCode('');
       setNewPassword('');
       setConfirmNewPassword('');
       setPendingPasswordReset(true);
       Alert.alert('Code envoyé', `Un code de réinitialisation a été envoyé à ${email}. Vérifiez aussi vos spams.`);
     } catch (err: any) {
-      console.error('=== FORGOT PASSWORD ERROR ===', JSON.stringify(err?.errors || err));
       const errorMessage =
         err?.errors?.[0]?.longMessage ||
         err?.errors?.[0]?.message ||

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { Livreur } from '../types';
 import { supabase } from '../lib/supabase';
@@ -58,10 +59,11 @@ export const useDriversStore = create<DriversState>((set, get) => ({
         .from('profiles')
         .select('*')
         .eq('role', 'chauffeur')
-        .eq('disponible', true);
+        .eq('disponible', true)
+        .limit(50);
 
       if (error) {
-        console.error('Error loading drivers:', error.message);
+        Sentry.captureException(new Error(`Error loading drivers: ${error.message}`));
         return;
       }
 
@@ -79,7 +81,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
         set({ connectedDrivers: drivers });
       }
     } catch (err) {
-      console.error('Error loading drivers:', err);
+      Sentry.captureException(err);
     } finally {
       set({ isLoading: false });
     }

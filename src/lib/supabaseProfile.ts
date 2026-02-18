@@ -1,4 +1,6 @@
+import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
+import { sanitizeInput } from '../utils/validation';
 
 export interface SupabaseProfile {
   id: string;
@@ -43,8 +45,8 @@ export async function upsertProfile(
       {
         clerk_id: clerkId,
         role: profileData.role,
-        name: profileData.name,
-        email: profileData.email,
+        name: sanitizeInput(profileData.name),
+        email: sanitizeInput(profileData.email),
         phone: profileData.phone || '',
         avatar: profileData.avatar || '',
         disponible: profileData.disponible ?? false,
@@ -55,7 +57,7 @@ export async function upsertProfile(
     .single();
 
   if (error) {
-    console.error('Supabase upsertProfile error:', error.message);
+    Sentry.captureException(new Error(`Supabase upsertProfile error: ${error.message}`));
     return null;
   }
   return data as SupabaseProfile;
@@ -73,13 +75,16 @@ export async function updateProfile(
     total_deliveries: number;
   }>
 ): Promise<boolean> {
+  const sanitizedUpdates = { ...updates };
+  if (sanitizedUpdates.name) sanitizedUpdates.name = sanitizeInput(sanitizedUpdates.name);
+
   const { error } = await supabase
     .from('profiles')
-    .update(updates)
+    .update(sanitizedUpdates)
     .eq('clerk_id', clerkId);
 
   if (error) {
-    console.error('Supabase updateProfile error:', error.message);
+    Sentry.captureException(new Error(`Supabase updateProfile error: ${error.message}`));
     return false;
   }
   return true;

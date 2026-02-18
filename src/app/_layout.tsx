@@ -1,5 +1,6 @@
 import '../../global.css';
 
+import * as Sentry from '@sentry/react-native';
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
 import { Stack } from 'expo-router';
 import { View, Text } from 'react-native';
@@ -7,11 +8,21 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { tokenCache } from '../utils/tokenCache';
 
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.2,
+    environment: __DEV__ ? 'development' : 'production',
+  });
+}
+
 // Get Clerk publishable key from environment
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 // Root layout aligned with expo-router expectations
-export default function RootLayout() {
+function RootLayout() {
   // If no Clerk key, show error — the app cannot function without authentication
   if (!CLERK_PUBLISHABLE_KEY) {
     return (
@@ -43,3 +54,5 @@ export default function RootLayout() {
     </ClerkProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);
