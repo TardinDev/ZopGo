@@ -21,6 +21,7 @@ type ClerkUserHook = {
         imageUrl: string;
         primaryEmailAddress?: { emailAddress: string } | null;
         publicMetadata: Record<string, unknown>;
+        reload: () => Promise<unknown>;
     } | null | undefined;
     isLoaded: boolean;
 };
@@ -33,9 +34,6 @@ export function createAuthProvider(
     auth: ClerkAuthHook,
     user: ClerkUserHook
 ): AuthProvider {
-    const adminRole = user.user?.publicMetadata?.role as string | undefined;
-    const isAdmin = adminRole === "admin" || adminRole === "super_admin";
-
     return {
         login: async () => {
             // Clerk handles login via <SignIn /> component
@@ -48,33 +46,43 @@ export function createAuthProvider(
         },
 
         check: async () => {
+            // Still loading — do NOT redirect, tell Refine to wait
             if (!auth.isLoaded || !user.isLoaded) {
-                return { authenticated: false };
+                return { authenticated: false, logout: false };
             }
-            if (auth.isSignedIn && isAdmin) {
+
+            if (!auth.isSignedIn) {
+                return { authenticated: false, redirectTo: "/login" };
+            }
+
+            // Signed in — check admin role from publicMetadata
+            const adminRole = user.user?.publicMetadata?.role as string | undefined;
+            const isAdmin = adminRole === "admin" || adminRole === "super_admin";
+
+            if (isAdmin) {
                 return { authenticated: true };
             }
-            if (auth.isSignedIn && !isAdmin) {
-                // Signed in but not admin → show forbidden
-                return {
-                    authenticated: false,
-                    error: {
-                        name: "Accès refusé",
-                        message:
-                            "Vous n'avez pas les droits administrateur pour accéder à ce dashboard.",
-                    },
-                    redirectTo: "/login",
-                };
-            }
-            return { authenticated: false, redirectTo: "/login" };
+
+            // Signed in but not admin
+            return {
+                authenticated: false,
+                error: {
+                    name: "Accès refusé",
+                    message:
+                        "Vous n'avez pas les droits administrateur pour accéder à ce dashboard.",
+                },
+                redirectTo: "/forbidden",
+            };
         },
 
         getPermissions: async () => {
+            const adminRole = user.user?.publicMetadata?.role as string | undefined;
             return adminRole ?? null;
         },
 
         getIdentity: async () => {
             if (!user.user) return null;
+            const adminRole = user.user?.publicMetadata?.role as string | undefined;
             return {
                 id: user.user.id,
                 name: user.user.fullName ?? user.user.firstName ?? "Admin",

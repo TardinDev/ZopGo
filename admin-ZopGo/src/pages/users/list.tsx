@@ -1,6 +1,5 @@
 /**
- * ZopGo Admin — Liste des utilisateurs
- * Table avec filtres, pagination serveur, et badges
+ * ZopGo Admin — Liste des utilisateurs (dark theme)
  */
 
 import {
@@ -9,18 +8,18 @@ import {
     FilterDropdown,
     ShowButton,
     EditButton,
-    TagField,
 } from "@refinedev/antd";
-import { Table, Space, Input, Select, Rate, Badge, DatePicker } from "antd";
+import { Table, Space, Input, Select, Rate, Badge, DatePicker, Row, Col, Tag } from "antd";
+import { TeamOutlined, CarOutlined, CalendarOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { UserAvatar } from "@/components/common/UserAvatar";
-import { USER_ROLE_LABELS, COLORS } from "@/config/constants";
+import { USER_ROLE_LABELS, DARK } from "@/config/constants";
 import type { DbProfile } from "@/types";
 
 const { RangePicker } = DatePicker;
 
 export function UserList() {
-    const { tableProps, filters } = useTable<DbProfile>({
+    const { tableProps } = useTable<DbProfile>({
         resource: "profiles",
         sorters: {
             initial: [{ field: "created_at", order: "desc" }],
@@ -30,8 +29,65 @@ export function UserList() {
         },
     });
 
+    const total = tableProps.pagination && typeof tableProps.pagination === "object"
+        ? (tableProps.pagination as { total?: number }).total ?? 0
+        : 0;
+
+    const statCards = [
+        {
+            label: "Total utilisateurs",
+            value: total,
+            icon: <TeamOutlined style={{ fontSize: 20, color: DARK.accent }} />,
+            iconBg: "rgba(124, 92, 252, 0.15)",
+        },
+        {
+            label: "Chauffeurs actifs",
+            value: "—",
+            icon: <CarOutlined style={{ fontSize: 20, color: DARK.success }} />,
+            iconBg: "rgba(16, 185, 129, 0.15)",
+        },
+        {
+            label: "Nouveaux ce mois",
+            value: "—",
+            icon: <CalendarOutlined style={{ fontSize: 20, color: DARK.accent }} />,
+            iconBg: "rgba(124, 92, 252, 0.15)",
+        },
+    ];
+
     return (
         <List title="Utilisateurs">
+            {/* Stats bar */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+                {statCards.map((stat) => (
+                    <Col xs={24} sm={8} key={stat.label}>
+                        <div className="stat-mini-card">
+                            <div
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 10,
+                                    background: stat.iconBg,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                }}
+                            >
+                                {stat.icon}
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 12, color: DARK.textSecondary, fontWeight: 500 }}>
+                                    {stat.label}
+                                </div>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: DARK.textPrimary, lineHeight: 1.2 }}>
+                                    {stat.value}
+                                </div>
+                            </div>
+                        </div>
+                    </Col>
+                ))}
+            </Row>
+
             <Table
                 {...tableProps}
                 rowKey="id"
@@ -53,8 +109,8 @@ export function UserList() {
                         <Space>
                             <UserAvatar src={record.avatar} name={record.name} size={36} />
                             <div>
-                                <div style={{ fontWeight: 500 }}>{name}</div>
-                                <div style={{ fontSize: 12, color: COLORS.gray[400] }}>
+                                <div style={{ fontWeight: 600, fontSize: 14, color: DARK.textPrimary }}>{name}</div>
+                                <div style={{ fontSize: 12, color: DARK.textSecondary }}>
                                     {record.email}
                                 </div>
                             </div>
@@ -62,7 +118,7 @@ export function UserList() {
                                 <Badge
                                     count="Suspendu"
                                     style={{
-                                        backgroundColor: COLORS.error,
+                                        backgroundColor: DARK.error,
                                         fontSize: 10,
                                     }}
                                 />
@@ -77,7 +133,9 @@ export function UserList() {
                     dataIndex="phone"
                     key="phone"
                     width={140}
-                    render={(phone) => phone || "—"}
+                    render={(phone) => (
+                        <span style={{ color: DARK.textSecondary }}>{phone || "—"}</span>
+                    )}
                 />
 
                 {/* Rôle */}
@@ -100,10 +158,12 @@ export function UserList() {
                         </FilterDropdown>
                     )}
                     render={(role: string) => (
-                        <TagField
-                            value={USER_ROLE_LABELS[role] ?? role}
-                            color={role === "chauffeur" ? "blue" : "default"}
-                        />
+                        <Tag
+                            color={role === "chauffeur" ? "blue" : "green"}
+                            style={{ borderRadius: 6, fontWeight: 500 }}
+                        >
+                            {USER_ROLE_LABELS[role] ?? role}
+                        </Tag>
                     )}
                 />
 
@@ -137,7 +197,7 @@ export function UserList() {
                     width={80}
                     align="center"
                     render={(disponible: boolean, record) => {
-                        if (record.role !== "chauffeur") return "—";
+                        if (record.role !== "chauffeur") return <span style={{ color: DARK.textMuted }}>—</span>;
                         return (
                             <Badge
                                 status={disponible ? "success" : "default"}
@@ -159,7 +219,11 @@ export function UserList() {
                             <RangePicker />
                         </FilterDropdown>
                     )}
-                    render={(date: string) => dayjs(date).format("DD/MM/YYYY")}
+                    render={(date: string) => (
+                        <span style={{ color: DARK.textSecondary }}>
+                            {dayjs(date).format("DD/MM/YYYY")}
+                        </span>
+                    )}
                 />
 
                 {/* Actions */}

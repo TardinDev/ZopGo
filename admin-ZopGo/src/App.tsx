@@ -1,19 +1,18 @@
 /**
  * ZopGo Admin — Refine root component
- * Routing, resources, providers, theme Ant Design
+ * Full dark theme with Ant Design darkAlgorithm
  */
 
 import { useEffect, useMemo } from "react";
 import { Refine, Authenticated } from "@refinedev/core";
-import { ThemedLayoutV2, ErrorComponent, useNotificationProvider } from "@refinedev/antd";
+import { ErrorComponent, useNotificationProvider } from "@refinedev/antd";
 import routerProvider, {
     CatchAllNavigate,
-    NavigateToResource,
     DocumentTitleHandler,
     UnsavedChangesNotifier,
 } from "@refinedev/react-router-v6";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
-import { ConfigProvider, App as AntdApp, theme } from "antd";
+import { ConfigProvider, App as AntdApp, Layout, theme, Spin } from "antd";
 import frFR from "antd/locale/fr_FR";
 import {
     TeamOutlined,
@@ -28,7 +27,7 @@ import { useAuth, useUser } from "@clerk/clerk-react";
 
 // Config
 import { setClerkTokenProvider } from "@/config/supabase";
-import { COLORS } from "@/config/constants";
+import { COLORS, DARK } from "@/config/constants";
 
 // Auth & Providers
 import { createAuthProvider } from "@/auth/authProvider";
@@ -46,12 +45,24 @@ import { UserList } from "@/pages/users/list";
 import { UserShow } from "@/pages/users/show";
 import { UserEdit } from "@/pages/users/edit";
 
-// Import Ant Design + Refine styles
+// Styles
 import "@refinedev/antd/dist/reset.css";
+import "@/styles/admin.css";
+
+const { Content } = Layout;
 
 function AppContent() {
     const auth = useAuth();
     const userHook = useUser();
+
+    // Reload Clerk user on mount to get fresh publicMetadata
+    useEffect(() => {
+        if (userHook.isLoaded && userHook.user) {
+            userHook.user.reload();
+        }
+        // Only on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userHook.isLoaded]);
 
     // Inject Clerk JWT into Supabase client
     useEffect(() => {
@@ -146,11 +157,9 @@ function AppContent() {
             ]}
         >
             <Routes>
-                {/* Auth: Login */}
-                <Route
-                    path="/login"
-                    element={<LoginPage />}
-                />
+                {/* Auth: Login + Forbidden — wildcard * pour les sous-routes Clerk */}
+                <Route path="/login/*" element={<LoginPage />} />
+                <Route path="/forbidden" element={<LoginPage />} />
 
                 {/* Protected routes */}
                 <Route
@@ -158,18 +167,37 @@ function AppContent() {
                         <Authenticated
                             key="auth"
                             fallback={<CatchAllNavigate to="/login" />}
+                            loading={
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        minHeight: "100vh",
+                                        background: DARK.pageBg,
+                                    }}
+                                >
+                                    <Spin size="large" />
+                                </div>
+                            }
                         >
-                            <ThemedLayoutV2
-                                Sider={() => <AdminSider />}
-                                Header={() => <AdminHeader />}
-                                Title={() => (
-                                    <span style={{ fontSize: 20, fontWeight: 700, color: COLORS.primary }}>
-                                        ZopGo
-                                    </span>
-                                )}
-                            >
-                                <Outlet />
-                            </ThemedLayoutV2>
+                            <Layout style={{ minHeight: "100vh" }}>
+                                <AdminSider />
+                                <Layout>
+                                    <AdminHeader />
+                                    <Content
+                                        style={{
+                                            margin: 0,
+                                            padding: 24,
+                                            background: DARK.pageBg,
+                                            minHeight: 280,
+                                            overflow: "auto",
+                                        }}
+                                    >
+                                        <Outlet />
+                                    </Content>
+                                </Layout>
+                            </Layout>
                         </Authenticated>
                     }
                 >
@@ -209,16 +237,17 @@ function AppContent() {
 function PlaceholderPage({ title }: { title: string }) {
     return (
         <div
+            className="admin-content-area"
             style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
                 minHeight: 300,
-                color: COLORS.gray[400],
+                color: DARK.textSecondary,
             }}
         >
-            <h2 style={{ color: COLORS.gray[700] }}>{title}</h2>
+            <h2 style={{ color: DARK.textPrimary }}>{title}</h2>
             <p>Cette section sera implémentée dans une prochaine phase.</p>
         </div>
     );
@@ -234,8 +263,17 @@ export function App() {
                         colorPrimary: COLORS.primary,
                         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
                         borderRadius: 8,
+                        colorBgContainer: DARK.cardBg,
+                        colorBgLayout: DARK.pageBg,
+                        colorBgBase: DARK.pageBg,
+                        colorText: DARK.textPrimary,
+                        colorTextSecondary: DARK.textSecondary,
+                        colorBorder: "rgba(255, 255, 255, 0.06)",
+                        colorBorderSecondary: "rgba(255, 255, 255, 0.04)",
+                        controlHeight: 36,
+                        fontSize: 14,
                     },
-                    algorithm: theme.defaultAlgorithm,
+                    algorithm: theme.darkAlgorithm,
                 }}
             >
                 <AntdApp>

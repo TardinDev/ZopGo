@@ -1,9 +1,9 @@
 /**
- * ZopGo Admin — Sidebar navigation
+ * ZopGo Admin — Dark sidebar navigation (Dribbble-inspired)
  */
 
 import { useState } from "react";
-import { Layout, Menu, type MenuProps } from "antd";
+import { Layout, Menu, type MenuProps, Tooltip } from "antd";
 import {
     DashboardOutlined,
     TeamOutlined,
@@ -13,65 +13,89 @@ import {
     BellOutlined,
     AuditOutlined,
     SettingOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
-import { COLORS } from "@/config/constants";
+import { SIDEBAR, DARK } from "@/config/constants";
 
 const { Sider } = Layout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
-const menuItems: MenuItem[] = [
+const buildMenuItems = (collapsed: boolean): MenuItem[] => [
     {
-        key: "/",
-        icon: <DashboardOutlined />,
-        label: "Tableau de bord",
+        key: "section-principal",
+        type: "group",
+        label: collapsed ? null : (
+            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: DARK.textMuted }}>
+                Menu Principal
+            </span>
+        ),
+        children: [
+            {
+                key: "/",
+                icon: <DashboardOutlined />,
+                label: "Tableau de bord",
+            },
+            {
+                key: "/users",
+                icon: <TeamOutlined />,
+                label: "Utilisateurs",
+            },
+        ],
     },
     {
-        key: "/users",
-        icon: <TeamOutlined />,
-        label: "Utilisateurs",
+        key: "section-services",
+        type: "group",
+        label: collapsed ? null : (
+            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: DARK.textMuted }}>
+                Services
+            </span>
+        ),
+        children: [
+            {
+                key: "/trips",
+                icon: <CarOutlined />,
+                label: "Courses — ZopRide",
+            },
+            {
+                key: "/deliveries",
+                icon: <ShoppingOutlined />,
+                label: "Livraisons — ZopDelivery",
+            },
+            {
+                key: "/trajets",
+                icon: <GlobalOutlined />,
+                label: "Voyages — ZopTravel",
+            },
+        ],
     },
     {
-        type: "divider",
-    },
-    {
-        key: "/trips",
-        icon: <CarOutlined />,
-        label: "Courses — ZopRide",
-    },
-    {
-        key: "/deliveries",
-        icon: <ShoppingOutlined />,
-        label: "Livraisons — ZopDelivery",
-    },
-    {
-        key: "/trajets",
-        icon: <GlobalOutlined />,
-        label: "Voyages — ZopTravel",
-    },
-    {
-        key: "/vehicles",
-        icon: <CarOutlined />,
-        label: "Véhicules",
-    },
-    {
-        type: "divider",
-    },
-    {
-        key: "/notifications",
-        icon: <BellOutlined />,
-        label: "Notifications",
-    },
-    {
-        key: "/audit",
-        icon: <AuditOutlined />,
-        label: "Journal d'audit",
-    },
-    {
-        key: "/settings",
-        icon: <SettingOutlined />,
-        label: "Paramètres",
+        key: "section-systeme",
+        type: "group",
+        label: collapsed ? null : (
+            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: DARK.textMuted }}>
+                Système
+            </span>
+        ),
+        children: [
+            {
+                key: "/notifications",
+                icon: <BellOutlined />,
+                label: "Notifications",
+            },
+            {
+                key: "/audit",
+                icon: <AuditOutlined />,
+                label: "Journal d'audit",
+            },
+            {
+                key: "/settings",
+                icon: <SettingOutlined />,
+                label: "Paramètres",
+            },
+        ],
     },
 ];
 
@@ -80,9 +104,17 @@ export function AdminSider() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Determine selected key from current path
+    const menuItems = buildMenuItems(collapsed);
+
+    const allItems = menuItems.flatMap((group) => {
+        if (group && "children" in group && group.children) {
+            return group.children;
+        }
+        return [];
+    });
+
     const selectedKey =
-        menuItems.find(
+        allItems.find(
             (item) =>
                 item &&
                 "key" in item &&
@@ -92,20 +124,22 @@ export function AdminSider() {
 
     return (
         <Sider
+            className="admin-sider"
             collapsible
             collapsed={collapsed}
             onCollapse={setCollapsed}
+            trigger={null}
             style={{
                 overflow: "auto",
                 height: "100vh",
                 position: "sticky",
                 top: 0,
                 left: 0,
-                background: "#fff",
-                borderRight: "1px solid #f0f0f0",
+                background: SIDEBAR.bg,
+                borderRight: `1px solid ${DARK.border}`,
             }}
-            theme="light"
-            width={260}
+            width={SIDEBAR.width}
+            collapsedWidth={SIDEBAR.collapsedWidth}
         >
             {/* Logo */}
             <div
@@ -113,45 +147,104 @@ export function AdminSider() {
                     height: 64,
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    borderBottom: "1px solid #f0f0f0",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    padding: collapsed ? 0 : "0 24px",
+                    borderBottom: `1px solid ${DARK.border}`,
                     cursor: "pointer",
                 }}
                 onClick={() => navigate("/")}
             >
-                <h2
+                <div
                     style={{
-                        margin: 0,
-                        fontSize: collapsed ? 20 : 24,
-                        fontWeight: 700,
-                        color: COLORS.primary,
-                        letterSpacing: "-0.02em",
-                        transition: "font-size 0.2s",
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: DARK.accent,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
                     }}
                 >
-                    {collapsed ? "Z" : "ZopGo"}
-                </h2>
+                    <span style={{ color: "#fff", fontWeight: 800, fontSize: 16 }}>Z</span>
+                </div>
                 {!collapsed && (
                     <span
                         style={{
-                            fontSize: 12,
-                            color: COLORS.gray[400],
-                            marginLeft: 8,
-                            fontWeight: 500,
+                            fontSize: 20,
+                            fontWeight: 800,
+                            color: DARK.textPrimary,
+                            marginLeft: 12,
+                            letterSpacing: "-0.02em",
                         }}
                     >
-                        Admin
+                        ZopGo
                     </span>
                 )}
             </div>
 
+            {/* Menu */}
             <Menu
                 mode="inline"
                 selectedKeys={[selectedKey]}
                 items={menuItems}
-                style={{ borderRight: 0, paddingTop: 8 }}
+                style={{
+                    background: "transparent",
+                    borderRight: 0,
+                    paddingTop: 8,
+                    color: SIDEBAR.text,
+                }}
                 onClick={({ key }) => navigate(key)}
             />
+
+            {/* Footer: collapse toggle */}
+            <div
+                style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    borderTop: `1px solid ${DARK.border}`,
+                    padding: collapsed ? "12px 0" : "12px 16px",
+                    display: "flex",
+                    alignItems: collapsed ? "center" : "stretch",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                }}
+            >
+                <div
+                    onClick={() => setCollapsed(!collapsed)}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: collapsed ? "center" : "flex-start",
+                        gap: 10,
+                        padding: "8px 8px",
+                        borderRadius: 10,
+                        cursor: "pointer",
+                        color: DARK.textSecondary,
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = DARK.cardBgHover;
+                        e.currentTarget.style.color = DARK.textPrimary;
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = DARK.textSecondary;
+                    }}
+                >
+                    {collapsed ? (
+                        <Tooltip title="Déplier" placement="right">
+                            <MenuUnfoldOutlined style={{ fontSize: 16 }} />
+                        </Tooltip>
+                    ) : (
+                        <>
+                            <MenuFoldOutlined style={{ fontSize: 16 }} />
+                            <span style={{ fontSize: 13 }}>Réduire</span>
+                        </>
+                    )}
+                </div>
+            </div>
         </Sider>
     );
 }
