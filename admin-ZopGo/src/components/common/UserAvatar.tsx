@@ -29,7 +29,7 @@ export function UserAvatar({ src, name, size = 40, ...rest }: UserAvatarProps) {
         return (
             <Avatar
                 size={size}
-                style={{ backgroundColor: COLORS.primary, fontWeight: 600 }}
+                style={{ backgroundColor: COLORS.primary, fontWeight: 600, color: "#13112B" }}
                 {...rest}
             >
                 {getInitials(name)}

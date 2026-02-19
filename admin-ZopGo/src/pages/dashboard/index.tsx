@@ -163,7 +163,7 @@ export function DashboardPage() {
                                             borderRadius: 6,
                                             background: i === 6
                                                 ? DARK.accent
-                                                : `rgba(124, 92, 252, ${0.15 + (i * 0.08)})`,
+                                                : `rgba(255, 221, 92, ${0.12 + (i * 0.08)})`,
                                             transition: "height 0.3s ease",
                                         }}
                                     />
