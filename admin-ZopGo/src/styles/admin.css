@@ -1,0 +1,362 @@
+/**
+ * ZopGo Admin — Full Dark Theme
+ * Palette: #13112B page bg, #1C1B2E cards, #7C5CFC accent
+ */
+
+/* ─── Global dark background ─── */
+body {
+    background: #13112B !important;
+}
+
+/* ─── Fade-in animation ─── */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-content-area {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+/* ─── Custom scrollbar (dark) ─── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555573;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7C5CFC;
+}
+
+/* ─── Sidebar menu — dark theme ─── */
+.admin-sider .ant-menu {
+    background: transparent !important;
+    color: #8B8BA3 !important;
+}
+
+.admin-sider .ant-menu-item {
+    transition: all 0.2s ease !important;
+    margin: 2px 12px !important;
+    border-radius: 10px !important;
+    color: #8B8BA3 !important;
+    height: 42px !important;
+    line-height: 42px !important;
+}
+
+.admin-sider .ant-menu-item .anticon {
+    color: #8B8BA3 !important;
+    font-size: 18px !important;
+}
+
+.admin-sider .ant-menu-item .ant-menu-title-content {
+    color: #8B8BA3 !important;
+}
+
+.admin-sider .ant-menu-item:hover {
+    background: rgba(124, 92, 252, 0.08) !important;
+    color: #fff !important;
+}
+
+.admin-sider .ant-menu-item:hover .anticon,
+.admin-sider .ant-menu-item:hover .ant-menu-title-content {
+    color: #fff !important;
+}
+
+/* Active item — pill style with violet accent, NO border-left */
+.admin-sider .ant-menu-item-selected {
+    background: rgba(124, 92, 252, 0.15) !important;
+    color: #fff !important;
+    border-left: none !important;
+}
+
+.admin-sider .ant-menu-item-selected .anticon {
+    color: #7C5CFC !important;
+}
+
+.admin-sider .ant-menu-item-selected .ant-menu-title-content {
+    color: #fff !important;
+}
+
+/* Group titles */
+.admin-sider .ant-menu-item-group-title {
+    color: #555573 !important;
+}
+
+/* ─── Card hover lift effect (dark) ─── */
+.admin-card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    cursor: default;
+}
+
+.admin-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+    background: #252440 !important;
+}
+
+/* ─── KPI card — dark, no left-border ─── */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+    background: #1C1B2E !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.kpi-card::before {
+    display: none;
+}
+
+/* ─── Tables — full dark override ─── */
+.ant-table {
+    background: #1C1B2E !important;
+    color: #FFFFFF !important;
+}
+
+.ant-table-thead > tr > th,
+.ant-table-thead > tr > td {
+    background: #1C1B2E !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    color: #8B8BA3 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.ant-table-tbody > tr > td {
+    background: #1C1B2E !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    transition: background 0.15s ease;
+}
+
+.ant-table-tbody > tr:hover > td {
+    background: #252440 !important;
+}
+
+.ant-table-tbody > tr.ant-table-row:hover > td {
+    background: #252440 !important;
+}
+
+/* Table pagination */
+.ant-table-pagination .ant-pagination-item {
+    background: #1C1B2E !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.ant-table-pagination .ant-pagination-item a {
+    color: #8B8BA3 !important;
+}
+
+.ant-table-pagination .ant-pagination-item-active {
+    background: rgba(124, 92, 252, 0.15) !important;
+    border-color: #7C5CFC !important;
+}
+
+.ant-table-pagination .ant-pagination-item-active a {
+    color: #7C5CFC !important;
+}
+
+/* Table empty state */
+.ant-table-placeholder td {
+    background: #1C1B2E !important;
+}
+
+.ant-empty-description {
+    color: #8B8BA3 !important;
+}
+
+/* ─── Stats bar cards (dark) ─── */
+.stat-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #1C1B2E;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.stat-mini-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    background: #252440;
+}
+
+/* ─── Quick access cards (dark) ─── */
+.quick-access-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    text-align: center;
+    background: #1C1B2E !important;
+}
+
+.quick-access-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    border-color: #7C5CFC !important;
+    background: #252440 !important;
+}
+
+/* ─── Chart placeholder (dark) ─── */
+.chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    background: #252440;
+    border-radius: 12px;
+    border: 2px dashed rgba(124, 92, 252, 0.25);
+    transition: border-color 0.2s ease;
+}
+
+.chart-placeholder:hover {
+    border-color: #7C5CFC;
+}
+
+/* ─── Sidebar section labels ─── */
+.sidebar-section-label {
+    padding: 16px 24px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555573;
+}
+
+/* ─── Notification badge pulse ─── */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(124, 92, 252, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(124, 92, 252, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(124, 92, 252, 0); }
+}
+
+.notification-bell .ant-badge-dot {
+    animation: pulse 2s infinite;
+}
+
+/* ─── Inputs / Search dark ─── */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector {
+    background: #252440 !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #FFFFFF !important;
+}
+
+.ant-input::placeholder,
+.ant-input-affix-wrapper .ant-input::placeholder {
+    color: #555573 !important;
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select-selector:hover {
+    border-color: #7C5CFC !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+    border-color: #7C5CFC !important;
+    box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.2) !important;
+}
+
+/* ─── Ant Design Cards dark override ─── */
+.ant-card {
+    background: #1C1B2E !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    color: #FFFFFF !important;
+}
+
+/* ─── Breadcrumb / page header dark ─── */
+.ant-breadcrumb,
+.ant-breadcrumb a,
+.ant-breadcrumb-separator {
+    color: #8B8BA3 !important;
+}
+
+/* ─── Dropdown dark ─── */
+.ant-dropdown-menu {
+    background: #1C1B2E !important;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ant-dropdown-menu-item {
+    color: #FFFFFF !important;
+}
+
+.ant-dropdown-menu-item:hover {
+    background: #252440 !important;
+}
+
+/* ─── Refine page headers ─── */
+.ant-page-header {
+    background: transparent !important;
+}
+
+.ant-page-header-heading-title {
+    color: #FFFFFF !important;
+}
+
+/* ─── Filter dropdowns ─── */
+.ant-table-filter-dropdown {
+    background: #1C1B2E !important;
+}
+
+/* ─── Modal dark ─── */
+.ant-modal-content {
+    background: #1C1B2E !important;
+    color: #FFFFFF !important;
+}
+
+.ant-modal-header {
+    background: #1C1B2E !important;
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.ant-modal-title {
+    color: #FFFFFF !important;
+}
+
+/* ─── Refine List title dark ─── */
+.refine-list-header,
+.ant-page-header {
+    background: transparent !important;
+}
+
+h1, h2, h3, h4, h5 {
+    color: #FFFFFF;
+}
+
+/* ─── Spin loader ─── */
+.ant-spin-dot-item {
+    background: #7C5CFC !important;
+}
+
+/* ─── Tooltip ─── */
+.ant-tooltip-inner {
+    background: #252440 !important;
+}
+
+/* ─── Badge text for dark ─── */
+.ant-badge-status-text {
+    color: #FFFFFF !important;
+}

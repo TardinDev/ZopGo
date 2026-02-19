@@ -89,9 +89,6 @@ export const dataProvider: DataProvider = {
 
         let query = supabase.from(resource).select(selectFields, { count: "exact" });
 
-        // Soft delete filter (always exclude deleted records)
-        query = query.is("deleted_at", null);
-
         // Apply user filters
         query = applyFilters(query, filters as CrudFilter[]);
 
@@ -163,10 +160,9 @@ export const dataProvider: DataProvider = {
     },
 
     deleteOne: async ({ resource, id }): Promise<any> => {
-        // Soft delete: set deleted_at instead of real DELETE
         const { data, error } = await supabase
             .from(resource)
-            .update({ deleted_at: new Date().toISOString() })
+            .delete()
             .eq("id", id as string)
             .select()
             .single();
@@ -184,8 +180,7 @@ export const dataProvider: DataProvider = {
         const { data, error } = await supabase
             .from(resource)
             .select(selectFields)
-            .in("id", ids as string[])
-            .is("deleted_at", null);
+            .in("id", ids as string[]);
 
         if (error) {
             throw new Error(error.message);

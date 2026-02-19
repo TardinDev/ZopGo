@@ -2,11 +2,26 @@
  * ZopGo Admin — Constantes globales
  */
 
-// Palette de couleurs ZopGo (alignée avec l'app mobile)
+// Dark theme palette (inspired by Dribbble HR Dashboard — Zeyox Studio)
+export const DARK = {
+    pageBg: "#13112B",
+    cardBg: "#1C1B2E",
+    cardBgHover: "#252440",
+    accent: "#7C5CFC",
+    accentLight: "rgba(124, 92, 252, 0.15)",
+    textPrimary: "#FFFFFF",
+    textSecondary: "#8B8BA3",
+    textMuted: "#555573",
+    border: "rgba(255, 255, 255, 0.06)",
+    success: "#10B981",
+    error: "#EF4444",
+} as const;
+
+// Palette de couleurs ZopGo
 export const COLORS = {
-    primary: "#2162FE",
-    primaryDark: "#1E40AF",
-    primaryLight: "#E8EFFE",
+    primary: "#7C5CFC",
+    primaryDark: "#5B3FD6",
+    primaryLight: "rgba(124, 92, 252, 0.15)",
     secondary: "#4facfe",
     secondaryLight: "#00f2fe",
     yellow: "#FFDD5C",
@@ -27,6 +42,26 @@ export const COLORS = {
         800: "#1F2937",
         900: "#111827",
     },
+} as const;
+
+// Design tokens — Sidebar
+export const SIDEBAR = {
+    bg: DARK.cardBg,
+    bgHover: DARK.cardBgHover,
+    text: DARK.textSecondary,
+    textActive: DARK.textPrimary,
+    accent: DARK.accent,
+    border: DARK.border,
+    width: 260,
+    collapsedWidth: 80,
+} as const;
+
+// Shadows (subtle for dark theme)
+export const SHADOWS = {
+    sm: "0 1px 2px rgba(0, 0, 0, 0.2)",
+    md: "0 4px 12px rgba(0, 0, 0, 0.25)",
+    lg: "0 8px 25px rgba(0, 0, 0, 0.3)",
+    header: "0 1px 3px rgba(0, 0, 0, 0.2)",
 } as const;
 
 // Devise
