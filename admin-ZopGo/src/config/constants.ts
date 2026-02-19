@@ -2,15 +2,16 @@
  * ZopGo Admin — Constantes globales
  */
 
-// Dark theme palette (inspired by Dribbble HR Dashboard — Zeyox Studio)
+// Dark theme palette — yellow accent (aligned with ZopGo mobile app)
 export const DARK = {
     pageBg: "#13112B",
     cardBg: "#1C1B2E",
     cardBgHover: "#252440",
-    accent: "#7C5CFC",
-    accentLight: "rgba(124, 92, 252, 0.15)",
+    accent: "#FFDD5C",
+    accentDark: "#E5C44E",
+    accentLight: "rgba(255, 221, 92, 0.15)",
     textPrimary: "#FFFFFF",
-    textSecondary: "#8B8BA3",
+    textSecondary: "#A0A0B8",
     textMuted: "#555573",
     border: "rgba(255, 255, 255, 0.06)",
     success: "#10B981",
@@ -19,9 +20,9 @@ export const DARK = {
 
 // Palette de couleurs ZopGo
 export const COLORS = {
-    primary: "#7C5CFC",
-    primaryDark: "#5B3FD6",
-    primaryLight: "rgba(124, 92, 252, 0.15)",
+    primary: "#FFDD5C",
+    primaryDark: "#E5C44E",
+    primaryLight: "rgba(255, 221, 92, 0.15)",
     secondary: "#4facfe",
     secondaryLight: "#00f2fe",
     yellow: "#FFDD5C",
@@ -51,6 +52,7 @@ export const SIDEBAR = {
     text: DARK.textSecondary,
     textActive: DARK.textPrimary,
     accent: DARK.accent,
+    accentDark: DARK.accentDark,
     border: DARK.border,
     width: 260,
     collapsedWidth: 80,

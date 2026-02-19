@@ -1,6 +1,6 @@
 /**
  * ZopGo Admin — Full Dark Theme
- * Palette: #13112B page bg, #1C1B2E cards, #7C5CFC accent
+ * Palette: #13112B page bg, #1C1B2E cards, #FFDD5C yellow accent
  */
 
 /* ─── Global dark background ─── */
@@ -40,35 +40,35 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #7C5CFC;
+    background: #FFDD5C;
 }
 
 /* ─── Sidebar menu — dark theme ─── */
 .admin-sider .ant-menu {
     background: transparent !important;
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
 }
 
 .admin-sider .ant-menu-item {
     transition: all 0.2s ease !important;
     margin: 2px 12px !important;
     border-radius: 10px !important;
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
     height: 42px !important;
     line-height: 42px !important;
 }
 
 .admin-sider .ant-menu-item .anticon {
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
     font-size: 18px !important;
 }
 
 .admin-sider .ant-menu-item .ant-menu-title-content {
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
 }
 
 .admin-sider .ant-menu-item:hover {
-    background: rgba(124, 92, 252, 0.08) !important;
+    background: rgba(255, 221, 92, 0.08) !important;
     color: #fff !important;
 }
 
@@ -77,15 +77,15 @@ body {
     color: #fff !important;
 }
 
-/* Active item — pill style with violet accent, NO border-left */
+/* Active item — pill style with yellow accent, NO border-left */
 .admin-sider .ant-menu-item-selected {
-    background: rgba(124, 92, 252, 0.15) !important;
+    background: rgba(255, 221, 92, 0.15) !important;
     color: #fff !important;
     border-left: none !important;
 }
 
 .admin-sider .ant-menu-item-selected .anticon {
-    color: #7C5CFC !important;
+    color: #FFDD5C !important;
 }
 
 .admin-sider .ant-menu-item-selected .ant-menu-title-content {
@@ -132,7 +132,7 @@ body {
     background: #1C1B2E !important;
     font-weight: 600 !important;
     font-size: 13px !important;
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -160,16 +160,16 @@ body {
 }
 
 .ant-table-pagination .ant-pagination-item a {
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
 }
 
 .ant-table-pagination .ant-pagination-item-active {
-    background: rgba(124, 92, 252, 0.15) !important;
-    border-color: #7C5CFC !important;
+    background: rgba(255, 221, 92, 0.15) !important;
+    border-color: #FFDD5C !important;
 }
 
 .ant-table-pagination .ant-pagination-item-active a {
-    color: #7C5CFC !important;
+    color: #FFDD5C !important;
 }
 
 /* Table empty state */
@@ -178,7 +178,7 @@ body {
 }
 
 .ant-empty-description {
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
 }
 
 /* ─── Stats bar cards (dark) ─── */
@@ -210,7 +210,7 @@ body {
 .quick-access-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-    border-color: #7C5CFC !important;
+    border-color: #FFDD5C !important;
     background: #252440 !important;
 }
 
@@ -223,12 +223,12 @@ body {
     min-height: 220px;
     background: #252440;
     border-radius: 12px;
-    border: 2px dashed rgba(124, 92, 252, 0.25);
+    border: 2px dashed rgba(255, 221, 92, 0.25);
     transition: border-color 0.2s ease;
 }
 
 .chart-placeholder:hover {
-    border-color: #7C5CFC;
+    border-color: #FFDD5C;
 }
 
 /* ─── Sidebar section labels ─── */
@@ -243,9 +243,9 @@ body {
 
 /* ─── Notification badge pulse ─── */
 @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(124, 92, 252, 0.4); }
-    70% { box-shadow: 0 0 0 6px rgba(124, 92, 252, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(124, 92, 252, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(255, 221, 92, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(255, 221, 92, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 221, 92, 0); }
 }
 
 .notification-bell .ant-badge-dot {
@@ -269,14 +269,14 @@ body {
 .ant-input:hover,
 .ant-input-affix-wrapper:hover,
 .ant-select-selector:hover {
-    border-color: #7C5CFC !important;
+    border-color: #FFDD5C !important;
 }
 
 .ant-input:focus,
 .ant-input-affix-wrapper:focus,
 .ant-input-affix-wrapper-focused {
-    border-color: #7C5CFC !important;
-    box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.2) !important;
+    border-color: #FFDD5C !important;
+    box-shadow: 0 0 0 2px rgba(255, 221, 92, 0.2) !important;
 }
 
 /* ─── Ant Design Cards dark override ─── */
@@ -290,7 +290,7 @@ body {
 .ant-breadcrumb,
 .ant-breadcrumb a,
 .ant-breadcrumb-separator {
-    color: #8B8BA3 !important;
+    color: #A0A0B8 !important;
 }
 
 /* ─── Dropdown dark ─── */
@@ -348,7 +348,7 @@ h1, h2, h3, h4, h5 {
 
 /* ─── Spin loader ─── */
 .ant-spin-dot-item {
-    background: #7C5CFC !important;
+    background: #FFDD5C !important;
 }
 
 /* ─── Tooltip ─── */
@@ -359,4 +359,30 @@ h1, h2, h3, h4, h5 {
 /* ─── Badge text for dark ─── */
 .ant-badge-status-text {
     color: #FFFFFF !important;
+}
+
+/* ─── Ant Typography force white in dark theme ─── */
+.ant-typography {
+    color: #FFFFFF !important;
+}
+
+/* ─── Buttons — primary yellow with dark text ─── */
+.ant-btn-primary {
+    background: #FFDD5C !important;
+    border-color: #FFDD5C !important;
+    color: #13112B !important;
+}
+
+.ant-btn-primary:hover {
+    background: #E5C44E !important;
+    border-color: #E5C44E !important;
+}
+
+/* ─── Links ─── */
+.ant-btn-link {
+    color: #FFDD5C !important;
+}
+
+.ant-btn-link:hover {
+    color: #E5C44E !important;
 }

@@ -166,7 +166,7 @@ export function AdminSider() {
                         flexShrink: 0,
                     }}
                 >
-                    <span style={{ color: "#fff", fontWeight: 800, fontSize: 16 }}>Z</span>
+                    <span style={{ color: "#13112B", fontWeight: 800, fontSize: 16 }}>Z</span>
                 </div>
                 {!collapsed && (
                     <span

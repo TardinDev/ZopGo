@@ -38,7 +38,7 @@ export function UserList() {
             label: "Total utilisateurs",
             value: total,
             icon: <TeamOutlined style={{ fontSize: 20, color: DARK.accent }} />,
-            iconBg: "rgba(124, 92, 252, 0.15)",
+            iconBg: "rgba(255, 221, 92, 0.15)",
         },
         {
             label: "Chauffeurs actifs",
@@ -50,7 +50,7 @@ export function UserList() {
             label: "Nouveaux ce mois",
             value: "—",
             icon: <CalendarOutlined style={{ fontSize: 20, color: DARK.accent }} />,
-            iconBg: "rgba(124, 92, 252, 0.15)",
+            iconBg: "rgba(255, 221, 92, 0.15)",
         },
     ];
 

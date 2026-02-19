@@ -2,7 +2,7 @@
  * ZopGo Admin — Dark header with route-based title, search, notifications, user
  */
 
-import { Layout, Avatar, Dropdown, Space, Typography, Badge, Input } from "antd";
+import { Layout, Avatar, Dropdown, Space, Badge, Input } from "antd";
 import {
     UserOutlined,
     LogoutOutlined,
@@ -16,7 +16,6 @@ import { useLocation } from "react-router-dom";
 import { DARK } from "@/config/constants";
 
 const { Header } = Layout;
-const { Text } = Typography;
 
 interface Identity {
     id: string;
@@ -39,7 +38,6 @@ const routeTitles: Record<string, { title: string; subtitle: string }> = {
 };
 
 function getPageInfo(pathname: string) {
-    // Try exact match first, then first segment
     if (routeTitles[pathname]) return routeTitles[pathname];
     const base = "/" + pathname.split("/").filter(Boolean)[0];
     return routeTitles[base] ?? { title: "Dashboard", subtitle: "" };
@@ -95,11 +93,11 @@ export function AdminHeader() {
         >
             {/* Left — Page title + subtitle */}
             <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: DARK.textPrimary, lineHeight: 1.2 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>
                     {title}
                 </div>
                 {subtitle && (
-                    <div style={{ fontSize: 13, color: DARK.textSecondary, marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: "#A0A0B8", marginTop: 2 }}>
                         {subtitle}
                     </div>
                 )}
@@ -116,7 +114,6 @@ export function AdminHeader() {
                         background: DARK.cardBgHover,
                         borderColor: "transparent",
                         borderRadius: 10,
-                        color: DARK.textPrimary,
                     }}
                 />
 
@@ -124,25 +121,25 @@ export function AdminHeader() {
                 <div className="notification-bell" style={{ cursor: "pointer" }}>
                     <Badge count={3} size="small" offset={[-2, 2]}>
                         <BellOutlined
-                            style={{ fontSize: 20, color: DARK.textSecondary, transition: "color 0.2s" }}
+                            style={{ fontSize: 20, color: "#A0A0B8", transition: "color 0.2s" }}
                             onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
-                            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = DARK.textSecondary; }}
+                            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
                         />
                     </Badge>
                 </div>
 
                 {/* Messages */}
                 <MessageOutlined
-                    style={{ fontSize: 20, color: DARK.textSecondary, cursor: "pointer", transition: "color 0.2s" }}
+                    style={{ fontSize: 20, color: "#A0A0B8", cursor: "pointer", transition: "color 0.2s" }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = DARK.textSecondary; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
                 />
 
                 {/* Settings */}
                 <SettingOutlined
-                    style={{ fontSize: 20, color: DARK.textSecondary, cursor: "pointer", transition: "color 0.2s" }}
+                    style={{ fontSize: 20, color: "#A0A0B8", cursor: "pointer", transition: "color 0.2s" }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = DARK.textSecondary; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
                 />
 
                 {/* User dropdown */}
@@ -173,14 +170,14 @@ export function AdminHeader() {
                             size={36}
                         />
                         <div style={{ lineHeight: 1.3 }}>
-                            <Text strong style={{ display: "block", fontSize: 13, color: DARK.textPrimary }}>
+                            <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>
                                 {identity?.name ?? "Admin"}
-                            </Text>
-                            <Text
-                                style={{ display: "block", fontSize: 11, color: DARK.textSecondary, textTransform: "capitalize" }}
+                            </span>
+                            <span
+                                style={{ display: "block", fontSize: 11, color: "#A0A0B8", textTransform: "capitalize" }}
                             >
                                 {identity?.role?.replace("_", " ") ?? "admin"}
-                            </Text>
+                            </span>
                         </div>
                     </Space>
                 </Dropdown>
