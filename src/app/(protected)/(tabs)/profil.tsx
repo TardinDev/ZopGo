@@ -8,9 +8,9 @@ import { menuItems } from '../../../data';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { RatingSummary, ReviewCard } from '../../../components/ratings';
 import { useRatingsStore } from '../../../stores/ratingsStore';
-import { useAuthStore, isChauffeur } from '../../../stores/authStore';
+import { useAuthStore, isChauffeur, isHebergeur } from '../../../stores/authStore';
 import { COLORS } from '../../../constants';
-import { ChauffeurProfile } from '../../../types';
+import { ChauffeurProfile, HebergeurProfile } from '../../../types';
 
 type MainTabType = 'reviews' | 'settings';
 type ReviewTabType = 'received' | 'given';
@@ -25,7 +25,9 @@ export default function ProfilTab() {
   const profile = user?.profile;
   if (!profile) return null;
   const isUserChauffeur = isChauffeur(user);
+  const isUserHebergeur = isHebergeur(user);
   const chauffeurProfile = isUserChauffeur ? (user.profile as ChauffeurProfile) : null;
+  const hebergeurProfile = isUserHebergeur ? (user.profile as HebergeurProfile) : null;
 
   // Pour les chauffeurs, on affiche uniquement les avis reçus
   const reviews = activeReviewTab === 'received' ? receivedReviews : givenReviews;
@@ -91,17 +93,27 @@ export default function ProfilTab() {
                 </View>
               )}
 
+              {/* Badge hébergement pour les hébergeurs */}
+              {isUserHebergeur && hebergeurProfile && (
+                <View className="mb-2 flex-row items-center rounded-full bg-white/20 px-4 py-2">
+                  <Text className="mr-2 text-lg">{hebergeurProfile.accommodation.icon}</Text>
+                  <Text className="font-semibold text-white">
+                    {hebergeurProfile.accommodation.label}
+                  </Text>
+                </View>
+              )}
+
               <View className="flex-row items-center rounded-full bg-white/20 px-4 py-2">
                 <Ionicons name="star" size={16} color="#FFD700" />
                 <Text className="ml-1 font-semibold text-white">{profile.rating}</Text>
               </View>
 
-              {/* Badge Top Chauffeur si rating >= 4.5 */}
+              {/* Badge Top si rating >= 4.5 */}
               {profile.rating >= 4.5 && (
                 <View className="mt-3 flex-row items-center rounded-full bg-yellow-400/90 px-4 py-2">
                   <Text className="mr-1">🏆</Text>
                   <Text className="font-bold text-gray-800">
-                    {isUserChauffeur ? 'Top Chauffeur' : 'Client VIP'}
+                    {isUserChauffeur ? 'Top Transporteur' : isUserHebergeur ? 'Top Hébergeur' : 'Client VIP'}
                   </Text>
                 </View>
               )}
@@ -111,18 +123,20 @@ export default function ProfilTab() {
             {/* Statistiques */}
             <View className="mx-6 mb-6 rounded-2xl bg-white/10 p-6">
               <Text className="mb-4 text-center text-lg font-bold text-white">
-                {isUserChauffeur ? '📊 Mes performances' : '📊 Mes statistiques'}
+                {isUserChauffeur ? '📊 Mes performances' : isUserHebergeur ? '📊 Mes performances' : '📊 Mes statistiques'}
               </Text>
               <View className="flex-row justify-around">
                 <View className="items-center">
                   <Text className="text-3xl font-bold text-white">{profile.totalTrips}</Text>
                   <Text className="text-sm text-white/80">
-                    {isUserChauffeur ? 'Courses' : 'Voyages'}
+                    {isUserChauffeur ? 'Courses' : isUserHebergeur ? 'Réservations' : 'Voyages'}
                   </Text>
                 </View>
                 <View className="items-center">
                   <Text className="text-3xl font-bold text-white">{profile.totalDeliveries}</Text>
-                  <Text className="text-sm text-white/80">Livraisons</Text>
+                  <Text className="text-sm text-white/80">
+                    {isUserHebergeur ? 'Logements' : 'Livraisons'}
+                  </Text>
                 </View>
                 <View className="items-center">
                   <Text className="text-3xl font-bold text-white">{profile.memberSince}</Text>

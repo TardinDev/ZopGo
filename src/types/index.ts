@@ -113,12 +113,21 @@ export interface Trajet {
 }
 
 // Types pour l'authentification et les rôles
-export type UserRole = 'client' | 'chauffeur';
+export type UserRole = 'client' | 'chauffeur' | 'hebergeur';
 
 export type VehicleType = 'moto' | 'velo' | 'voiture' | 'camionnette';
 
 export interface VehicleInfo {
   type: VehicleType;
+  label: string;
+  icon: string;
+}
+
+// Types pour les hébergeurs
+export type AccommodationType = 'hotel' | 'auberge' | 'appartement' | 'maison' | 'chambre';
+
+export interface AccommodationInfo {
+  type: AccommodationType;
   label: string;
   icon: string;
 }
@@ -130,17 +139,41 @@ export interface ChauffeurProfile extends UserInfo {
   distance?: number; // Distance par rapport au client (calculée dynamiquement)
 }
 
+// Profil hébergeur (étend UserInfo avec infos spécifiques)
+export interface HebergeurProfile extends UserInfo {
+  accommodation: AccommodationInfo;
+  disponible: boolean;
+}
+
+// Listing d'hébergement proposé par un hébergeur
+export type HebergementStatus = 'actif' | 'inactif';
+
+export interface HebergeurListing {
+  id: string;
+  hebergeurId: string;
+  nom: string;
+  type: AccommodationType;
+  ville: string;
+  adresse: string;
+  prixParNuit: number;
+  capacite: number;
+  description: string;
+  status: HebergementStatus;
+  createdAt: string;
+}
+
 // Types pour les préférences de notifications push
 export interface NotificationPreferences {
   courses: boolean;
   trajets: boolean;
+  hebergements: boolean;
   promotions: boolean;
 }
 export type NotificationCategory = keyof NotificationPreferences;
 
-// Utilisateur authentifié (peut être client ou chauffeur)
+// Utilisateur authentifié (peut être client, chauffeur ou hébergeur)
 export interface AuthUser {
   id: string;
   role: UserRole;
-  profile: UserInfo | ChauffeurProfile;
+  profile: UserInfo | ChauffeurProfile | HebergeurProfile;
 }

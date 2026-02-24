@@ -6,9 +6,12 @@ import {
   AuthUser,
   UserRole,
   ChauffeurProfile,
+  HebergeurProfile,
   UserInfo,
   VehicleType,
   VehicleInfo,
+  AccommodationType,
+  AccommodationInfo,
   Livreur,
   NotificationPreferences,
 } from '../types';
@@ -24,9 +27,19 @@ export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   camionnette: { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
 };
 
+// Mapping des types d'hébergements
+export const ACCOMMODATION_TYPES: Record<AccommodationType, AccommodationInfo> = {
+  hotel: { type: 'hotel', label: 'Hôtel', icon: '🏨' },
+  auberge: { type: 'auberge', label: 'Auberge', icon: '🏠' },
+  appartement: { type: 'appartement', label: 'Appartement', icon: '🏢' },
+  maison: { type: 'maison', label: 'Maison', icon: '🏡' },
+  chambre: { type: 'chambre', label: 'Chambre', icon: '🛏️' },
+};
+
 const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
   courses: true,
   trajets: true,
+  hebergements: true,
   promotions: true,
 };
 
@@ -44,10 +57,11 @@ interface AuthState {
     name: string,
     email: string,
     vehicleType?: VehicleType,
-    clerkId?: string
+    clerkId?: string,
+    accommodationType?: AccommodationType
   ) => void;
   logout: () => void;
-  updateProfile: (profile: Partial<UserInfo | ChauffeurProfile>) => void;
+  updateProfile: (profile: Partial<UserInfo | ChauffeurProfile | HebergeurProfile>) => void;
   setDisponible: (disponible: boolean) => void;
   loadNotificationPreferences: (clerkId: string) => Promise<void>;
   setNotificationPreferences: (prefs: NotificationPreferences) => void;
@@ -85,6 +99,25 @@ const createChauffeurProfile = (
   disponible: true,
 });
 
+// Profil hébergeur par défaut
+const createHebergeurProfile = (
+  name: string,
+  email: string,
+  accommodationType: AccommodationType = 'hotel'
+): HebergeurProfile => ({
+  name,
+  email,
+  phone: '',
+  avatar:
+    'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+  rating: 5.0,
+  totalTrips: 0,
+  totalDeliveries: 0,
+  memberSince: new Date().getFullYear().toString(),
+  accommodation: ACCOMMODATION_TYPES[accommodationType],
+  disponible: true,
+});
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -96,10 +129,12 @@ export const useAuthStore = create<AuthState>()(
 
       setHasHydrated: (value) => set({ _hasHydrated: value }),
 
-      setupProfile: (role, name, email, vehicleType, clerkId) => {
+      setupProfile: (role, name, email, vehicleType, clerkId, accommodationType) => {
         const profile =
           role === 'chauffeur'
             ? createChauffeurProfile(name, email, vehicleType)
+            : role === 'hebergeur'
+            ? createHebergeurProfile(name, email, accommodationType)
             : createClientProfile(name, email);
 
         const newUser: AuthUser = {
@@ -147,7 +182,7 @@ export const useAuthStore = create<AuthState>()(
                   role,
                   name,
                   email,
-                  disponible: role === 'chauffeur',
+                  disponible: role === 'chauffeur' || role === 'hebergeur',
                 });
                 if (created) {
                   set({ supabaseProfileId: created.id });
@@ -206,17 +241,25 @@ export const useAuthStore = create<AuthState>()(
 
       setDisponible: (disponible) => {
         const { user, clerkId } = get();
-        if (!user || user.role !== 'chauffeur') return;
+        if (!user || (user.role !== 'chauffeur' && user.role !== 'hebergeur')) return;
 
-        set({
-          user: {
-            ...user,
-            profile: { ...(user.profile as ChauffeurProfile), disponible },
-          },
-        });
-
-        // Mettre à jour la disponibilité dans le driversStore
-        useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
+        if (user.role === 'chauffeur') {
+          set({
+            user: {
+              ...user,
+              profile: { ...(user.profile as ChauffeurProfile), disponible },
+            },
+          });
+          // Mettre à jour la disponibilité dans le driversStore
+          useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
+        } else {
+          set({
+            user: {
+              ...user,
+              profile: { ...(user.profile as HebergeurProfile), disponible },
+            },
+          });
+        }
 
         // Sync avec Supabase
         if (clerkId) {
@@ -258,6 +301,13 @@ export const isChauffeur = (
   user: AuthUser | null
 ): user is AuthUser & { profile: ChauffeurProfile } => {
   return user?.role === 'chauffeur';
+};
+
+// Helper pour vérifier si l'utilisateur est un hébergeur
+export const isHebergeur = (
+  user: AuthUser | null
+): user is AuthUser & { profile: HebergeurProfile } => {
+  return user?.role === 'hebergeur';
 };
 
 // Helper pour convertir un ChauffeurProfile en Livreur

@@ -45,6 +45,7 @@ export const COLORS = {
     yellow: ['#FFFEF5', '#FFDD5C'],
     purple: ['#667eea', '#764ba2'],
     cyan: ['#4facfe', '#00f2fe'],
+    hebergeur: ['#8B5CF6', '#A855F7'],
   },
 
   // Couleurs avec transparence

@@ -5,6 +5,7 @@ import type { NotificationPreferences } from '../types';
 const DEFAULT_PREFS: NotificationPreferences = {
   courses: true,
   trajets: true,
+  hebergements: true,
   promotions: true,
 };
 

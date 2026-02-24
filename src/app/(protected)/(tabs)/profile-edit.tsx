@@ -186,6 +186,28 @@ export default function ProfileEditScreen() {
               </TouchableOpacity>
             </View>
 
+            <View className="mb-4 flex-row items-center justify-between">
+              <View className="flex-1 pr-4">
+                <Text className="font-medium text-gray-800">Hébergements</Text>
+                <Text className="text-sm text-gray-500">
+                  Réservations, disponibilités, avis
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  setLocalPrefs({ ...localPrefs, hebergements: !localPrefs.hebergements })
+                }
+                className={`h-6 w-12 rounded-full ${
+                  localPrefs.hebergements ? 'bg-[#2162FE]' : 'bg-gray-300'
+                }`}>
+                <View
+                  className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    localPrefs.hebergements ? 'ml-6' : 'ml-0.5'
+                  }`}
+                />
+              </TouchableOpacity>
+            </View>
+
             <View className="flex-row items-center justify-between">
               <View className="flex-1 pr-4">
                 <Text className="font-medium text-gray-800">Promotions et infos</Text>

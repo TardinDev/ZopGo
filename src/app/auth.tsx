@@ -17,8 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
-import { useAuthStore, VEHICLE_TYPES } from '../stores/authStore';
-import { UserRole, VehicleType } from '../types';
+import { useAuthStore, VEHICLE_TYPES, ACCOMMODATION_TYPES } from '../stores/authStore';
+import { UserRole, VehicleType, AccommodationType } from '../types';
 import { ModeTransition } from '../components/ui';
 import { COLORS } from '../constants/colors';
 
@@ -27,6 +27,7 @@ const SPLASH_IMAGE = require('../../assets/splashScreen.jpg');
 // Couleurs harmonisées avec l'illustration ZopGo
 const ACCENT = '#0B8457';       // vert profond (voiture/logo)
 const GOLD = '#E8A832';         // doré (motifs véhicule)
+const VIOLET = '#8B5CF6';       // violet (hébergeur)
 
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
@@ -51,6 +52,7 @@ export default function AuthScreen() {
   });
   const [selectedRole, setSelectedRole] = useState<UserRole>('client');
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('moto');
+  const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationType>('hotel');
   const [showTransition, setShowTransition] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole>('client');
   const [isRoleSwitch, setIsRoleSwitch] = useState(false);
@@ -93,6 +95,7 @@ export default function AuthScreen() {
         unsafeMetadata: {
           role: selectedRole,
           vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
+          accommodationType: selectedRole === 'hebergeur' ? selectedAccommodation : undefined,
         },
       }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
 
@@ -102,6 +105,7 @@ export default function AuthScreen() {
         hasSetupProfile.current = true;
 
         const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+        const accommodationType = selectedRole === 'hebergeur' ? selectedAccommodation : undefined;
         const name =
           clerkUser.fullName ||
           clerkUser.firstName ||
@@ -110,7 +114,7 @@ export default function AuthScreen() {
           'Utilisateur';
         const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
 
-        setupProfile(selectedRole, name, email, vehicleType, clerkUser.id);
+        setupProfile(selectedRole, name, email, vehicleType, clerkUser.id, accommodationType);
       }
     }
   }, [clerkUser, showTransition, isRoleSwitch]);
@@ -231,8 +235,9 @@ export default function AuthScreen() {
         const userId = result.createdUserId || Date.now().toString();
         const name = formData.name || formData.email.split('@')[0] || 'Utilisateur';
         const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+        const accommodationType = selectedRole === 'hebergeur' ? selectedAccommodation : undefined;
         hasSetupProfile.current = true;
-        setupProfile(selectedRole, name, formData.email, vehicleType, userId);
+        setupProfile(selectedRole, name, formData.email, vehicleType, userId, accommodationType);
 
         // Le metadata Clerk sera sauvegardé par le useEffect quand clerkUser sera disponible
 
@@ -389,6 +394,7 @@ export default function AuthScreen() {
   };
 
   const vehicleOptions = Object.values(VEHICLE_TYPES);
+  const accommodationOptions = Object.values(ACCOMMODATION_TYPES);
 
   const codeDigits = verificationCode.split('');
 
@@ -834,10 +840,18 @@ export default function AuthScreen() {
 
             {/* Card */}
             <View style={styles.cardContainer}>
-              <View style={[styles.card, { borderColor: selectedRole === 'chauffeur' ? GOLD : 'rgba(255, 255, 255, 0.4)' }]}>
+              <View style={[styles.card, {
+                borderColor: selectedRole === 'chauffeur' ? GOLD
+                  : selectedRole === 'hebergeur' ? VIOLET
+                  : 'rgba(255, 255, 255, 0.4)'
+              }]}>
                 {/* Accent bar top */}
                 <LinearGradient
-                  colors={selectedRole === 'chauffeur' ? [GOLD, '#D97706'] : [ACCENT, GOLD]}
+                  colors={
+                    selectedRole === 'chauffeur' ? [GOLD, '#D97706']
+                    : selectedRole === 'hebergeur' ? [VIOLET, '#A855F7']
+                    : [ACCENT, GOLD]
+                  }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cardAccentBar}
@@ -854,7 +868,7 @@ export default function AuthScreen() {
                       ]}>
                       <Ionicons
                         name="person"
-                        size={20}
+                        size={18}
                         color={selectedRole === 'client' ? ACCENT : COLORS.gray[400]}
                       />
                       <Text
@@ -874,7 +888,7 @@ export default function AuthScreen() {
                       ]}>
                       <Ionicons
                         name="car"
-                        size={20}
+                        size={18}
                         color={selectedRole === 'chauffeur' ? GOLD : COLORS.gray[400]}
                       />
                       <Text
@@ -882,7 +896,27 @@ export default function AuthScreen() {
                           styles.rolePillText,
                           selectedRole === 'chauffeur' ? styles.rolePillTextActiveChauffeur : styles.rolePillTextInactive,
                         ]}>
-                        Chauffeur
+                        Transporteur
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => handleRoleChange('hebergeur')}
+                      style={[
+                        styles.rolePill,
+                        selectedRole === 'hebergeur' ? styles.rolePillActiveHebergeur : styles.rolePillInactive,
+                      ]}>
+                      <Ionicons
+                        name="bed"
+                        size={18}
+                        color={selectedRole === 'hebergeur' ? VIOLET : COLORS.gray[400]}
+                      />
+                      <Text
+                        style={[
+                          styles.rolePillText,
+                          selectedRole === 'hebergeur' ? styles.rolePillTextActiveHebergeur : styles.rolePillTextInactive,
+                        ]}>
+                        Hébergeur
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -912,6 +946,37 @@ export default function AuthScreen() {
                                 : styles.vehicleLabelInactive,
                             ]}>
                             {vehicle.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Sélecteur de type d'hébergement (hébergeur) */}
+                {selectedRole === 'hebergeur' && (
+                  <View style={styles.vehicleSection}>
+                    <Text style={styles.sectionLabel}>Type d'hébergement</Text>
+                    <View style={styles.vehicleRow}>
+                      {accommodationOptions.map((accommodation) => (
+                        <TouchableOpacity
+                          key={accommodation.type}
+                          onPress={() => setSelectedAccommodation(accommodation.type)}
+                          style={[
+                            styles.vehicleChip,
+                            selectedAccommodation === accommodation.type
+                              ? styles.accommodationChipActive
+                              : styles.vehicleChipInactive,
+                          ]}>
+                          <Text style={styles.vehicleIcon}>{accommodation.icon}</Text>
+                          <Text
+                            style={[
+                              styles.vehicleLabel,
+                              selectedAccommodation === accommodation.type
+                                ? styles.accommodationLabelActive
+                                : styles.vehicleLabelInactive,
+                            ]}>
+                            {accommodation.label}
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -1219,6 +1284,18 @@ const styles = StyleSheet.create({
   rolePillTextActiveChauffeur: {
     color: GOLD,
   },
+  rolePillActiveHebergeur: {
+    borderColor: VIOLET,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    shadowColor: VIOLET,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  rolePillTextActiveHebergeur: {
+    color: VIOLET,
+  },
   rolePillTextInactive: {
     color: COLORS.gray[500],
   },
@@ -1259,6 +1336,13 @@ const styles = StyleSheet.create({
   },
   vehicleLabelInactive: {
     color: COLORS.gray[500],
+  },
+  accommodationChipActive: {
+    borderColor: VIOLET,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+  },
+  accommodationLabelActive: {
+    color: VIOLET,
   },
   fieldGroup: {
     marginBottom: 10,
