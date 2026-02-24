@@ -1240,15 +1240,16 @@ const styles = StyleSheet.create({
   },
   roleRow: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   rolePill: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 16,
     borderWidth: 2,
   },
@@ -1266,7 +1267,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   rolePillText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
   },
   rolePillTextActive: {
