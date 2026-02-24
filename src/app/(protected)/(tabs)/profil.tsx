@@ -192,8 +192,8 @@ export default function ProfilTab() {
                   {/* Résumé des notes */}
                   <RatingSummary data={ratingSummary} />
 
-                  {/* Onglets Avis reçus / Avis donnés (masqué pour chauffeurs) */}
-                  {!isUserChauffeur ? (
+                  {/* Onglets Avis reçus / Avis donnés (masqué pour chauffeurs et hébergeurs) */}
+                  {!isUserChauffeur && !isUserHebergeur ? (
                     <View className="mb-4 flex-row rounded-2xl bg-white p-1 shadow-sm">
                       <TouchableOpacity
                         className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${
@@ -259,14 +259,14 @@ export default function ProfilTab() {
                     </View>
                   ) : (
                     <Text className="mb-4 text-center text-sm text-gray-500">
-                      Avis reçus de vos clients
+                      {isUserHebergeur ? 'Avis reçus de vos voyageurs' : 'Avis reçus de vos clients'}
                     </Text>
                   )}
 
                   {/* Liste des avis */}
-                  {(isUserChauffeur ? receivedReviews : reviews).length > 0 ? (
+                  {((isUserChauffeur || isUserHebergeur) ? receivedReviews : reviews).length > 0 ? (
                     <View className="pb-6">
-                      {(isUserChauffeur ? receivedReviews : reviews).map((review) => (
+                      {((isUserChauffeur || isUserHebergeur) ? receivedReviews : reviews).map((review) => (
                         <ReviewCard key={review.id} review={review} />
                       ))}
                     </View>

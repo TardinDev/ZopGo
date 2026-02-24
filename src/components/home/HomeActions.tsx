@@ -31,7 +31,7 @@ export function HomeActions() {
   const clientCards: ActionCard[] = [
     {
       title: ['Démarrer', 'un voyage'],
-      subtitle: 'Transporter des passagers',
+      subtitle: 'Réservez un trajet en toute simplicité',
       icon: 'car-sport',
       gradientColors: ['rgba(37, 99, 235, 0.9)', 'rgba(29, 78, 216, 0.8)'],
       imageUri: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&q=80',
@@ -39,7 +39,7 @@ export function HomeActions() {
     },
     {
       title: ['Livraison', 'express'],
-      subtitle: 'Livrer des colis rapidement',
+      subtitle: 'Envoyez vos colis rapidement',
       icon: 'cube',
       gradientColors: ['rgba(249, 115, 22, 0.9)', 'rgba(194, 65, 12, 0.8)'],
       imageUri: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=800&q=80',
@@ -124,12 +124,12 @@ export function HomeActions() {
       onPress: () => Alert.alert('Bientôt disponible', 'Cette fonctionnalité arrive prochainement.'),
     },
     {
-      title: ['Trouver un', 'hébergement'],
-      subtitle: 'Hôtels, Auberges et plus',
-      icon: 'bed',
+      title: ['Consulter', 'les avis'],
+      subtitle: 'Avis et retours de vos voyageurs',
+      icon: 'chatbubbles',
       gradientColors: ['rgba(107, 114, 128, 0.8)', 'rgba(55, 65, 81, 0.9)'],
-      imageUri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80',
-      onPress: () => router.push('/(protected)/(tabs)/hebergements'),
+      imageUri: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
+      onPress: () => router.push('/(protected)/(tabs)/profil'),
     },
   ];
 

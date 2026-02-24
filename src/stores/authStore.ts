@@ -252,7 +252,7 @@ export const useAuthStore = create<AuthState>()(
           });
           // Mettre à jour la disponibilité dans le driversStore
           useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
-        } else {
+        } else if (user.role === 'hebergeur') {
           set({
             user: {
               ...user,

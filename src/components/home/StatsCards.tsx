@@ -5,7 +5,7 @@ import { BlurView } from 'expo-blur';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { COLORS } from '../../constants';
-import { Stat } from '../../types';
+import { Stat, UserRole } from '../../types';
 
 // Le rideau commence en couvrant 4/5 de la carte (96px sur 120px)
 // revealOffset: 0 = rideau en position haute (4/5 couvert), 96 = rideau complètement descendu (tout révélé)
@@ -72,9 +72,17 @@ interface StatsCardsProps {
   totalTrips: number;
   rating: number;
   totalDeliveries: number;
+  role?: UserRole;
 }
 
-export function StatsCards({ totalTrips, rating, totalDeliveries }: StatsCardsProps) {
+export function StatsCards({ totalTrips, rating, totalDeliveries, role }: StatsCardsProps) {
+  const isChauffeur = role === 'chauffeur';
+  const isHebergeur = role === 'hebergeur';
+
+  const tripsLabel = isChauffeur ? 'Courses' : isHebergeur ? 'Réservations' : 'Voyages';
+  const tripsSubtitle = isChauffeur ? 'Courses effectuées' : isHebergeur ? 'Réservations reçues' : 'Voyages effectués';
+  const tripsIcon = isChauffeur ? 'car-outline' : isHebergeur ? 'bed-outline' : 'airplane-outline';
+
   const stats: Stat[] = [
     {
       id: 1,
@@ -86,10 +94,10 @@ export function StatsCards({ totalTrips, rating, totalDeliveries }: StatsCardsPr
     },
     {
       id: 2,
-      title: 'Courses',
+      title: tripsLabel,
       value: totalTrips.toString(),
-      subtitle: 'Courses totales',
-      icon: 'car-outline',
+      subtitle: tripsSubtitle,
+      icon: tripsIcon,
       color: 'blue',
     },
     {

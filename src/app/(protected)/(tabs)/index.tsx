@@ -85,6 +85,7 @@ export default function HomeTab() {
               totalTrips={user?.profile?.totalTrips || 0}
               rating={user?.profile?.rating || 0}
               totalDeliveries={user?.profile?.totalDeliveries || 0}
+              role={user?.role}
             />
 
             {/* Actions Principales */}
