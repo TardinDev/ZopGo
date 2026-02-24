@@ -26,6 +26,7 @@ export function HomeActions() {
   const router = useRouter();
   const { user } = useAuthStore();
   const isChauffeur = user?.role === 'chauffeur';
+  const isHebergeur = user?.role === 'hebergeur';
 
   const clientCards: ActionCard[] = [
     {
@@ -97,7 +98,42 @@ export function HomeActions() {
     },
   ];
 
-  const cards = isChauffeur ? chauffeurCards : clientCards;
+  const hebergeurCards: ActionCard[] = [
+    {
+      title: ['Gérer mes', 'logements'],
+      subtitle: 'Ajoutez et gérez vos hébergements',
+      icon: 'home',
+      gradientColors: ['rgba(139, 92, 246, 0.9)', 'rgba(168, 85, 247, 0.8)'],
+      imageUri: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
+      onPress: () => router.push('/(protected)/(tabs)/mes-hebergements'),
+    },
+    {
+      title: ['Voir les', 'réservations'],
+      subtitle: 'Suivez les demandes de réservation',
+      icon: 'calendar',
+      gradientColors: ['rgba(59, 130, 246, 0.9)', 'rgba(37, 99, 235, 0.8)'],
+      imageUri: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80',
+      onPress: () => Alert.alert('Bientôt disponible', 'Cette fonctionnalité arrive prochainement.'),
+    },
+    {
+      title: ['Mes', 'statistiques'],
+      subtitle: 'Revenus, taux d\'occupation',
+      icon: 'stats-chart',
+      gradientColors: ['rgba(16, 185, 129, 0.9)', 'rgba(5, 150, 105, 0.8)'],
+      imageUri: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
+      onPress: () => Alert.alert('Bientôt disponible', 'Cette fonctionnalité arrive prochainement.'),
+    },
+    {
+      title: ['Trouver un', 'hébergement'],
+      subtitle: 'Hôtels, Auberges et plus',
+      icon: 'bed',
+      gradientColors: ['rgba(107, 114, 128, 0.8)', 'rgba(55, 65, 81, 0.9)'],
+      imageUri: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80',
+      onPress: () => router.push('/(protected)/(tabs)/hebergements'),
+    },
+  ];
+
+  const cards = isHebergeur ? hebergeurCards : isChauffeur ? chauffeurCards : clientCards;
 
   return (
     <ScrollView

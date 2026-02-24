@@ -26,9 +26,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const { signOut } = useAuth();
   const { user, logout, setDisponible } = useAuthStore();
-  const userRole = user?.role === 'chauffeur' ? 'driver' : 'client';
-  const isChauffeur = userRole === 'driver';
-  const isDisponible = isChauffeur && user?.profile && 'disponible' in user.profile && user.profile.disponible;
+  const isChauffeur = user?.role === 'chauffeur';
+  const isHebergeur = user?.role === 'hebergeur';
+  const isDisponible = (isChauffeur || isHebergeur) && user?.profile && 'disponible' in user.profile && user.profile.disponible;
 
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
@@ -73,10 +73,16 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
               {
                 backgroundColor: isChauffeur
                   ? isDisponible ? COLORS.success : '#9CA3AF'
+                  : isHebergeur
+                  ? isDisponible ? COLORS.success : '#9CA3AF'
                   : COLORS.primary,
               },
             ]}>
-            <Ionicons name={isChauffeur ? 'car' : 'person'} size={10} color="white" />
+            <Ionicons
+              name={isChauffeur ? 'car' : isHebergeur ? 'bed' : 'person'}
+              size={10}
+              color="white"
+            />
           </View>
         </TouchableOpacity>
       </View>
@@ -96,6 +102,8 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
                 {
                   borderColor: isChauffeur
                     ? isDisponible ? COLORS.success : '#9CA3AF'
+                    : isHebergeur
+                    ? isDisponible ? COLORS.success : '#9CA3AF'
                     : COLORS.primary,
                 },
               ]}>
@@ -105,28 +113,34 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
                   {
                     backgroundColor: isChauffeur
                       ? isDisponible ? COLORS.success + '20' : '#F3F4F6'
+                      : isHebergeur
+                      ? isDisponible ? COLORS.success + '20' : '#F3F4F6'
                       : COLORS.primary + '20',
                   },
                 ]}>
                 <Ionicons
-                  name={isChauffeur ? 'car' : 'person'}
+                  name={isChauffeur ? 'car' : isHebergeur ? 'bed' : 'person'}
                   size={24}
                   color={isChauffeur
+                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    : isHebergeur
                     ? isDisponible ? COLORS.success : '#9CA3AF'
                     : COLORS.primary}
                 />
               </View>
               <View style={styles.roleTextContainer}>
                 <Text style={styles.roleTitle}>
-                  {isChauffeur ? 'Chauffeur / Livreur' : 'Client'}
+                  {isChauffeur ? 'Transporteur / Livreur' : isHebergeur ? 'Hébergeur' : 'Client'}
                 </Text>
                 <Text style={styles.roleSubtitle}>
                   {isChauffeur
                     ? isDisponible ? 'En ligne - Vous recevez des demandes' : 'Hors ligne'
+                    : isHebergeur
+                    ? isDisponible ? 'En ligne - Vos logements sont visibles' : 'Hors ligne'
                     : 'Commander des courses et livraisons'}
                 </Text>
               </View>
-              {isChauffeur ? (
+              {(isChauffeur || isHebergeur) ? (
                 <Switch
                   value={!!isDisponible}
                   onValueChange={setDisponible}

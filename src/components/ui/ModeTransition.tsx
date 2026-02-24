@@ -37,13 +37,18 @@ export function ModeTransition({ visible, role, onComplete, quick = false }: Mod
   const dismissDelay = quick ? 1200 : 2800;
 
   const isClient = role === 'client';
-  const icon = isClient ? 'person' : 'car-sport';
-  const title = isClient ? 'Mode Client' : 'Mode Chauffeur';
+  const isHebergeur = role === 'hebergeur';
+  const icon: keyof typeof Ionicons.glyphMap = isClient ? 'person' : isHebergeur ? 'bed' : 'car-sport';
+  const title = isClient ? 'Mode Client' : isHebergeur ? 'Mode Hébergeur' : 'Mode Transporteur';
   const subtitle = isClient
     ? 'Commandez vos trajets et livraisons'
+    : isHebergeur
+    ? 'Gérez vos hébergements et réservations'
     : "Acceptez des courses et gagnez de l'argent";
   const gradientColors: readonly [string, string] = isClient
     ? (['#4F46E5', '#7C3AED'] as const) // Indigo to purple for client
+    : isHebergeur
+    ? (['#8B5CF6', '#A855F7'] as const) // Violet for hebergeur
     : (['#F59E0B', '#EF4444'] as const); // Amber to red for driver
 
   useEffect(() => {

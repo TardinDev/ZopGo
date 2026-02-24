@@ -6,7 +6,7 @@ import { TabAnimationProvider } from '../../hooks/useTabAnimation';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { useAuthStore } from '../../stores/authStore';
 import { setClerkTokenProvider } from '../../lib/supabase';
-import { UserRole, VehicleType } from '../../types';
+import { UserRole, VehicleType, AccommodationType } from '../../types';
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -64,10 +64,11 @@ export default function ProtectedLayout() {
         clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] ||
         'Utilisateur';
       const email = clerkUser.primaryEmailAddress?.emailAddress || '';
-      const metadata = clerkUser.unsafeMetadata as { role?: string; vehicleType?: string } | undefined;
+      const metadata = clerkUser.unsafeMetadata as { role?: string; vehicleType?: string; accommodationType?: string } | undefined;
       const role = (metadata?.role as UserRole) || 'client';
       const vehicleType = metadata?.vehicleType as VehicleType | undefined;
-      setupProfile(role, name, email, role === 'chauffeur' ? vehicleType : undefined, clerkUser.id);
+      const accommodationType = metadata?.accommodationType as AccommodationType | undefined;
+      setupProfile(role, name, email, role === 'chauffeur' ? vehicleType : undefined, clerkUser.id, role === 'hebergeur' ? accommodationType : undefined);
     }
   }, [isSignedIn, clerkUser, localUser, setupProfile]);
 
