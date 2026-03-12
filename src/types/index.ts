@@ -61,7 +61,7 @@ export interface Activity {
 
 // Types pour les livreurs
 export interface Livreur {
-  id: number;
+  id: string;
   prenom: string;
   vehicule: string;
   etoiles: number;

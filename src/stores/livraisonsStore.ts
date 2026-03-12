@@ -5,7 +5,7 @@ interface LivraisonsState {
   pickupLocation: string;
   dropoffLocation: string;
   showResults: boolean;
-  selectedLivreur: number | null;
+  selectedLivreur: string | null;
   waitingForAcceptance: boolean;
   accepted: boolean;
   noResponse: boolean;
@@ -14,7 +14,7 @@ interface LivraisonsState {
   setPickupLocation: (location: string) => void;
   setDropoffLocation: (location: string) => void;
   setShowResults: (show: boolean) => void;
-  setSelectedLivreur: (id: number | null) => void;
+  setSelectedLivreur: (id: string | null) => void;
   setWaitingForAcceptance: (waiting: boolean) => void;
   setAccepted: (accepted: boolean) => void;
   setNoResponse: (noResponse: boolean) => void;

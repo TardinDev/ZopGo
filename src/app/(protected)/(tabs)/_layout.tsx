@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMessagesStore } from '../../../stores';
 import { useTabAnimation } from '../../../hooks/useTabAnimation';
 import { useAuthStore } from '../../../stores/authStore';
+import { COLORS } from '../../../constants';
 
 export default function TabLayout() {
   const { notifications, messages } = useMessagesStore();
@@ -30,8 +31,8 @@ export default function TabLayout() {
       }}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2162FE',
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.gray[500],
 
         // --- Capsule flottante ---
         tabBarStyle: {
@@ -204,12 +205,26 @@ export default function TabLayout() {
           ),
           tabBarBadge: totalUnread > 0 ? totalUnread : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: '#EF4444',
+            backgroundColor: COLORS.error,
             fontSize: 10,
             fontWeight: 'bold',
             minWidth: 18,
             height: 18,
           },
+        }}
+      />
+
+      <Tabs.Screen
+        name="assistant"
+        options={{
+          title: 'Assistant',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'robot' : 'robot-outline'}
+              size={26}
+              color={color}
+            />
+          ),
         }}
       />
 
@@ -227,10 +242,24 @@ export default function TabLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="hebergements"
+        options={{
+          title: 'Hébergements',
+          href: (isChauffeur || isHebergeur) ? null : undefined, // Visible uniquement pour les clients
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'bed' : 'bed-outline'}
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+      />
+
       {/* Ecrans hors tab bar */}
       <Tabs.Screen name="voyage-detail" options={{ href: null, title: 'Détail du voyage' }} />
       <Tabs.Screen name="profile-edit" options={{ href: null, title: 'Modifier le profil' }} />
-      <Tabs.Screen name="hebergements" options={{ href: null, title: 'Hébergements' }} />
     </Tabs>
   );
 }

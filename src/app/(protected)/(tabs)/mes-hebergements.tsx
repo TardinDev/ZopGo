@@ -24,7 +24,7 @@ export default function MesHebergementsTab() {
     if (supabaseProfileId) {
       loadListings(supabaseProfileId);
     }
-  }, [supabaseProfileId]);
+  }, [supabaseProfileId, loadListings]);
 
   const activeListings = listings.filter((l) => l.status === 'actif');
 
@@ -100,7 +100,7 @@ export default function MesHebergementsTab() {
 
               {/* Type d'hébergement */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>
-                Type d'hébergement
+                {"Type d'hébergement"}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                 {ACCOMMODATION_OPTIONS.map((a) => (

@@ -57,7 +57,7 @@ function RevenueCard({ stat }: { stat: Stat }) {
             experimentalBlurMethod="dimezisBlurView"
             style={styles.blurView}>
             <View style={styles.blurOverlay}>
-              <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#FFD700' }}>$</Text>
+              <Text style={{ fontSize: 28, fontWeight: 'bold', color: COLORS.gold }}>$</Text>
               <Text style={styles.blurText}>↓ Glisser</Text>
               <View style={styles.dragHandle} />
             </View>
@@ -137,13 +137,13 @@ export function StatsCards({ totalTrips, rating, totalDeliveries, role }: StatsC
 function getBgColor(color: string) {
   switch (color) {
     case 'green':
-      return '#DCFCE7';
+      return COLORS.success + '20';
     case 'blue':
-      return '#DBEAFE';
+      return COLORS.info + '20';
     case 'yellow':
-      return '#FEF9C3';
+      return COLORS.warning + '20';
     default:
-      return '#F3F4F6';
+      return COLORS.gray[100];
   }
 }
 
@@ -156,7 +156,7 @@ function getColor(color: string) {
     case 'yellow':
       return COLORS.warning;
     default:
-      return '#374151';
+      return COLORS.gray[700];
   }
 }
 
@@ -188,13 +188,13 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   value: {
-    fontSize: 24, // text-2xl
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: COLORS.gray[900],
   },
   subtitle: {
-    fontSize: 12, // text-xs
-    color: '#4B5563',
+    fontSize: 12,
+    color: COLORS.gray[600],
   },
   revenueCard: {
     overflow: 'hidden',

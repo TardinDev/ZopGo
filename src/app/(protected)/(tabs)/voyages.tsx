@@ -1,11 +1,12 @@
-import { View, Text, ScrollView } from 'react-native';
-import { useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { voyages, transportTypes } from '../../../data';
 import type { Voyage } from '../../../types';
+import { COLORS } from '../../../constants';
 import { useVoyagesStore } from '../../../stores';
+import { transportTypes } from '../../../stores/voyagesStore';
 import { AnimatedTabScreen } from '../../../components/ui';
 import {
   VoyageCard,
@@ -18,19 +19,34 @@ export default function VoyagesTab() {
   const router = useRouter();
 
   // État global Zustand
-  const { selectedType, fromCity, toCity, setSelectedType, setFromCity, setToCity, swapCities } =
-    useVoyagesStore();
+  const {
+    trajets,
+    isLoading,
+    selectedType,
+    fromCity,
+    toCity,
+    loadVoyages,
+    setSelectedType,
+    setFromCity,
+    setToCity,
+    swapCities,
+  } = useVoyagesStore();
+
+  // Charger les trajets au montage
+  useEffect(() => {
+    loadVoyages();
+  }, [loadVoyages]);
 
   // Filtrage des voyages
   const filteredVoyages = useMemo(() => {
-    return voyages
+    return trajets
       .filter((v) => selectedType === 'All' || v.type === selectedType)
       .filter((v) => {
         const matchFrom = !fromCity || v.from.toLowerCase().includes(fromCity.toLowerCase());
         const matchTo = !toCity || v.to.toLowerCase().includes(toCity.toLowerCase());
         return matchFrom && matchTo;
       });
-  }, [selectedType, fromCity, toCity]);
+  }, [trajets, selectedType, fromCity, toCity]);
 
   const handleVoyagePress = useCallback(
     (voyage: Voyage) => {
@@ -51,7 +67,7 @@ export default function VoyagesTab() {
 
   return (
     <AnimatedTabScreen>
-      <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
+      <LinearGradient colors={COLORS.gradients.cyan} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
@@ -59,7 +75,7 @@ export default function VoyagesTab() {
               Trouvez votre voyage
             </Text>
             <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-              Bus, voitures, trains et plus
+              Motos, voitures, camionnettes
             </Text>
           </View>
 
@@ -85,7 +101,9 @@ export default function VoyagesTab() {
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}>
-            {filteredVoyages.length > 0 ? (
+            {isLoading ? (
+              <ActivityIndicator size="large" color="white" style={{ marginTop: 40 }} />
+            ) : filteredVoyages.length > 0 ? (
               filteredVoyages.map((voyage) => (
                 <VoyageCard
                   key={voyage.id}

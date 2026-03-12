@@ -2,6 +2,7 @@ import { View, Text, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect } from 'react';
+import { COLORS } from '../../../constants';
 import { useMessagesStore, useAuthStore } from '../../../stores';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { TabSelector } from '../../../components/voyages';
@@ -31,7 +32,7 @@ export default function MessagesTab() {
     if (supabaseProfileId && user) {
       loadNotifications(supabaseProfileId, user.role);
     }
-  }, [supabaseProfileId, user?.role]);
+  }, [supabaseProfileId, user?.role, user, loadNotifications]);
 
   // Handlers
   const handleTabChange = useCallback(
@@ -44,7 +45,6 @@ export default function MessagesTab() {
   const handleNotificationPress = useCallback(
     (notificationId: string) => {
       markNotificationAsRead(notificationId);
-      console.log('Opening notification:', notificationId);
     },
     [markNotificationAsRead]
   );
@@ -52,15 +52,13 @@ export default function MessagesTab() {
   const handleMessagePress = useCallback(
     (messageId: string) => {
       markMessageAsRead(messageId);
-      console.log('Opening conversation:', messageId);
-      // router.push({ pathname: '/(protected)/conversation/[id]', params: { id: messageId } });
     },
     [markMessageAsRead]
   );
 
   return (
     <AnimatedTabScreen>
-      <LinearGradient colors={['#00D9A5', '#00F5C4']} style={{ flex: 1 }}>
+      <LinearGradient colors={COLORS.gradients.messages} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12 }}>

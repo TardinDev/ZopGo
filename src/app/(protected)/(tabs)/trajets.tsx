@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AnimatedTabScreen } from '../../../components/ui';
+import { COLORS } from '../../../constants';
 import { useTrajetsStore } from '../../../stores/trajetsStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { VehicleType } from '../../../types';
@@ -23,7 +24,7 @@ export default function TrajetsTab() {
     if (supabaseProfileId) {
       loadTrajets(supabaseProfileId);
     }
-  }, [supabaseProfileId]);
+  }, [supabaseProfileId, loadTrajets]);
 
   const mesTrajetsEnAttente = trajets.filter((t) => t.status === 'en_attente');
 
@@ -46,7 +47,7 @@ export default function TrajetsTab() {
 
   return (
     <AnimatedTabScreen>
-      <LinearGradient colors={['#4facfe', '#00f2fe']} style={{ flex: 1 }}>
+      <LinearGradient colors={COLORS.gradients.cyan} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
@@ -73,46 +74,46 @@ export default function TrajetsTab() {
               shadowOffset: { width: 0, height: 4 },
               elevation: 4,
             }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: COLORS.gray[800], marginBottom: 16 }}>
                 Nouveau trajet
               </Text>
 
               {/* Ville de départ */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                 Ville de départ
               </Text>
               <TextInput
                 style={{
-                  backgroundColor: '#F3F4F6',
+                  backgroundColor: COLORS.gray[100],
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   fontSize: 15,
-                  color: '#1F2937',
+                  color: COLORS.gray[800],
                   marginBottom: 12,
                 }}
                 placeholder="Ex: Lomé"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={COLORS.gray[400]}
                 value={formData.villeDepart}
                 onChangeText={(v) => updateForm('villeDepart', v)}
               />
 
               {/* Ville d'arrivée */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                 Ville d&apos;arrivée
               </Text>
               <TextInput
                 style={{
-                  backgroundColor: '#F3F4F6',
+                  backgroundColor: COLORS.gray[100],
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   fontSize: 15,
-                  color: '#1F2937',
+                  color: COLORS.gray[800],
                   marginBottom: 12,
                 }}
                 placeholder="Ex: Kara"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={COLORS.gray[400]}
                 value={formData.villeArrivee}
                 onChangeText={(v) => updateForm('villeArrivee', v)}
               />
@@ -120,40 +121,40 @@ export default function TrajetsTab() {
               {/* Prix et Places - côte à côte */}
               <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                     Prix (FCFA)
                   </Text>
                   <TextInput
                     style={{
-                      backgroundColor: '#F3F4F6',
+                      backgroundColor: COLORS.gray[100],
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
                       fontSize: 15,
-                      color: '#1F2937',
+                      color: COLORS.gray[800],
                     }}
                     placeholder="5000"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     keyboardType="numeric"
                     value={formData.prix}
                     onChangeText={(v) => updateForm('prix', v)}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                     Places
                   </Text>
                   <TextInput
                     style={{
-                      backgroundColor: '#F3F4F6',
+                      backgroundColor: COLORS.gray[100],
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
                       fontSize: 15,
-                      color: '#1F2937',
+                      color: COLORS.gray[800],
                     }}
                     placeholder="1"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     keyboardType="numeric"
                     value={formData.placesDisponibles}
                     onChangeText={(v) => updateForm('placesDisponibles', v)}
@@ -162,7 +163,7 @@ export default function TrajetsTab() {
               </View>
 
               {/* Type de véhicule */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 8 }}>
                 Type de véhicule
               </Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
@@ -174,7 +175,7 @@ export default function TrajetsTab() {
                       flex: 1,
                       paddingVertical: 10,
                       borderRadius: 12,
-                      backgroundColor: formData.vehicule === v.type ? '#2162FE' : '#F3F4F6',
+                      backgroundColor: formData.vehicule === v.type ? COLORS.primary : COLORS.gray[100],
                       alignItems: 'center',
                     }}
                   >
@@ -192,21 +193,21 @@ export default function TrajetsTab() {
               </View>
 
               {/* Date/Heure */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                 Date et heure
               </Text>
               <TextInput
                 style={{
-                  backgroundColor: '#F3F4F6',
+                  backgroundColor: COLORS.gray[100],
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                   fontSize: 15,
-                  color: '#1F2937',
+                  color: COLORS.gray[800],
                   marginBottom: 20,
                 }}
                 placeholder="Ex: 15/02/2026 à 08h00"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={COLORS.gray[400]}
                 value={formData.date}
                 onChangeText={(v) => updateForm('date', v)}
               />
@@ -215,7 +216,7 @@ export default function TrajetsTab() {
               <TouchableOpacity
                 onPress={handlePublish}
                 style={{
-                  backgroundColor: '#2162FE',
+                  backgroundColor: COLORS.primary,
                   borderRadius: 14,
                   paddingVertical: 14,
                   alignItems: 'center',
@@ -254,18 +255,18 @@ export default function TrajetsTab() {
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                        <MaterialCommunityIcons name="map-marker-path" size={22} color="#2162FE" />
+                        <MaterialCommunityIcons name="map-marker-path" size={22} color={COLORS.primary} />
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F2937' }}>
+                          <Text style={{ fontSize: 15, fontWeight: '700', color: COLORS.gray[800] }}>
                             {trajet.villeDepart} → {trajet.villeArrivee}
                           </Text>
-                          <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>
+                          <Text style={{ fontSize: 13, color: COLORS.gray[500], marginTop: 2 }}>
                             {trajet.placesDisponibles} place{trajet.placesDisponibles > 1 ? 's' : ''} · {trajet.date || 'Date non définie'}
                           </Text>
                         </View>
                       </View>
                       <TouchableOpacity onPress={() => handleRemove(trajet.id)}>
-                        <MaterialCommunityIcons name="delete-outline" size={22} color="#EF4444" />
+                        <MaterialCommunityIcons name="delete-outline" size={22} color={COLORS.error} />
                       </TouchableOpacity>
                     </View>
                     <View style={{
@@ -275,9 +276,9 @@ export default function TrajetsTab() {
                       marginTop: 10,
                       paddingTop: 10,
                       borderTopWidth: 1,
-                      borderTopColor: '#F3F4F6',
+                      borderTopColor: COLORS.gray[100],
                     }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#2162FE' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.primary }}>
                         {trajet.prix.toLocaleString()} FCFA
                       </Text>
                       <TouchableOpacity

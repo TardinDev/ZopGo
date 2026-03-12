@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../../constants';
 import type { Hebergement } from '../../types';
 
 interface HebergementCardProps {
@@ -18,14 +19,14 @@ export function HebergementCard({ hebergement, onPress }: HebergementCardProps) 
           <Text style={styles.title}>{hebergement.name}</Text>
 
           <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={14} color="#6B7280" />
+            <Ionicons name="location-outline" size={14} color={COLORS.gray[500]} />
             <Text style={styles.location}>{hebergement.location}</Text>
           </View>
 
           <View style={styles.bottomRow}>
             <Text style={styles.price}>{hebergement.price}</Text>
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFA500" />
+              <Ionicons name="star" size={16} color={COLORS.star} />
               <Text style={styles.rating}>{ratingDisplay}</Text>
             </View>
           </View>
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: COLORS.gray[800],
   },
   locationRow: {
     flexDirection: 'row',
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   location: {
-    color: '#6B7280',
+    color: COLORS.gray[500],
     marginLeft: 4,
   },
   bottomRow: {
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   price: {
-    color: '#4B5563',
+    color: COLORS.gray[600],
     fontWeight: '600',
   },
   ratingContainer: {
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rating: {
-    color: '#4B5563',
+    color: COLORS.gray[600],
     marginLeft: 4,
     fontWeight: '600',
   },

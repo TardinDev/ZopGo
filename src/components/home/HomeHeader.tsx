@@ -72,9 +72,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
               styles.roleIndicator,
               {
                 backgroundColor: isChauffeur
-                  ? isDisponible ? COLORS.success : '#9CA3AF'
+                  ? isDisponible ? COLORS.success : COLORS.gray[400]
                   : isHebergeur
-                  ? isDisponible ? COLORS.success : '#9CA3AF'
+                  ? isDisponible ? COLORS.success : COLORS.gray[400]
                   : COLORS.primary,
               },
             ]}>
@@ -101,9 +101,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
                 styles.currentRole,
                 {
                   borderColor: isChauffeur
-                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    ? isDisponible ? COLORS.success : COLORS.gray[400]
                     : isHebergeur
-                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    ? isDisponible ? COLORS.success : COLORS.gray[400]
                     : COLORS.primary,
                 },
               ]}>
@@ -112,9 +112,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
                   styles.roleIcon,
                   {
                     backgroundColor: isChauffeur
-                      ? isDisponible ? COLORS.success + '20' : '#F3F4F6'
+                      ? isDisponible ? COLORS.success + '20' : COLORS.gray[100]
                       : isHebergeur
-                      ? isDisponible ? COLORS.success + '20' : '#F3F4F6'
+                      ? isDisponible ? COLORS.success + '20' : COLORS.gray[100]
                       : COLORS.primary + '20',
                   },
                 ]}>
@@ -122,9 +122,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
                   name={isChauffeur ? 'car' : isHebergeur ? 'bed' : 'person'}
                   size={24}
                   color={isChauffeur
-                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    ? isDisponible ? COLORS.success : COLORS.gray[400]
                     : isHebergeur
-                    ? isDisponible ? COLORS.success : '#9CA3AF'
+                    ? isDisponible ? COLORS.success : COLORS.gray[400]
                     : COLORS.primary}
                 />
               </View>
@@ -157,14 +157,14 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
               style={styles.logoutButton}
               onPress={handleLogout}
               activeOpacity={0.7}>
-              <View style={[styles.roleIcon, { backgroundColor: '#FEE2E2' }]}>
-                <Ionicons name="log-out-outline" size={24} color="#DC2626" />
+              <View style={[styles.roleIcon, { backgroundColor: COLORS.error + '20' }]}>
+                <Ionicons name="log-out-outline" size={24} color={COLORS.error} />
               </View>
               <View style={styles.roleTextContainer}>
                 <Text style={styles.logoutTitle}>Se déconnecter</Text>
                 <Text style={styles.roleSubtitle}>Quitter votre session</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -186,12 +186,12 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 16,
-    color: '#374151',
+    color: COLORS.gray[700],
   },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: COLORS.gray[900],
   },
   avatarButton: {
     height: 48,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 16,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.gray[50],
     borderWidth: 2,
     borderColor: COLORS.primary,
   },
@@ -264,11 +264,11 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: COLORS.gray[900],
   },
   roleSubtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: COLORS.gray[500],
     marginTop: 2,
   },
   logoutButton: {
@@ -277,13 +277,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginTop: 8,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: COLORS.error + '10',
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: COLORS.error + '30',
   },
   logoutTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#DC2626',
+    color: COLORS.error,
   },
 });

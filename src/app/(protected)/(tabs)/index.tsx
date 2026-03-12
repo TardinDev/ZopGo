@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAuthStore } from '../../../stores/authStore';
+import { COLORS } from '../../../constants';
 import SearchBar from '../../../components/SearchBar';
 import { AnimatedTabScreen } from '../../../components/ui';
 
@@ -73,7 +74,7 @@ export default function HomeTab() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}>
-        <LinearGradient colors={['#FFDD5C', '#FFE89A']} style={{ flex: 1 }}>
+        <LinearGradient colors={COLORS.gradients.home} style={{ flex: 1 }}>
           <SafeAreaView style={{ flex: 1 }}>
             <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 

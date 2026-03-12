@@ -41,15 +41,15 @@ export async function insertTrajet(trajet: {
   places_disponibles: number;
 }): Promise<SupabaseTrajet | null> {
   if (!validateCity(trajet.ville_depart) || !validateCity(trajet.ville_arrivee)) {
-    console.error('Invalid city name');
+    if (__DEV__) console.error('Invalid city name');
     return null;
   }
   if (!validatePrice(trajet.prix)) {
-    console.error('Invalid price');
+    if (__DEV__) console.error('Invalid price');
     return null;
   }
   if (!validatePlaces(trajet.places_disponibles)) {
-    console.error('Invalid places count');
+    if (__DEV__) console.error('Invalid places count');
     return null;
   }
 
@@ -70,6 +70,22 @@ export async function insertTrajet(trajet: {
     return null;
   }
   return data as SupabaseTrajet;
+}
+
+export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
+  const { data, error } = await supabase
+    .from('trajets')
+    .select('*')
+    .is('deleted_at', null)
+    .eq('status', 'en_attente')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    Sentry.captureException(new Error(`Error fetching all available trajets: ${error.message}`));
+    return [];
+  }
+  return (data as SupabaseTrajet[]) || [];
 }
 
 export async function deleteTrajet(id: string): Promise<boolean> {

@@ -1,9 +1,11 @@
-import { View, Text, ScrollView } from 'react-native';
-import { useMemo, useState, useCallback } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { useMemo, useCallback, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { hebergements, hebergementTypes } from '../../../data';
 import type { Hebergement } from '../../../types';
+import { COLORS } from '../../../constants';
+import { useHebergementsDiscoveryStore } from '../../../stores';
+import { hebergementTypes } from '../../../stores/hebergementsDiscoveryStore';
 import {
   HebergementCard,
   TypeFilter,
@@ -12,26 +14,37 @@ import {
 } from '../../../components/voyages';
 
 export default function HebergementsTab() {
-  const [selectedType, setSelectedType] = useState('All');
-  const [searchLocation, setSearchLocation] = useState('');
+  const {
+    listings,
+    isLoading,
+    selectedType,
+    searchLocation,
+    loadHebergements,
+    setSelectedType,
+    setSearchLocation,
+  } = useHebergementsDiscoveryStore();
+
+  // Charger les hébergements au montage
+  useEffect(() => {
+    loadHebergements();
+  }, [loadHebergements]);
 
   // Filtrage des hébergements
   const filteredHebergements = useMemo(() => {
-    if (!Array.isArray(hebergements) || hebergements.length === 0) return [];
-    return hebergements
+    return listings
       .filter((h) => selectedType === 'All' || h.type === selectedType)
       .filter((h) => {
         if (!searchLocation.trim()) return true;
         return (h.location || '').toLowerCase().includes(searchLocation.toLowerCase());
       });
-  }, [selectedType, searchLocation]);
+  }, [listings, selectedType, searchLocation]);
 
   const handleHebergementPress = useCallback((hebergement: Hebergement) => {
-    console.log('Hébergement sélectionné:', hebergement.name);
+    Alert.alert(hebergement.name, `${hebergement.location}\n${hebergement.price}\nNote : ${hebergement.rating > 0 ? hebergement.rating.toFixed(1) + '/5' : 'N/A'}`);
   }, []);
 
   return (
-    <LinearGradient colors={['#8B5CF6', '#A855F7']} style={{ flex: 1 }}>
+    <LinearGradient colors={COLORS.gradients.hebergeur} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         {/* Header */}
         <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
@@ -59,7 +72,9 @@ export default function HebergementsTab() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}>
-          {filteredHebergements.length > 0 ? (
+          {isLoading ? (
+            <ActivityIndicator size="large" color="white" style={{ marginTop: 40 }} />
+          ) : filteredHebergements.length > 0 ? (
             filteredHebergements.map((hebergement) => (
               <HebergementCard
                 key={hebergement.id}

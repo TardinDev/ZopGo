@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../../../constants';
 import { useAuthStore } from '../../../stores/authStore';
 import type { NotificationPreferences } from '../../../types';
 
@@ -53,7 +54,7 @@ export default function ProfileEditScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <LinearGradient
-        colors={['#4FA5CF', '#2162FE']}
+        colors={COLORS.gradients.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.3 }}
         className="pb-8">
@@ -65,7 +66,7 @@ export default function ProfileEditScreen() {
           <Text className="text-xl font-bold text-white">Modifier le profil</Text>
           <TouchableOpacity onPress={handleSave} disabled={isLoading}>
             <Text className={`font-medium text-white ${isLoading ? 'opacity-50' : ''}`}>
-              {isLoading ? 'Saving...' : 'Sauver'}
+              {isLoading ? 'Enregistrement...' : 'Sauver'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -93,12 +94,15 @@ export default function ProfileEditScreen() {
               <Text className="mb-2 text-gray-600">Email</Text>
               <TextInput
                 value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                className="rounded-xl bg-gray-50 px-4 py-3 text-gray-800"
+                editable={false}
+                className="rounded-xl bg-gray-100 px-4 py-3 text-gray-500"
                 placeholder="votre.email@example.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
+              <Text className="mt-1 text-xs text-gray-400">
+                {"L'email ne peut pas être modifié ici"}
+              </Text>
             </View>
 
             <View className="mb-4">
@@ -107,7 +111,7 @@ export default function ProfileEditScreen() {
                 value={formData.phone}
                 onChangeText={(text) => setFormData({ ...formData, phone: text })}
                 className="rounded-xl bg-gray-50 px-4 py-3 text-gray-800"
-                placeholder="+33 6 12 34 56 78"
+                placeholder="+241 06 12 34 56"
                 keyboardType="phone-pad"
               />
             </View>
@@ -130,7 +134,7 @@ export default function ProfileEditScreen() {
                 value={formData.emergencyContact}
                 onChangeText={(text) => setFormData({ ...formData, emergencyContact: text })}
                 className="rounded-xl bg-gray-50 px-4 py-3 text-gray-800"
-                placeholder="+33 6 98 76 54 32"
+                placeholder="+241 07 98 76 54"
                 keyboardType="phone-pad"
               />
             </View>

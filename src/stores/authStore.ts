@@ -200,7 +200,7 @@ export const useAuthStore = create<AuthState>()(
 
         // Si c'était un chauffeur, le retirer de la liste des chauffeurs disponibles
         if (user && user.role === 'chauffeur') {
-          useDriversStore.getState().removeConnectedDriver(parseInt(user.id) || 0);
+          useDriversStore.getState().removeConnectedDriver(user.id);
         }
 
         // Clear push token in Supabase
@@ -229,7 +229,7 @@ export const useAuthStore = create<AuthState>()(
 
         // Sync avec Supabase
         if (clerkId) {
-          const supabaseUpdates: Record<string, any> = {};
+          const supabaseUpdates: Record<string, string | boolean> = {};
           if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
           if ('phone' in updates && updates.phone) supabaseUpdates.phone = updates.phone;
           if ('avatar' in updates && updates.avatar) supabaseUpdates.avatar = updates.avatar;
@@ -251,7 +251,7 @@ export const useAuthStore = create<AuthState>()(
             },
           });
           // Mettre à jour la disponibilité dans le driversStore
-          useDriversStore.getState().updateDriverAvailability(parseInt(user.id) || 0, disponible);
+          useDriversStore.getState().updateDriverAvailability(user.id, disponible);
         } else if (user.role === 'hebergeur') {
           set({
             user: {
@@ -314,7 +314,7 @@ export const isHebergeur = (
 export const chauffeurToLivreur = (user: AuthUser): Livreur => {
   const profile = user.profile as ChauffeurProfile;
   return {
-    id: parseInt(user.id) || Date.now(),
+    id: user.id,
     prenom: profile.name.split(' ')[0],
     vehicule: `${profile.vehicule.icon} ${profile.vehicule.label}`,
     etoiles: profile.rating,

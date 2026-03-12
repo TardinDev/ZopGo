@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Sentry from '@sentry/react-native';
 import { COLORS } from '../constants';
 
 interface Props {
@@ -25,11 +26,10 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log l'erreur (à remplacer par un service de tracking en production)
-    console.error('Error caught by boundary:', error, errorInfo);
-
-    // TODO: Envoyer à un service de tracking d'erreurs (Sentry, etc.)
-    // Sentry.captureException(error, { extra: errorInfo });
+    if (__DEV__) {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   handleReset = () => {
