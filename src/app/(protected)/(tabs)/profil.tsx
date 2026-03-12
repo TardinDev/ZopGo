@@ -7,8 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { menuItems } from '../../../data';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { RatingSummary, ReviewCard } from '../../../components/ratings';
-import { useRatingsStore } from '../../../stores/ratingsStore';
-import { useAuthStore, isChauffeur, isHebergeur } from '../../../stores/authStore';
+import { useRatingsStore, useAuthStore, isChauffeur, isHebergeur } from '../../../stores';
 import { COLORS } from '../../../constants';
 import { ChauffeurProfile, HebergeurProfile } from '../../../types';
 
@@ -32,6 +31,9 @@ export default function ProfilTab() {
   // Pour les chauffeurs, on affiche uniquement les avis reçus
   const reviews = activeReviewTab === 'received' ? receivedReviews : givenReviews;
 
+  const comingSoon = (title: string) =>
+    Alert.alert(title, 'Cette fonctionnalité sera disponible prochainement.');
+
   const handleMenuPress = (index: number) => {
     switch (index) {
       case 0:
@@ -41,25 +43,25 @@ export default function ProfilTab() {
         // Les avis sont maintenant affichés directement dans le profil
         break;
       case 2:
-        Alert.alert('Mes véhicules', 'Fonctionnalité en développement');
+        comingSoon('Mes véhicules');
         break;
       case 3:
-        Alert.alert('Méthodes de paiement', 'Fonctionnalité en développement');
+        comingSoon('Méthodes de paiement');
         break;
       case 4:
-        Alert.alert('Adresses favorites', 'Fonctionnalité en développement');
+        comingSoon('Adresses favorites');
         break;
       case 5:
         router.push('/(protected)/(tabs)/profile-edit');
         break;
       case 6:
-        Alert.alert('Sécurité', 'Fonctionnalité en développement');
+        comingSoon('Sécurité');
         break;
       case 7:
-        Alert.alert('Aide et support', 'Fonctionnalité en développement');
+        comingSoon('Aide et support');
         break;
       case 8:
-        Alert.alert('Paramètres', 'Fonctionnalité en développement');
+        comingSoon('Paramètres');
         break;
       default:
         break;
@@ -68,7 +70,7 @@ export default function ProfilTab() {
 
   return (
     <AnimatedTabScreen>
-      <LinearGradient colors={['#667eea', '#764ba2']} style={{ flex: 1 }}>
+      <LinearGradient colors={COLORS.gradients.purple} style={{ flex: 1 }}>
         <SafeAreaView className="flex-1">
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -104,7 +106,7 @@ export default function ProfilTab() {
               )}
 
               <View className="flex-row items-center rounded-full bg-white/20 px-4 py-2">
-                <Ionicons name="star" size={16} color="#FFD700" />
+                <Ionicons name="star" size={16} color={COLORS.gold} />
                 <Text className="ml-1 font-semibold text-white">{profile.rating}</Text>
               </View>
 
@@ -272,7 +274,7 @@ export default function ProfilTab() {
                     </View>
                   ) : (
                     <View className="items-center justify-center py-12">
-                      <Ionicons name="chatbubble-ellipses-outline" size={48} color="#D1D5DB" />
+                      <Ionicons name="chatbubble-ellipses-outline" size={48} color={COLORS.gray[300]} />
                       <Text className="mt-3 text-base text-gray-400">
                         Aucun avis pour le moment
                       </Text>
@@ -295,13 +297,13 @@ export default function ProfilTab() {
                           className="flex-row items-center border-b border-gray-100 py-4"
                           activeOpacity={0.7}>
                           <View className="mr-4 h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                            <Ionicons name={item.icon as any} size={20} color="#2162FE" />
+                            <Ionicons name={item.icon as any} size={20} color={COLORS.primary} />
                           </View>
                           <View className="flex-1">
                             <Text className="font-semibold text-gray-800">{item.title}</Text>
                             <Text className="text-sm text-gray-500">{item.subtitle}</Text>
                           </View>
-                          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                          <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
                         </TouchableOpacity>
                       ))}
                   </View>

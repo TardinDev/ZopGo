@@ -9,8 +9,6 @@ interface RatingSummaryProps {
 }
 
 export function RatingSummary({ data }: RatingSummaryProps) {
-  const maxCount = Math.max(...Object.values(data.distribution));
-
   return (
     <View style={styles.container}>
       {/* Score principal */}
@@ -33,7 +31,7 @@ export function RatingSummary({ data }: RatingSummaryProps) {
       <View style={styles.distribution}>
         {[5, 4, 3, 2, 1].map((stars) => {
           const count = data.distribution[stars as keyof typeof data.distribution];
-          const percentage = maxCount > 0 ? (count / data.total) * 100 : 0;
+          const percentage = data.total > 0 ? (count / data.total) * 100 : 0;
 
           return (
             <View key={stars} style={styles.distributionRow}>

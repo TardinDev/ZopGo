@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { Livreur } from '../../types';
 
 interface NoResponseViewProps {
-  livreur: any; // On pourrait typer plus strictement
+  livreur?: Livreur;
   onRetry: () => void;
   onCancel: () => void;
 }
