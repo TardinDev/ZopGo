@@ -15,6 +15,8 @@ export const COLORS = {
   yellowLight: '#FFE89A',
   orange: '#F59E0B',
   orangeDark: '#D97706',
+  gold: '#FFD700',
+  star: '#FFA500',
 
   // Couleurs de statut
   success: '#10B981',
@@ -43,9 +45,13 @@ export const COLORS = {
     blue: ['#3B82F6', '#2563EB'],
     orange: ['#F59E0B', '#D97706'],
     yellow: ['#FFFEF5', '#FFDD5C'],
+    home: ['#FFDD5C', '#FFE89A'],
     purple: ['#667eea', '#764ba2'],
     cyan: ['#4facfe', '#00f2fe'],
     hebergeur: ['#8B5CF6', '#A855F7'],
+    primary: ['#2162FE', '#4facfe'],
+    header: ['#4FA5CF', '#2162FE'],
+    messages: ['#00D9A5', '#00F5C4'],
   },
 
   // Couleurs avec transparence

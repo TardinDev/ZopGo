@@ -97,7 +97,7 @@ export default function AuthScreen() {
           vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
           accommodationType: selectedRole === 'hebergeur' ? selectedAccommodation : undefined,
         },
-      }).catch((err: any) => console.error('Failed to save Clerk metadata:', err));
+      }).catch((err: any) => { if (__DEV__) console.error('Failed to save Clerk metadata:', err); });
 
       // Configurer le profil local uniquement si pas déjà fait
       // (sign-up le fait directement dans handleVerifyEmail)
@@ -117,6 +117,7 @@ export default function AuthScreen() {
         setupProfile(selectedRole, name, email, vehicleType, clerkUser.id, accommodationType);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clerkUser, showTransition, isRoleSwitch]);
 
   const handleRoleChange = (newRole: UserRole) => {
@@ -956,7 +957,7 @@ export default function AuthScreen() {
                 {/* Sélecteur de type d'hébergement (hébergeur) */}
                 {selectedRole === 'hebergeur' && (
                   <View style={styles.vehicleSection}>
-                    <Text style={styles.sectionLabel}>Type d'hébergement</Text>
+                    <Text style={styles.sectionLabel}>{"Type d'hébergement"}</Text>
                     <View style={styles.vehicleRow}>
                       {accommodationOptions.map((accommodation) => (
                         <TouchableOpacity

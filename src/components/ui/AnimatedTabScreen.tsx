@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useTabAnimation } from '../../hooks/useTabAnimation';
+import { COLORS } from '../../constants';
 
 interface AnimatedTabScreenProps {
   children: ReactNode;
@@ -25,7 +26,7 @@ export function AnimatedTabScreen({ children }: AnimatedTabScreenProps) {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#0f0f1a', // Fond sombre profond
+    backgroundColor: COLORS.gray[900],
   },
   container: {
     flex: 1,

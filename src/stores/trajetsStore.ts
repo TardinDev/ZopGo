@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { Trajet, VehicleType } from '../types';
 import {
@@ -47,7 +48,6 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
   addTrajet: async (chauffeurId, supabaseProfileId) => {
     const { formData, trajets } = get();
 
-    // Créer localement d'abord
     const localTrajet: Trajet = {
       id: Date.now().toString(),
       chauffeurId,
@@ -62,41 +62,57 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
     };
     set({ trajets: [localTrajet, ...trajets], formData: { ...initialFormData } });
 
-    // Persister en Supabase
     if (supabaseProfileId) {
-      const result = await insertTrajet({
-        chauffeur_id: supabaseProfileId,
-        ville_depart: formData.villeDepart,
-        ville_arrivee: formData.villeArrivee,
-        prix: parseInt(formData.prix) || 0,
-        vehicule: formData.vehicule,
-        date: formData.date || undefined,
-        places_disponibles: parseInt(formData.placesDisponibles) || 1,
-      });
+      try {
+        const result = await insertTrajet({
+          chauffeur_id: supabaseProfileId,
+          ville_depart: formData.villeDepart,
+          ville_arrivee: formData.villeArrivee,
+          prix: parseInt(formData.prix) || 0,
+          vehicule: formData.vehicule,
+          date: formData.date || undefined,
+          places_disponibles: parseInt(formData.placesDisponibles) || 1,
+        });
 
-      // Mettre à jour l'id local avec l'id Supabase
-      if (result) {
-        set((state) => ({
-          trajets: state.trajets.map((t) =>
-            t.id === localTrajet.id ? { ...t, id: result.id } : t
-          ),
-        }));
+        if (result) {
+          set((state) => ({
+            trajets: state.trajets.map((t) =>
+              t.id === localTrajet.id ? { ...t, id: result.id } : t
+            ),
+          }));
+        }
+      } catch (err) {
+        // Rollback optimistic update
+        set((state) => ({ trajets: state.trajets.filter((t) => t.id !== localTrajet.id) }));
+        Sentry.captureException(err);
       }
     }
   },
 
   removeTrajet: async (id) => {
-    set({ trajets: get().trajets.filter((t) => t.id !== id) });
-    await deleteSupabaseTrajet(id);
+    const previous = get().trajets;
+    set({ trajets: previous.filter((t) => t.id !== id) });
+    try {
+      await deleteSupabaseTrajet(id);
+    } catch (err) {
+      set({ trajets: previous });
+      Sentry.captureException(err);
+    }
   },
 
   markEffectue: async (id) => {
+    const previous = get().trajets;
     set({
-      trajets: get().trajets.map((t) =>
+      trajets: previous.map((t) =>
         t.id === id ? { ...t, status: 'effectue' as const } : t
       ),
     });
-    await markSupabaseTrajetEffectue(id);
+    try {
+      await markSupabaseTrajetEffectue(id);
+    } catch (err) {
+      set({ trajets: previous });
+      Sentry.captureException(err);
+    }
   },
 
   updateForm: (field, value) => {
@@ -125,7 +141,7 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
       }));
       set({ trajets });
     } catch (err) {
-      console.error('Error loading trajets:', err);
+      Sentry.captureException(err);
     } finally {
       set({ isLoading: false });
     }

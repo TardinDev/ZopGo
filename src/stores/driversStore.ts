@@ -10,8 +10,8 @@ interface DriversState {
 
   // Actions
   addConnectedDriver: (driver: Livreur) => void;
-  removeConnectedDriver: (driverId: number) => void;
-  updateDriverAvailability: (driverId: number, disponible: boolean) => void;
+  removeConnectedDriver: (driverId: string) => void;
+  updateDriverAvailability: (driverId: string, disponible: boolean) => void;
   loadDrivers: () => Promise<void>;
 
   // Getters
@@ -69,7 +69,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
 
       if (data) {
         const drivers: Livreur[] = data.map((d: any) => ({
-          id: parseInt(d.clerk_id) || Date.now(),
+          id: d.clerk_id || d.id,
           prenom: d.name.split(' ')[0],
           vehicule: '🚗 Voiture',
           etoiles: d.rating || 5.0,

@@ -7,6 +7,7 @@ import { View, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { tokenCache } from '../utils/tokenCache';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
@@ -38,20 +39,22 @@ function RootLayout() {
   }
 
   return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <ClerkLoaded>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
-            <Stack initialRouteName="index" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000' } }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="onboarding" />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="(protected)" options={{ contentStyle: { backgroundColor: '#fff' } }} />
-            </Stack>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      </ClerkLoaded>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
+        <ClerkLoaded>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaProvider>
+              <Stack initialRouteName="index" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000' } }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="(protected)" options={{ contentStyle: { backgroundColor: '#fff' } }} />
+              </Stack>
+            </SafeAreaProvider>
+          </GestureHandlerRootView>
+        </ClerkLoaded>
+      </ClerkProvider>
+    </ErrorBoundary>
   );
 }
 

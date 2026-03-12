@@ -1,6 +1,7 @@
 /**
  * Gestionnaire centralisé d'erreurs
  */
+import * as Sentry from '@sentry/react-native';
 
 interface ErrorResponse {
   message: string;
@@ -19,11 +20,10 @@ export const handleError = (error: unknown, context?: string): ErrorResponse => 
     console.error(`Error in ${context || 'app'}:`, message, error);
   }
 
-  // En production, envoyer à un service de tracking
-  // TODO: Intégrer Sentry ou autre service
-  // if (!__DEV__) {
-  //   Sentry.captureException(error, { extra: { context } });
-  // }
+  // En production, envoyer à Sentry
+  if (!__DEV__) {
+    Sentry.captureException(error, { extra: { context } });
+  }
 
   // Messages utilisateur friendly selon le type d'erreur
   let displayMessage = 'Une erreur est survenue. Veuillez réessayer.';
@@ -53,8 +53,9 @@ export const handleError = (error: unknown, context?: string): ErrorResponse => 
 export const logError = (error: unknown, context?: string): void => {
   if (__DEV__) {
     console.error(`[${context || 'App'}]`, error);
+  } else {
+    Sentry.captureException(error, { extra: { context } });
   }
-  // TODO: Log to tracking service
 };
 
 /**

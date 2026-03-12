@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { COLORS } from '../../constants';
 
 interface TypeFilterProps {
   types: string[];
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   activeFilterText: {
-    color: '#2563EB',
+    color: COLORS.primary,
     textShadowColor: 'transparent',
   },
 });

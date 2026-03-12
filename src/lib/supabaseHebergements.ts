@@ -63,6 +63,22 @@ export async function insertHebergement(hebergement: {
   return data as SupabaseHebergement;
 }
 
+export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergement[]> {
+  const { data, error } = await supabase
+    .from('hebergements')
+    .select('*')
+    .is('deleted_at', null)
+    .eq('status', 'actif')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    Sentry.captureException(new Error(`Error fetching all available hebergements: ${error.message}`));
+    return [];
+  }
+  return (data as SupabaseHebergement[]) || [];
+}
+
 export async function deleteHebergement(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('hebergements')

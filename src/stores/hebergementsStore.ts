@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { HebergeurListing, AccommodationType } from '../types';
 import {
@@ -64,44 +65,60 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
     };
     set({ listings: [localListing, ...listings], formData: { ...initialFormData } });
 
-    // Persister en Supabase
     if (supabaseProfileId) {
-      const result = await insertHebergement({
-        hebergeur_id: supabaseProfileId,
-        nom: formData.nom,
-        type: formData.type,
-        ville: formData.ville,
-        adresse: formData.adresse,
-        prix_par_nuit: parseInt(formData.prixParNuit) || 0,
-        capacite: parseInt(formData.capacite) || 1,
-        description: formData.description,
-      });
+      try {
+        const result = await insertHebergement({
+          hebergeur_id: supabaseProfileId,
+          nom: formData.nom,
+          type: formData.type,
+          ville: formData.ville,
+          adresse: formData.adresse,
+          prix_par_nuit: parseInt(formData.prixParNuit) || 0,
+          capacite: parseInt(formData.capacite) || 1,
+          description: formData.description,
+        });
 
-      if (result) {
-        set((state) => ({
-          listings: state.listings.map((l) =>
-            l.id === localListing.id ? { ...l, id: result.id } : l
-          ),
-        }));
+        if (result) {
+          set((state) => ({
+            listings: state.listings.map((l) =>
+              l.id === localListing.id ? { ...l, id: result.id } : l
+            ),
+          }));
+        }
+      } catch (err) {
+        set((state) => ({ listings: state.listings.filter((l) => l.id !== localListing.id) }));
+        Sentry.captureException(err);
       }
     }
   },
 
   removeListing: async (id) => {
-    set({ listings: get().listings.filter((l) => l.id !== id) });
-    await deleteSupabaseHebergement(id);
+    const previous = get().listings;
+    set({ listings: previous.filter((l) => l.id !== id) });
+    try {
+      await deleteSupabaseHebergement(id);
+    } catch (err) {
+      set({ listings: previous });
+      Sentry.captureException(err);
+    }
   },
 
   toggleStatus: async (id) => {
-    const listing = get().listings.find((l) => l.id === id);
+    const previous = get().listings;
+    const listing = previous.find((l) => l.id === id);
     if (!listing) return;
     const newStatus = listing.status === 'actif' ? 'inactif' : 'actif';
     set({
-      listings: get().listings.map((l) =>
+      listings: previous.map((l) =>
         l.id === id ? { ...l, status: newStatus as 'actif' | 'inactif' } : l
       ),
     });
-    await toggleSupabaseStatus(id, newStatus);
+    try {
+      await toggleSupabaseStatus(id, newStatus);
+    } catch (err) {
+      set({ listings: previous });
+      Sentry.captureException(err);
+    }
   },
 
   updateForm: (field, value) => {
@@ -131,7 +148,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       }));
       set({ listings });
     } catch (err) {
-      console.error('Error loading hebergements:', err);
+      Sentry.captureException(err);
     } finally {
       set({ isLoading: false });
     }
