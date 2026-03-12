@@ -3,13 +3,14 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LivreurCard } from './LivreurCard';
+import type { Livreur } from '../../types';
 
 interface LivreurListProps {
-  livreurs: any[];
+  livreurs: Livreur[];
   pickupLocation: string;
   dropoffLocation: string;
-  selectedLivreurId: number | null;
-  onSelectLivreur: (id: number) => void;
+  selectedLivreurId: string | null;
+  onSelectLivreur: (id: string) => void;
   onConfirm: () => void;
   onEditSearch: () => void;
 }

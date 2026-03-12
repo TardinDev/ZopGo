@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../../../constants';
 
 export default function VoyageDetailScreen() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function VoyageDetailScreen() {
     amenities: ['WiFi', 'Climatisation', 'USB', 'Bagages'],
   };
 
-  const totalPrice = parseInt(String(voyage.price).replace(/[^0-9]/g, '')) * passengers;
+  const totalPrice = (parseInt(String(voyage.price).replace(/[^0-9]/g, '')) || 0) * passengers;
 
   const handleBooking = () => {
     Alert.alert(
@@ -51,7 +52,7 @@ export default function VoyageDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <LinearGradient
-        colors={['#4FA5CF', '#2162FE']}
+        colors={COLORS.gradients.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.3 }}
         className="pb-8">
@@ -104,7 +105,7 @@ export default function VoyageDetailScreen() {
               <TouchableOpacity
                 onPress={() => passengers > 1 && setPassengers(passengers - 1)}
                 className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                <Ionicons name="remove" size={20} color="#666" />
+                <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
               </TouchableOpacity>
               <Text className="mx-4 text-lg font-bold">{passengers}</Text>
               <TouchableOpacity
@@ -135,7 +136,7 @@ export default function VoyageDetailScreen() {
             <View className="flex-row items-center">
               <Text className="mr-2 font-medium">{voyage.driver}</Text>
               <View className="flex-row items-center">
-                <Ionicons name="star" size={16} color="#FCA91A" />
+                <Ionicons name="star" size={16} color={COLORS.star} />
                 <Text className="ml-1 text-sm text-gray-600">{voyage.driverRating}</Text>
               </View>
             </View>

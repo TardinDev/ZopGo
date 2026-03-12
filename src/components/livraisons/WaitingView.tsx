@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import type { Livreur } from '../../types';
 
 interface WaitingViewProps {
-  livreur: any;
+  livreur?: Livreur;
   pickupLocation: string;
   dropoffLocation: string;
 }

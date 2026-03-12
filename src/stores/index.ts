@@ -7,3 +7,6 @@ export { useAuthStore, isChauffeur, isHebergeur, chauffeurToLivreur, VEHICLE_TYP
 export { useDriversStore } from './driversStore';
 export { useTrajetsStore } from './trajetsStore';
 export { useHebergementsStore } from './hebergementsStore';
+export { useChatStore } from './chatStore';
+export { useRatingsStore } from './ratingsStore';
+export { useHebergementsDiscoveryStore } from './hebergementsDiscoveryStore';
