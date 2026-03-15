@@ -102,13 +102,16 @@ export function RatingModal({
 
           {/* Buttons */}
           <View style={styles.buttons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose} accessibilityRole="button" accessibilityLabel="Annuler l'évaluation">
               <Text style={styles.cancelText}>Annuler</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.submitButton, rating === 0 && styles.submitButtonDisabled]}
               onPress={handleSubmit}
-              disabled={rating === 0}>
+              disabled={rating === 0}
+              accessibilityRole="button"
+              accessibilityLabel="Envoyer l'évaluation"
+              accessibilityState={{ disabled: rating === 0 }}>
               <Ionicons name="send" size={18} color="white" />
               <Text style={styles.submitText}>Envoyer</Text>
             </TouchableOpacity>

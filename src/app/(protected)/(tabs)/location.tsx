@@ -1,3 +1,4 @@
+export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';

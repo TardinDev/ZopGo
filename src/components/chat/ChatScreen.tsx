@@ -80,7 +80,11 @@ export function ChatScreen() {
           <Text style={styles.headerTitle}>Assistant IA</Text>
         </View>
         {messages.length > 0 && (
-          <TouchableOpacity onPress={clearChat} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity
+            onPress={clearChat}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Effacer la conversation">
             <MaterialCommunityIcons name="delete-outline" size={22} color="rgba(255,255,255,0.8)" />
           </TouchableOpacity>
         )}
@@ -88,7 +92,7 @@ export function ChatScreen() {
 
       {/* Error banner */}
       {error && (
-        <TouchableOpacity style={styles.errorBanner} onPress={dismissError} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.errorBanner} onPress={dismissError} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Fermer le message d'erreur">
           <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#FFFFFF" />
           <Text style={styles.errorText} numberOfLines={2}>
             {error}

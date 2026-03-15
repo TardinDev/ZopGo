@@ -1,30 +1,23 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-interface Livreur {
-  id: number;
-  prenom: string;
-  vehicule: string;
-  photo: string;
-  etoiles: number;
-  distance: number;
-  disponible: boolean;
-  commentaires: string[];
-}
+import type { Livreur } from '../../types';
 
 interface LivreurCardProps {
   livreur: Livreur;
   isSelected: boolean;
-  onSelect: (id: number) => void;
+  onSelect: (id: string) => void;
 }
 
-export function LivreurCard({ livreur, isSelected, onSelect }: LivreurCardProps) {
+export const LivreurCard = React.memo(function LivreurCard({ livreur, isSelected, onSelect }: LivreurCardProps) {
   return (
     <TouchableOpacity
       onPress={() => onSelect(livreur.id)}
       style={[styles.card, isSelected && styles.selectedCard]}
-      activeOpacity={0.9}>
+      activeOpacity={0.9}
+      accessibilityRole="button"
+      accessibilityLabel={`${livreur.prenom}, ${livreur.vehicule}, ${livreur.etoiles} étoiles, ${livreur.distance} km`}
+      accessibilityState={{ selected: isSelected }}>
       <View style={styles.container}>
         <Image source={{ uri: livreur.photo }} style={styles.avatar} />
         <View style={styles.info}>
@@ -73,7 +66,7 @@ export function LivreurCard({ livreur, isSelected, onSelect }: LivreurCardProps)
       )}
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

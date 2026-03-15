@@ -43,7 +43,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
           // Purge des tokens du SecureStore
           try {
             await SecureStore.deleteItemAsync('__clerk_client_jwt');
-          } catch { /* ignore if key doesn't exist */ }
+          } catch (err) {
+            if (__DEV__) console.warn('SecureStore cleanup failed:', err);
+          }
           // Déconnexion locale (store Zustand)
           logout();
           // Redirection vers la page de connexion
@@ -64,7 +66,10 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
           style={styles.avatarButton}
-          activeOpacity={0.8}>
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Menu profil"
+          accessibilityHint="Ouvre le menu profil et déconnexion">
           <Image source={{ uri: user?.profile?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face' }} style={styles.avatar} />
           {/* Indicateur du rôle / disponibilité */}
           <View
@@ -156,7 +161,9 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
             <TouchableOpacity
               style={styles.logoutButton}
               onPress={handleLogout}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Se déconnecter">
               <View style={[styles.roleIcon, { backgroundColor: COLORS.error + '20' }]}>
                 <Ionicons name="log-out-outline" size={24} color={COLORS.error} />
               </View>

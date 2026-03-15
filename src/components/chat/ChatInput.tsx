@@ -38,12 +38,17 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           maxLength={2000}
           editable={!disabled}
           returnKeyType="default"
+          accessibilityLabel="Message pour l'assistant"
+          accessibilityHint="Tapez votre question ici"
         />
         <TouchableOpacity
           style={[styles.sendButton, canSend && styles.sendButtonActive]}
           onPress={handleSend}
           disabled={!canSend}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Envoyer le message"
+          accessibilityState={{ disabled: !canSend }}>
           <MaterialCommunityIcons
             name="send"
             size={20}

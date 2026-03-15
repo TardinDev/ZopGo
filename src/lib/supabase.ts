@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { logError } from '../utils/errorHandler';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -31,8 +32,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
             headers.set('Authorization', `Bearer ${token}`);
             return fetch(input, { ...init, headers });
           }
-        } catch {
-          // Fall through to default fetch with anon key
+        } catch (err) {
+          logError(err, 'Clerk token provider for Supabase');
         }
       }
       return fetch(input, init);

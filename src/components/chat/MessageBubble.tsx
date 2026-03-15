@@ -6,7 +6,7 @@ interface MessageBubbleProps {
   message: ChatMessageItem;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export const MessageBubble = React.memo(function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -24,7 +24,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

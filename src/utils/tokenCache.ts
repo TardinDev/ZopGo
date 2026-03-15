@@ -1,5 +1,6 @@
 // Token cache for Clerk using expo-secure-store
 import * as SecureStore from 'expo-secure-store';
+import * as Sentry from '@sentry/react-native';
 import type { TokenCache } from '@clerk/clerk-expo';
 
 const createTokenCache = (): TokenCache => {
@@ -10,6 +11,7 @@ const createTokenCache = (): TokenCache => {
                 return item;
             } catch (error) {
                 if (__DEV__) console.error('Error getting token from secure store:', error);
+                else Sentry.captureException(error, { extra: { context: 'tokenCache.getToken', key } });
                 await SecureStore.deleteItemAsync(key);
                 return null;
             }
@@ -19,6 +21,7 @@ const createTokenCache = (): TokenCache => {
                 await SecureStore.setItemAsync(key, token);
             } catch (error) {
                 if (__DEV__) console.error('Error saving token to secure store:', error);
+                else Sentry.captureException(error, { extra: { context: 'tokenCache.saveToken', key } });
             }
         },
         clearToken: async (key: string) => {
@@ -26,6 +29,7 @@ const createTokenCache = (): TokenCache => {
                 await SecureStore.deleteItemAsync(key);
             } catch (error) {
                 if (__DEV__) console.error('Error clearing token from secure store:', error);
+                else Sentry.captureException(error, { extra: { context: 'tokenCache.clearToken', key } });
             }
         },
     };

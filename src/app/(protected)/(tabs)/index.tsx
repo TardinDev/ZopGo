@@ -1,3 +1,4 @@
+export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { View, StatusBar, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -5,6 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useAuthStore } from '../../../stores/authStore';
 import { COLORS } from '../../../constants';
+import type { Activity } from '../../../types';
 import SearchBar from '../../../components/SearchBar';
 import { AnimatedTabScreen } from '../../../components/ui';
 
@@ -23,7 +25,7 @@ const MIN_TRANSLATE_Y = 100; // Position maximale (reste 100px en haut)
 export default function HomeTab() {
   const { user } = useAuthStore();
   const userName = user?.profile?.name || 'Utilisateur';
-  const activities: any[] = [];
+  const activities: Activity[] = [];
   const translateY = useSharedValue(INITIAL_POSITION);
   const startY = useSharedValue(0);
 

@@ -2,6 +2,16 @@ import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { Livreur } from '../types';
 import { supabase } from '../lib/supabase';
+import { checkNetwork } from '../hooks/useNetworkStatus';
+
+interface SupabaseProfileRow {
+  id: string;
+  clerk_id?: string;
+  name: string;
+  rating?: number;
+  disponible: boolean;
+  avatar?: string;
+}
 
 interface DriversState {
   // Chauffeurs connectés (ajoutés dynamiquement)
@@ -55,6 +65,11 @@ export const useDriversStore = create<DriversState>((set, get) => ({
   loadDrivers: async () => {
     set({ isLoading: true });
     try {
+      const connected = await checkNetwork();
+      if (!connected) {
+        set({ isLoading: false });
+        return;
+      }
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -68,7 +83,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
       }
 
       if (data) {
-        const drivers: Livreur[] = data.map((d: any) => ({
+        const drivers: Livreur[] = data.map((d: SupabaseProfileRow) => ({
           id: d.clerk_id || d.id,
           prenom: d.name.split(' ')[0],
           vehicule: '🚗 Voiture',

@@ -6,6 +6,7 @@ import { TabAnimationProvider } from '../../hooks/useTabAnimation';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { useAuthStore } from '../../stores/authStore';
 import { setClerkTokenProvider } from '../../lib/supabase';
+import { logError } from '../../utils/errorHandler';
 import { UserRole, VehicleType, AccommodationType } from '../../types';
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -29,10 +30,17 @@ export default function ProtectedLayout() {
         const elapsed = Date.now() - backgroundTimestamp.current;
         backgroundTimestamp.current = null;
         if (elapsed >= INACTIVITY_TIMEOUT_MS && isSignedIn) {
-          signOut().then(() => {
-            logout();
-            router.replace('/auth');
-          });
+          signOut()
+            .then(() => {
+              logout();
+              router.replace('/auth');
+            })
+            .catch((err) => {
+              logError(err, 'auto-logout signOut');
+              // Force local logout even if Clerk signOut fails
+              logout();
+              router.replace('/auth');
+            });
         }
       }
     },

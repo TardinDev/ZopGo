@@ -19,6 +19,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
 import { useAuthStore, VEHICLE_TYPES, ACCOMMODATION_TYPES } from '../stores/authStore';
 import { UserRole, VehicleType, AccommodationType } from '../types';
+
+// Clerk second factor types (not exported by @clerk/clerk-expo)
+interface ClerkSecondFactor {
+  strategy: string;
+  emailAddressId?: string;
+  phoneNumberId?: string;
+}
+
+interface ClerkError {
+  errors?: { longMessage?: string; message?: string }[];
+}
 import { ModeTransition } from '../components/ui';
 import { COLORS } from '../constants/colors';
 
@@ -89,34 +100,33 @@ export default function AuthScreen() {
 
   // Après auth, clerkUser se met à jour → configurer le profil + sauvegarder metadata
   useEffect(() => {
-    if (clerkUser && showTransition && !isRoleSwitch) {
-      // Sauvegarder le rôle choisi dans Clerk metadata (idempotent, fonctionne pour sign-in et sign-up)
-      clerkUser.update({
-        unsafeMetadata: {
-          role: selectedRole,
-          vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
-          accommodationType: selectedRole === 'hebergeur' ? selectedAccommodation : undefined,
-        },
-      }).catch((err: any) => { if (__DEV__) console.error('Failed to save Clerk metadata:', err); });
+    if (!clerkUser || !showTransition || isRoleSwitch) return;
 
-      // Configurer le profil local uniquement si pas déjà fait
-      // (sign-up le fait directement dans handleVerifyEmail)
-      if (!hasSetupProfile.current) {
-        hasSetupProfile.current = true;
+    // Sauvegarder le rôle choisi dans Clerk metadata (idempotent)
+    clerkUser.update({
+      unsafeMetadata: {
+        role: selectedRole,
+        vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
+        accommodationType: selectedRole === 'hebergeur' ? selectedAccommodation : undefined,
+      },
+    }).catch((err: unknown) => { if (__DEV__) console.error('Failed to save Clerk metadata:', err); });
 
-        const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
-        const accommodationType = selectedRole === 'hebergeur' ? selectedAccommodation : undefined;
-        const name =
-          clerkUser.fullName ||
-          clerkUser.firstName ||
-          formData.name ||
-          formData.email.split('@')[0] ||
-          'Utilisateur';
-        const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
+    // Configurer le profil local uniquement si pas déjà fait
+    // (sign-up le fait directement dans handleVerifyEmail pour éviter la race condition)
+    if (hasSetupProfile.current) return;
+    hasSetupProfile.current = true;
 
-        setupProfile(selectedRole, name, email, vehicleType, clerkUser.id, accommodationType);
-      }
-    }
+    const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
+    const accommodationType = selectedRole === 'hebergeur' ? selectedAccommodation : undefined;
+    const name =
+      clerkUser.fullName ||
+      clerkUser.firstName ||
+      formData.name ||
+      formData.email.split('@')[0] ||
+      'Utilisateur';
+    const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
+
+    setupProfile(selectedRole, name, email, vehicleType, clerkUser.id, accommodationType);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clerkUser, showTransition, isRoleSwitch]);
 
@@ -175,16 +185,16 @@ export default function AuthScreen() {
         } else if (result.status === 'needs_second_factor') {
           // 2FA requis — déterminer la stratégie disponible
           const supported = result.supportedSecondFactors;
-          const emailFactor = supported?.find((f: any) => f.strategy === 'email_code');
-          const phoneFactor = supported?.find((f: any) => f.strategy === 'phone_code');
-          const hasTotp = supported?.some((f: any) => f.strategy === 'totp');
+          const emailFactor = supported?.find((f: ClerkSecondFactor) => f.strategy === 'email_code');
+          const phoneFactor = supported?.find((f: ClerkSecondFactor) => f.strategy === 'phone_code');
+          const hasTotp = supported?.some((f: ClerkSecondFactor) => f.strategy === 'totp');
 
           if (emailFactor && 'emailAddressId' in emailFactor) {
             setSecondFactorStrategy('email_code');
             await signIn!.prepareSecondFactor({
               strategy: 'email_code',
               emailAddressId: emailFactor.emailAddressId,
-            } as any);
+            } as Parameters<NonNullable<typeof signIn>['prepareSecondFactor']>[0]);
           } else if (phoneFactor) {
             setSecondFactorStrategy('phone_code');
             await signIn!.prepareSecondFactor({ strategy: 'phone_code' });
@@ -208,10 +218,11 @@ export default function AuthScreen() {
         await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' });
         setPendingVerification(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const clerkErr = err as ClerkError;
       const errorMessage =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
+        clerkErr?.errors?.[0]?.longMessage ||
+        clerkErr?.errors?.[0]?.message ||
         'Une erreur est survenue';
       Alert.alert('Erreur', errorMessage);
     } finally {
@@ -246,10 +257,11 @@ export default function AuthScreen() {
         setIsRoleSwitch(false);
         setShowTransition(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const clerkErr = err as ClerkError;
       const errorMessage =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
+        clerkErr?.errors?.[0]?.longMessage ||
+        clerkErr?.errors?.[0]?.message ||
         'Code de vérification invalide';
       Alert.alert('Erreur', errorMessage);
     } finally {
@@ -271,16 +283,18 @@ export default function AuthScreen() {
         await setActive!({ session: result.createdSessionId });
         setPendingSecondFactor(false);
         setVerificationCode('');
+        // Profile will be setup by the useEffect when clerkUser becomes available
         setTransitionRole(selectedRole);
         setIsRoleSwitch(false);
         setShowTransition(true);
       } else {
         Alert.alert('Erreur', `Statut inattendu: ${result.status}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const clerkErr = err as ClerkError;
       const errorMessage =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
+        clerkErr?.errors?.[0]?.longMessage ||
+        clerkErr?.errors?.[0]?.message ||
         'Code de vérification invalide';
       Alert.alert('Erreur', errorMessage);
     } finally {
@@ -311,10 +325,11 @@ export default function AuthScreen() {
       setConfirmNewPassword('');
       setPendingPasswordReset(true);
       Alert.alert('Code envoyé', `Un code de réinitialisation a été envoyé à ${email}. Vérifiez aussi vos spams.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const clerkErr = err as ClerkError;
       const errorMessage =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
+        clerkErr?.errors?.[0]?.longMessage ||
+        clerkErr?.errors?.[0]?.message ||
         'Une erreur est survenue';
       Alert.alert('Erreur', errorMessage);
     } finally {
@@ -360,15 +375,15 @@ export default function AuthScreen() {
         setNewPassword('');
         setConfirmNewPassword('');
         const supported = result.supportedSecondFactors;
-        const emailFactor = supported?.find((f: any) => f.strategy === 'email_code');
-        const phoneFactor = supported?.find((f: any) => f.strategy === 'phone_code');
-        const hasTotp = supported?.some((f: any) => f.strategy === 'totp');
+        const emailFactor = supported?.find((f: ClerkSecondFactor) => f.strategy === 'email_code');
+        const phoneFactor = supported?.find((f: ClerkSecondFactor) => f.strategy === 'phone_code');
+        const hasTotp = supported?.some((f: ClerkSecondFactor) => f.strategy === 'totp');
         if (emailFactor && 'emailAddressId' in emailFactor) {
           setSecondFactorStrategy('email_code');
           await signIn.prepareSecondFactor({
             strategy: 'email_code',
             emailAddressId: emailFactor.emailAddressId,
-          } as any);
+          } as Parameters<NonNullable<typeof signIn>['prepareSecondFactor']>[0]);
         } else if (phoneFactor) {
           setSecondFactorStrategy('phone_code');
           await signIn.prepareSecondFactor({ strategy: 'phone_code' });
@@ -378,10 +393,11 @@ export default function AuthScreen() {
         setVerificationCode('');
         setPendingSecondFactor(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const clerkErr = err as ClerkError;
       const errorMessage =
-        err?.errors?.[0]?.longMessage ||
-        err?.errors?.[0]?.message ||
+        clerkErr?.errors?.[0]?.longMessage ||
+        clerkErr?.errors?.[0]?.message ||
         'Code invalide ou mot de passe trop faible';
       Alert.alert('Erreur', errorMessage);
     } finally {
@@ -648,14 +664,15 @@ export default function AuthScreen() {
                   onPress={async () => {
                     if (signIn) {
                       try {
+                        const factor = signIn.supportedSecondFactors?.find(
+                          (f: ClerkSecondFactor) => f.strategy === 'email_code'
+                        ) as ClerkSecondFactor | undefined;
                         await signIn.prepareSecondFactor({
                           strategy: secondFactorStrategy,
-                          ...(secondFactorStrategy === 'email_code' ? {
-                            emailAddressId: (signIn.supportedSecondFactors?.find(
-                              (f: any) => f.strategy === 'email_code'
-                            ) as any)?.emailAddressId,
+                          ...(secondFactorStrategy === 'email_code' && factor?.emailAddressId ? {
+                            emailAddressId: factor.emailAddressId,
                           } : {}),
-                        } as any);
+                        } as Parameters<NonNullable<typeof signIn>['prepareSecondFactor']>[0]);
                         Alert.alert('Succès', 'Un nouveau code a été envoyé');
                       } catch {
                         Alert.alert('Erreur', 'Impossible de renvoyer le code');

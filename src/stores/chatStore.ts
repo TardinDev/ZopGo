@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendMessage, ChatMessage as GeminiMessage } from '../lib/gemini';
+import { checkNetwork } from '../hooks/useNetworkStatus';
 import { UserRole } from '../types';
 
 export interface ChatMessageItem {
@@ -61,6 +62,20 @@ export const useChatStore = create<ChatState>()(
           error: null,
         }));
 
+        // Check network before sending
+        const connected = await checkNetwork();
+        if (!connected) {
+          set({
+            isStreaming: false,
+            error: 'Pas de connexion internet. Vérifiez votre connexion et réessayez.',
+          });
+          return;
+        }
+
+        // Abort any previous request before creating a new controller
+        if (abortController) {
+          abortController.abort();
+        }
         abortController = new AbortController();
 
         try {
