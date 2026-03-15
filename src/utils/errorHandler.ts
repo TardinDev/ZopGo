@@ -43,7 +43,7 @@ export const handleError = (error: unknown, context?: string): ErrorResponse => 
   return {
     message,
     displayMessage,
-    code: error instanceof Error ? (error as any).code : undefined,
+    code: error instanceof Error ? (error as Error & { code?: string }).code : undefined,
   };
 };
 

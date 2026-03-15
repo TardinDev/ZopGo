@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { checkNetwork } from '../hooks/useNetworkStatus';
 
 type MessageTab = 'notifications' | 'messages';
 
@@ -26,6 +27,20 @@ export interface Message {
   date: string;
   time: string;
   read: boolean;
+}
+
+interface SupabaseNotificationRow {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+  icon?: string;
+  icon_color?: string;
+  icon_bg?: string;
+  recipient_role?: 'client' | 'chauffeur' | 'all';
+  recipient_id?: string;
 }
 
 interface MessagesState {
@@ -77,6 +92,11 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   loadNotifications: async (userId: string, userRole: string) => {
     set({ isLoading: true });
     try {
+      const connected = await checkNetwork();
+      if (!connected) {
+        set({ isLoading: false });
+        return;
+      }
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -90,7 +110,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       }
 
       if (data) {
-        const notifications: Notification[] = data.map((n: any) => ({
+        const notifications: Notification[] = data.map((n: SupabaseNotificationRow) => ({
           id: n.id,
           type: n.type,
           title: n.title,

@@ -1,3 +1,4 @@
+export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';

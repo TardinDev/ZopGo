@@ -132,8 +132,8 @@ async function streamGenerate(
             fullText += text;
             onChunk(text);
           }
-        } catch {
-          // Ignorer les lignes JSON invalides
+        } catch (err) {
+          if (__DEV__) console.warn('Gemini SSE: invalid JSON line skipped:', jsonStr, err);
         }
       }
     }

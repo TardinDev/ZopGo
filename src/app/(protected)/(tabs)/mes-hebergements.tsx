@@ -1,3 +1,4 @@
+export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

@@ -1,3 +1,4 @@
+export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { View, Text, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useMemo, useCallback, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';

@@ -19,9 +19,15 @@ interface NotificationCardProps {
   onPress: () => void;
 }
 
-export function NotificationCard({ notification, onPress }: NotificationCardProps) {
+export const NotificationCard = React.memo(function NotificationCard({ notification, onPress }: NotificationCardProps) {
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.card}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={`${notification.title}. ${notification.message}`}
+      accessibilityState={{ selected: notification.read }}>
       {/* Icon Badge */}
       <View style={[styles.iconContainer, { backgroundColor: notification.iconBg }]}>
         <Ionicons
@@ -44,7 +50,7 @@ export function NotificationCard({ notification, onPress }: NotificationCardProp
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

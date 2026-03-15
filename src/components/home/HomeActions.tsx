@@ -145,7 +145,9 @@ export function HomeActions() {
           key={index}
           onPress={card.onPress}
           activeOpacity={0.9}
-          style={styles.card}>
+          style={styles.card}
+          accessibilityRole="button"
+          accessibilityLabel={`${card.title.join(' ')}. ${card.subtitle}`}>
           <ImageBackground
             source={{ uri: card.imageUri }}
             style={styles.bgImage}>
