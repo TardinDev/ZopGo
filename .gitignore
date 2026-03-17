@@ -34,3 +34,6 @@ android
 
 # Supabase CLI temp files
 supabase/.temp/
+
+# Test coverage
+coverage/

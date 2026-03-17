@@ -1,6 +1,6 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
-import { useMemo, useCallback, useEffect } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,9 +33,18 @@ export default function VoyagesTab() {
     swapCities,
   } = useVoyagesStore();
 
+  const [refreshing, setRefreshing] = useState(false);
+
   // Charger les trajets au montage
   useEffect(() => {
     loadVoyages();
+  }, [loadVoyages]);
+
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadVoyages();
+    setRefreshing(false);
   }, [loadVoyages]);
 
   // Filtrage des voyages
@@ -101,7 +110,10 @@ export default function VoyagesTab() {
           {/* Liste des résultats */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}>
+            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="white" />
+            }>
             {isLoading ? (
               <ActivityIndicator size="large" color="white" style={{ marginTop: 40 }} />
             ) : filteredVoyages.length > 0 ? (

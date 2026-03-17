@@ -20,7 +20,6 @@ export async function fetchTrajets(chauffeurId: string): Promise<SupabaseTrajet[
     .from('trajets')
     .select('*')
     .eq('chauffeur_id', chauffeurId)
-    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -76,7 +75,6 @@ export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
   const { data, error } = await supabase
     .from('trajets')
     .select('*')
-    .is('deleted_at', null)
     .eq('status', 'en_attente')
     .order('created_at', { ascending: false })
     .limit(100);
@@ -91,7 +89,7 @@ export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
 export async function deleteTrajet(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('trajets')
-    .update({ deleted_at: new Date().toISOString() })
+    .delete()
     .eq('id', id);
 
   if (error) {
