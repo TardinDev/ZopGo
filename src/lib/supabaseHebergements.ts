@@ -21,7 +21,6 @@ export async function fetchHebergements(hebergeurId: string): Promise<SupabaseHe
     .from('hebergements')
     .select('*')
     .eq('hebergeur_id', hebergeurId)
-    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -67,7 +66,6 @@ export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergeme
   const { data, error } = await supabase
     .from('hebergements')
     .select('*')
-    .is('deleted_at', null)
     .eq('status', 'actif')
     .order('created_at', { ascending: false })
     .limit(100);
@@ -82,7 +80,7 @@ export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergeme
 export async function deleteHebergement(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('hebergements')
-    .update({ deleted_at: new Date().toISOString() })
+    .delete()
     .eq('id', id);
 
   if (error) {

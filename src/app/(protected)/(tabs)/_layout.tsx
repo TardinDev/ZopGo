@@ -229,20 +229,6 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="profil"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons
-              name={focused ? 'account' : 'account-outline'}
-              size={26}
-              color={color}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="hebergements"
         options={{
           title: 'Hébergements',
@@ -256,6 +242,22 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="profil"
+        options={{
+          title: 'Profil',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'account' : 'account-outline'}
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+    
 
       {/* Ecrans hors tab bar */}
       <Tabs.Screen name="voyage-detail" options={{ href: null, title: 'Détail du voyage' }} />

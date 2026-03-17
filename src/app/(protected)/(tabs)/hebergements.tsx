@@ -1,6 +1,6 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { useMemo, useCallback, useEffect } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Hebergement } from '../../../types';
@@ -25,9 +25,18 @@ export default function HebergementsTab() {
     setSearchLocation,
   } = useHebergementsDiscoveryStore();
 
+  const [refreshing, setRefreshing] = useState(false);
+
   // Charger les hébergements au montage
   useEffect(() => {
     loadHebergements();
+  }, [loadHebergements]);
+
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadHebergements();
+    setRefreshing(false);
   }, [loadHebergements]);
 
   // Filtrage des hébergements
@@ -72,7 +81,10 @@ export default function HebergementsTab() {
         {/* Liste des résultats */}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}>
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="white" />
+          }>
           {isLoading ? (
             <ActivityIndicator size="large" color="white" style={{ marginTop: 40 }} />
           ) : filteredHebergements.length > 0 ? (
