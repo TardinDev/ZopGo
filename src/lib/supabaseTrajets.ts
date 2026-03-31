@@ -12,6 +12,7 @@ export interface SupabaseTrajet {
   places_disponibles: number;
   status: string;
   created_at: string;
+  profiles?: { name: string; avatar: string; rating: number } | null;
 }
 
 export async function fetchTrajets(chauffeurId: string): Promise<SupabaseTrajet[]> {
@@ -73,7 +74,7 @@ export async function insertTrajet(trajet: {
 export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
   const { data, error } = await supabase
     .from('trajets')
-    .select('*')
+    .select('*, profiles:chauffeur_id(name, avatar, rating)')
     .eq('status', 'en_attente')
     .order('created_at', { ascending: false })
     .limit(100);

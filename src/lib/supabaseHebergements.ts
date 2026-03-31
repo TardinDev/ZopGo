@@ -13,6 +13,7 @@ export interface SupabaseHebergement {
   description: string;
   status: string;
   created_at: string;
+  profiles?: { name: string; avatar: string; rating: number } | null;
 }
 
 export async function fetchHebergements(hebergeurId: string): Promise<SupabaseHebergement[]> {
@@ -64,7 +65,7 @@ export async function insertHebergement(hebergement: {
 export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergement[]> {
   const { data, error } = await supabase
     .from('hebergements')
-    .select('*')
+    .select('*, profiles:hebergeur_id(name, avatar, rating)')
     .eq('status', 'actif')
     .order('created_at', { ascending: false })
     .limit(100);

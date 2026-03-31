@@ -86,6 +86,11 @@ export default function VoyagesTab() {
           to: voyage.to,
           price: voyage.price,
           icon: voyage.icon,
+          chauffeurName: voyage.chauffeurName || '',
+          chauffeurAvatar: voyage.chauffeurAvatar || '',
+          chauffeurRating: voyage.chauffeurRating?.toString() || '',
+          placesDisponibles: voyage.placesDisponibles?.toString() || '',
+          date: voyage.date || '',
         },
       });
     },

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,6 @@ export default function VoyageDetailScreen() {
   const params = useLocalSearchParams();
   const [passengers, setPassengers] = useState(1);
 
-  // En vraie app, on récupérerait les données du voyage avec l'ID
   const voyage = {
     id: params.id || '1',
     type: params.type || 'Bus',
@@ -22,11 +21,12 @@ export default function VoyageDetailScreen() {
     departureTime: '14:30',
     arrivalTime: '18:45',
     duration: '4h 15min',
-    availableSeats: 15,
-    driver: 'Amadou Traore',
-    driverRating: 4.8,
-    vehicle: 'Mercedes Sprinter',
-    amenities: ['WiFi', 'Climatisation', 'USB', 'Bagages'],
+    availableSeats: Number(params.placesDisponibles) || 4,
+    driver: (params.chauffeurName as string) || 'Conducteur',
+    driverRating: Number(params.chauffeurRating) || 0,
+    driverAvatar: (params.chauffeurAvatar as string) || '',
+    vehicle: String(params.type || 'Véhicule'),
+    amenities: ['Climatisation', 'Bagages'],
   };
 
   const totalPrice = (parseInt(String(voyage.price).replace(/[^0-9]/g, '')) || 0) * passengers;
@@ -55,7 +55,7 @@ export default function VoyageDetailScreen() {
         colors={COLORS.gradients.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.3 }}
-        className="pb-8">
+        style={{ paddingBottom: 32 }}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
           <TouchableOpacity onPress={() => router.back()}>
@@ -134,11 +134,19 @@ export default function VoyageDetailScreen() {
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-gray-600">Conducteur</Text>
             <View className="flex-row items-center">
+              {voyage.driverAvatar ? (
+                <Image
+                  source={{ uri: voyage.driverAvatar }}
+                  style={{ width: 28, height: 28, borderRadius: 14, marginRight: 8 }}
+                />
+              ) : null}
               <Text className="mr-2 font-medium">{voyage.driver}</Text>
-              <View className="flex-row items-center">
-                <Ionicons name="star" size={16} color={COLORS.star} />
-                <Text className="ml-1 text-sm text-gray-600">{voyage.driverRating}</Text>
-              </View>
+              {voyage.driverRating > 0 && (
+                <View className="flex-row items-center">
+                  <Ionicons name="star" size={16} color={COLORS.star} />
+                  <Text className="ml-1 text-sm text-gray-600">{voyage.driverRating.toFixed(1)}</Text>
+                </View>
+              )}
             </View>
           </View>
 

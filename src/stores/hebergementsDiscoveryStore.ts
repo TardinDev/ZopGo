@@ -47,8 +47,14 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
         name: h.nom,
         location: h.ville,
         price: `${h.prix_par_nuit} FCFA/nuit`,
-        rating: 0,
+        rating: h.profiles?.rating ?? 0,
         icon: TYPE_ICON[h.type] || '🏨',
+        hebergeurName: h.profiles?.name,
+        hebergeurAvatar: h.profiles?.avatar,
+        hebergeurRating: h.profiles?.rating,
+        capacite: h.capacite,
+        description: h.description,
+        adresse: h.adresse,
       }));
       set({ listings: mapped });
     } catch (err) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
 import type { Hebergement } from '../../types';
@@ -23,8 +23,28 @@ export function HebergementCard({ hebergement, onPress }: HebergementCardProps) 
             <Text style={styles.location}>{hebergement.location}</Text>
           </View>
 
+          {/* Creator info */}
+          {hebergement.hebergeurName && (
+            <View style={styles.creatorRow}>
+              {hebergement.hebergeurAvatar ? (
+                <Image source={{ uri: hebergement.hebergeurAvatar }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <Ionicons name="person" size={12} color="#9CA3AF" />
+                </View>
+              )}
+              <Text style={styles.creatorName} numberOfLines={1}>{hebergement.hebergeurName}</Text>
+            </View>
+          )}
+
           <View style={styles.bottomRow}>
             <Text style={styles.price}>{hebergement.price}</Text>
+            {hebergement.capacite != null && (
+              <View style={styles.capacityBadge}>
+                <Ionicons name="people-outline" size={14} color={COLORS.gray[500]} />
+                <Text style={styles.capacityText}>{hebergement.capacite}</Text>
+              </View>
+            )}
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color={COLORS.star} />
               <Text style={styles.rating}>{ratingDisplay}</Text>
@@ -71,6 +91,27 @@ const styles = StyleSheet.create({
     color: COLORS.gray[500],
     marginLeft: 4,
   },
+  creatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  avatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+  },
+  avatarPlaceholder: {
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  creatorName: {
+    fontSize: 13,
+    color: '#374151',
+    marginLeft: 6,
+    flexShrink: 1,
+  },
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -80,6 +121,15 @@ const styles = StyleSheet.create({
   price: {
     color: COLORS.gray[600],
     fontWeight: '600',
+  },
+  capacityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  capacityText: {
+    fontSize: 13,
+    color: COLORS.gray[500],
   },
   ratingContainer: {
     flexDirection: 'row',
