@@ -1,31 +1,16 @@
-/**
- * Gestionnaire centralisé d'erreurs
- */
-import * as Sentry from '@sentry/react-native';
-
 interface ErrorResponse {
   message: string;
   displayMessage: string;
   code?: string;
 }
 
-/**
- * Gère une erreur et retourne un message utilisateur friendly
- */
 export const handleError = (error: unknown, context?: string): ErrorResponse => {
   const message = error instanceof Error ? error.message : 'Unknown error';
 
-  // Log l'erreur en développement
   if (__DEV__) {
     console.error(`Error in ${context || 'app'}:`, message, error);
   }
 
-  // En production, envoyer à Sentry
-  if (!__DEV__) {
-    Sentry.captureException(error, { extra: { context } });
-  }
-
-  // Messages utilisateur friendly selon le type d'erreur
   let displayMessage = 'Une erreur est survenue. Veuillez réessayer.';
 
   if (message.includes('network') || message.includes('fetch')) {
@@ -47,20 +32,12 @@ export const handleError = (error: unknown, context?: string): ErrorResponse => 
   };
 };
 
-/**
- * Log une erreur sans la traiter
- */
 export const logError = (error: unknown, context?: string): void => {
   if (__DEV__) {
     console.error(`[${context || 'App'}]`, error);
-  } else {
-    Sentry.captureException(error, { extra: { context } });
   }
 };
 
-/**
- * Vérifie si c'est une erreur réseau
- */
 export const isNetworkError = (error: unknown): boolean => {
   if (error instanceof Error) {
     return (

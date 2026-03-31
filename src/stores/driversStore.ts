@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { Livreur } from '../types';
 import { supabase } from '../lib/supabase';
@@ -14,17 +13,14 @@ interface SupabaseProfileRow {
 }
 
 interface DriversState {
-  // Chauffeurs connectés (ajoutés dynamiquement)
   connectedDrivers: Livreur[];
   isLoading: boolean;
 
-  // Actions
   addConnectedDriver: (driver: Livreur) => void;
   removeConnectedDriver: (driverId: string) => void;
   updateDriverAvailability: (driverId: string, disponible: boolean) => void;
   loadDrivers: () => Promise<void>;
 
-  // Getters
   getAllDrivers: () => Livreur[];
   getAvailableDrivers: () => Livreur[];
 }
@@ -35,7 +31,6 @@ export const useDriversStore = create<DriversState>((set, get) => ({
 
   addConnectedDriver: (driver) => {
     set((state) => {
-      // Éviter les doublons
       const exists = state.connectedDrivers.find((d) => d.id === driver.id);
       if (exists) {
         return {
@@ -78,7 +73,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
         .limit(50);
 
       if (error) {
-        Sentry.captureException(new Error(`Error loading drivers: ${error.message}`));
+        if (__DEV__) console.error('Error loading drivers:', error.message);
         return;
       }
 
@@ -96,7 +91,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
         set({ connectedDrivers: drivers });
       }
     } catch (err) {
-      Sentry.captureException(err);
+      if (__DEV__) console.error('loadDrivers error:', err);
     } finally {
       set({ isLoading: false });
     }

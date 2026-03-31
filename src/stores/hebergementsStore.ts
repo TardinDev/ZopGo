@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { HebergeurListing, AccommodationType } from '../types';
 import {
@@ -33,7 +32,6 @@ interface HebergementsState {
   formData: HebergementFormData;
   isLoading: boolean;
 
-  // Actions
   addListing: (hebergeurId: string, supabaseProfileId?: string) => Promise<void>;
   removeListing: (id: string) => Promise<void>;
   toggleStatus: (id: string) => Promise<void>;
@@ -87,7 +85,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         }
       } catch (err) {
         set((state) => ({ listings: state.listings.filter((l) => l.id !== localListing.id) }));
-        Sentry.captureException(err);
+        if (__DEV__) console.error('addListing error:', err);
       }
     }
   },
@@ -99,7 +97,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       await deleteSupabaseHebergement(id);
     } catch (err) {
       set({ listings: previous });
-      Sentry.captureException(err);
+      if (__DEV__) console.error('removeListing error:', err);
     }
   },
 
@@ -117,7 +115,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       await toggleSupabaseStatus(id, newStatus);
     } catch (err) {
       set({ listings: previous });
-      Sentry.captureException(err);
+      if (__DEV__) console.error('toggleStatus error:', err);
     }
   },
 
@@ -148,7 +146,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       }));
       set({ listings });
     } catch (err) {
-      Sentry.captureException(err);
+      if (__DEV__) console.error('loadListings error:', err);
     } finally {
       set({ isLoading: false });
     }

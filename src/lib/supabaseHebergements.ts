@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
 import { sanitizeInput } from '../utils/validation';
 
@@ -25,7 +24,7 @@ export async function fetchHebergements(hebergeurId: string): Promise<SupabaseHe
     .limit(50);
 
   if (error) {
-    Sentry.captureException(new Error(`Error fetching hebergements: ${error.message}`));
+    if (__DEV__) console.error('Error fetching hebergements:', error.message);
     return [];
   }
   return (data as SupabaseHebergement[]) || [];
@@ -56,7 +55,7 @@ export async function insertHebergement(hebergement: {
     .single();
 
   if (error) {
-    Sentry.captureException(new Error(`Error inserting hebergement: ${error.message}`));
+    if (__DEV__) console.error('Error inserting hebergement:', error.message);
     return null;
   }
   return data as SupabaseHebergement;
@@ -71,7 +70,7 @@ export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergeme
     .limit(100);
 
   if (error) {
-    Sentry.captureException(new Error(`Error fetching all available hebergements: ${error.message}`));
+    if (__DEV__) console.error('Error fetching all available hebergements:', error.message);
     return [];
   }
   return (data as SupabaseHebergement[]) || [];
@@ -84,7 +83,7 @@ export async function deleteHebergement(id: string): Promise<boolean> {
     .eq('id', id);
 
   if (error) {
-    Sentry.captureException(new Error(`Error deleting hebergement: ${error.message}`));
+    if (__DEV__) console.error('Error deleting hebergement:', error.message);
     return false;
   }
   return true;
@@ -97,7 +96,7 @@ export async function toggleHebergementStatus(id: string, newStatus: string): Pr
     .eq('id', id);
 
   if (error) {
-    Sentry.captureException(new Error(`Error toggling hebergement status: ${error.message}`));
+    if (__DEV__) console.error('Error toggling hebergement status:', error.message);
     return false;
   }
   return true;

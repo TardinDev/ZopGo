@@ -417,7 +417,7 @@ src/
 
 ### Moyen terme (< 1 semaine)
 7. Ajouter tests unitaires
-8. Intégrer service de tracking d'erreurs (Sentry)
+8. Intégrer service de tracking d'erreurs
 9. Ajouter offline support
 
 ---

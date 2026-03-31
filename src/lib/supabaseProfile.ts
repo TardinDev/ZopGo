@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
 import { sanitizeInput } from '../utils/validation';
 import type { NotificationPreferences } from '../types';
@@ -60,7 +59,7 @@ export async function upsertProfile(
     .single();
 
   if (error) {
-    Sentry.captureException(new Error(`Supabase upsertProfile error: ${error.message}`));
+    if (__DEV__) console.error('Supabase upsertProfile error:', error.message);
     return null;
   }
   return data as SupabaseProfile;
@@ -87,7 +86,7 @@ export async function updateProfile(
     .eq('clerk_id', clerkId);
 
   if (error) {
-    Sentry.captureException(new Error(`Supabase updateProfile error: ${error.message}`));
+    if (__DEV__) console.error('Supabase updateProfile error:', error.message);
     return false;
   }
   return true;

@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { fetchAllAvailableTrajets } from '../lib/supabaseTrajets';
 import type { Voyage } from '../types';
@@ -18,14 +17,12 @@ const VEHICLE_ICON: Record<string, string> = {
 export const transportTypes = ['All', 'Moto', 'Voiture', 'Camionnette'];
 
 interface VoyagesState {
-  // État
   trajets: Voyage[];
   isLoading: boolean;
   selectedType: string;
   fromCity: string;
   toCity: string;
 
-  // Actions
   loadVoyages: () => Promise<void>;
   setSelectedType: (type: string) => void;
   setFromCity: (city: string) => void;
@@ -35,14 +32,12 @@ interface VoyagesState {
 }
 
 export const useVoyagesStore = create<VoyagesState>((set, get) => ({
-  // État initial
   trajets: [],
   isLoading: false,
   selectedType: 'All',
   fromCity: '',
   toCity: '',
 
-  // Actions
   loadVoyages: async () => {
     set({ isLoading: true });
     try {
@@ -57,7 +52,7 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
       }));
       set({ trajets: mapped });
     } catch (err) {
-      Sentry.captureException(err);
+      if (__DEV__) console.error('loadVoyages error:', err);
     } finally {
       set({ isLoading: false });
     }

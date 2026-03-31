@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
 import { sanitizeInput, validateCity, validatePrice, validatePlaces } from '../utils/validation';
 
@@ -24,7 +23,7 @@ export async function fetchTrajets(chauffeurId: string): Promise<SupabaseTrajet[
     .limit(50);
 
   if (error) {
-    Sentry.captureException(new Error(`Error fetching trajets: ${error.message}`));
+    if (__DEV__) console.error('Error fetching trajets:', error.message);
     return [];
   }
   return (data as SupabaseTrajet[]) || [];
@@ -65,7 +64,7 @@ export async function insertTrajet(trajet: {
     .single();
 
   if (error) {
-    Sentry.captureException(new Error(`Error inserting trajet: ${error.message}`));
+    if (__DEV__) console.error('Error inserting trajet:', error.message);
     return null;
   }
   return data as SupabaseTrajet;
@@ -80,7 +79,7 @@ export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
     .limit(100);
 
   if (error) {
-    Sentry.captureException(new Error(`Error fetching all available trajets: ${error.message}`));
+    if (__DEV__) console.error('Error fetching all available trajets:', error.message);
     return [];
   }
   return (data as SupabaseTrajet[]) || [];
@@ -93,7 +92,7 @@ export async function deleteTrajet(id: string): Promise<boolean> {
     .eq('id', id);
 
   if (error) {
-    Sentry.captureException(new Error(`Error deleting trajet: ${error.message}`));
+    if (__DEV__) console.error('Error deleting trajet:', error.message);
     return false;
   }
   return true;
@@ -106,7 +105,7 @@ export async function markTrajetEffectue(id: string): Promise<boolean> {
     .eq('id', id);
 
   if (error) {
-    Sentry.captureException(new Error(`Error marking trajet effectue: ${error.message}`));
+    if (__DEV__) console.error('Error marking trajet effectue:', error.message);
     return false;
   }
   return true;

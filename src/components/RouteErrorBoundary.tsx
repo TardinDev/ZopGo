@@ -1,19 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Sentry from '@sentry/react-native';
 import { COLORS } from '../constants';
 
-/**
- * Route-level ErrorBoundary for Expo Router.
- *
- * Usage: export { RouteErrorBoundary as ErrorBoundary } from '...'
- * in any route file to catch errors within that screen only.
- */
 export function RouteErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
-  // Report to Sentry
   React.useEffect(() => {
-    Sentry.captureException(error, { extra: { context: 'RouteErrorBoundary' } });
+    if (__DEV__) {
+      console.error('RouteErrorBoundary caught:', error);
+    }
   }, [error]);
 
   return (

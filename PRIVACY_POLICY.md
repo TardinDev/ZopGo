@@ -22,7 +22,7 @@ ZopGo est une application mobile de mise en relation entre clients, transporteur
 
 ### Données techniques
 - **Tokens de notifications push** : pour l'envoi de notifications
-- **Identifiant d'appareil** : pour le diagnostic d'erreurs (via Sentry)
+- **Identifiant d'appareil** : pour le diagnostic d'erreurs
 
 ## 2. Données NON collectées
 
@@ -39,7 +39,6 @@ Nous utilisons les services tiers suivants, chacun ayant sa propre politique de 
 | [Clerk](https://clerk.com/privacy) | Authentification | Email, nom, session |
 | [Supabase](https://supabase.com/privacy) | Base de données et stockage | Profil, évaluations, avatar |
 | [Google Gemini](https://ai.google.dev/terms) | Assistant IA | Messages de conversation |
-| [Sentry](https://sentry.io/privacy/) | Suivi d'erreurs | Données techniques, stack traces |
 | [Expo Push](https://expo.dev/privacy) | Notifications push | Token de notification |
 
 ## 4. Stockage local

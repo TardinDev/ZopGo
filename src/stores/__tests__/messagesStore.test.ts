@@ -1,12 +1,10 @@
 import * as Network from 'expo-network';
-import * as Sentry from '@sentry/react-native';
 import { useMessagesStore } from '../messagesStore';
 import { supabase } from '../../lib/supabase';
 import type { Notification, Message } from '../messagesStore';
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // Reset the store to initial state
   useMessagesStore.setState({
     selectedTab: 'notifications',
     notifications: [],
@@ -154,7 +152,7 @@ describe('messagesStore', () => {
       expect(notifs[0].icon).toBe('star');
     });
 
-    it('reports Supabase errors to Sentry', async () => {
+    it('logs Supabase errors in dev', async () => {
       (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: true });
       const mockChain = {
         select: jest.fn().mockReturnThis(),
@@ -167,18 +165,19 @@ describe('messagesStore', () => {
       };
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       await useMessagesStore.getState().loadNotifications('user1', 'client');
-      expect(Sentry.captureException).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
 
-    it('catches exceptions and reports to Sentry', async () => {
+    it('catches exceptions and resets loading', async () => {
       (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: true });
       (supabase.from as jest.Mock).mockImplementation(() => {
         throw new Error('crash');
       });
 
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       await useMessagesStore.getState().loadNotifications('user1', 'client');
-      expect(Sentry.captureException).toHaveBeenCalled();
       expect(useMessagesStore.getState().isLoading).toBe(false);
     });
   });

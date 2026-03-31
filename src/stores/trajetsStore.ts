@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { Trajet, VehicleType } from '../types';
 import {
@@ -31,7 +30,6 @@ interface TrajetsState {
   formData: TrajetFormData;
   isLoading: boolean;
 
-  // Actions
   addTrajet: (chauffeurId: string, supabaseProfileId?: string) => Promise<void>;
   removeTrajet: (id: string) => Promise<void>;
   markEffectue: (id: string) => Promise<void>;
@@ -82,9 +80,8 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
           }));
         }
       } catch (err) {
-        // Rollback optimistic update
         set((state) => ({ trajets: state.trajets.filter((t) => t.id !== localTrajet.id) }));
-        Sentry.captureException(err);
+        if (__DEV__) console.error('addTrajet error:', err);
       }
     }
   },
@@ -96,7 +93,7 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
       await deleteSupabaseTrajet(id);
     } catch (err) {
       set({ trajets: previous });
-      Sentry.captureException(err);
+      if (__DEV__) console.error('removeTrajet error:', err);
     }
   },
 
@@ -111,7 +108,7 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
       await markSupabaseTrajetEffectue(id);
     } catch (err) {
       set({ trajets: previous });
-      Sentry.captureException(err);
+      if (__DEV__) console.error('markEffectue error:', err);
     }
   },
 
@@ -141,7 +138,7 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
       }));
       set({ trajets });
     } catch (err) {
-      Sentry.captureException(err);
+      if (__DEV__) console.error('loadTrajets error:', err);
     } finally {
       set({ isLoading: false });
     }
