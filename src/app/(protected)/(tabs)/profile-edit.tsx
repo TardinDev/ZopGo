@@ -8,18 +8,23 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
+  ActionSheetIOS,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '../../../constants';
 import { useAuthStore } from '../../../stores/authStore';
 import type { NotificationPreferences } from '../../../types';
+import { uploadAvatar, generateAvatarPlaceholder } from '../../../lib/supabaseAvatar';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
-  const { user, updateProfile, notificationPreferences, setNotificationPreferences } =
+  const { user, updateProfile, notificationPreferences, setNotificationPreferences, clerkId } =
     useAuthStore();
 
   const profile = user?.profile;
@@ -32,8 +37,91 @@ export default function ProfileEditScreen() {
     emergencyContact: '',
   });
 
+  const [avatarUri, setAvatarUri] = useState<string>(profile?.avatar || '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<NotificationPreferences>(notificationPreferences);
   const [isLoading, setIsLoading] = useState(false);
+
+  const pickImage = async (source: 'camera' | 'library') => {
+    try {
+      // Request permissions
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission refusée', 'Nous avons besoin de la permission pour accéder à la caméra.');
+          return;
+        }
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission refusée', 'Nous avons besoin de la permission pour accéder à la galerie.');
+          return;
+        }
+      }
+
+      // Launch picker
+      const result = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({
+            mediaTypes: 'images',
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: 'images',
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setAvatarUri(imageUri);
+
+        // Upload immediately
+        setIsUploadingAvatar(true);
+        const userId = clerkId || user?.id || 'unknown';
+        const publicUrl = await uploadAvatar(userId, imageUri);
+
+        if (publicUrl) {
+          updateProfile({ avatar: publicUrl });
+          Alert.alert('Succès', 'Photo de profil mise à jour !');
+        } else {
+          Alert.alert('Erreur', "Impossible d'uploader la photo. Veuillez réessayer.");
+          setAvatarUri(profile?.avatar || '');
+        }
+        setIsUploadingAvatar(false);
+      }
+    } catch (error) {
+      setIsUploadingAvatar(false);
+      Alert.alert('Erreur', "Une erreur s'est produite lors de la sélection de l'image.");
+    }
+  };
+
+  const handleChangePhoto = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Annuler', 'Prendre une photo', 'Choisir depuis la galerie'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) pickImage('camera');
+          if (buttonIndex === 2) pickImage('library');
+        }
+      );
+    } else {
+      Alert.alert(
+        'Changer la photo',
+        'Choisissez une source',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Prendre une photo', onPress: () => pickImage('camera') },
+          { text: 'Galerie', onPress: () => pickImage('library') },
+        ]
+      );
+    }
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -76,6 +164,30 @@ export default function ProfileEditScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1">
         <ScrollView className="-mt-4 flex-1 px-6" showsVerticalScrollIndicator={false}>
+          {/* Avatar Section */}
+          <View className="mb-6 items-center rounded-2xl bg-white p-6 shadow-sm">
+            <View className="relative">
+              <Image
+                source={{ uri: avatarUri || generateAvatarPlaceholder(profile?.name || 'User', clerkId || 'default') }}
+                className="h-32 w-32 rounded-full border-4 border-gray-100"
+              />
+              {isUploadingAvatar && (
+                <View className="absolute inset-0 items-center justify-center rounded-full bg-black/50">
+                  <ActivityIndicator size="large" color="white" />
+                </View>
+              )}
+              <TouchableOpacity
+                onPress={handleChangePhoto}
+                disabled={isUploadingAvatar}
+                className="absolute bottom-0 right-0 rounded-full bg-blue-600 p-3 shadow-lg"
+                activeOpacity={0.7}>
+                <Ionicons name="camera" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Text className="mt-4 text-base font-semibold text-gray-800">{profile?.name}</Text>
+            <Text className="text-sm text-gray-500">Appuyez sur l&apos;icône pour changer</Text>
+          </View>
+
           {/* Personal Information */}
           <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
             <Text className="mb-4 text-lg font-bold text-gray-800">Informations personnelles</Text>

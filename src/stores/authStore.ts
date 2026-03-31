@@ -156,6 +156,7 @@ export const useAuthStore = create<AuthState>()(
                       ...state.user,
                       profile: {
                         ...state.user.profile,
+                        avatar: existing.avatar || state.user.profile.avatar,
                         rating: existing.rating,
                         totalTrips: existing.total_trips,
                         totalDeliveries: existing.total_deliveries,
