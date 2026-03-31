@@ -6,6 +6,11 @@ export interface Voyage {
   to: string;
   price: string;
   icon: string;
+  chauffeurName?: string;
+  chauffeurAvatar?: string;
+  chauffeurRating?: number;
+  placesDisponibles?: number;
+  date?: string;
 }
 
 // Types pour les hébergements
@@ -17,6 +22,12 @@ export interface Hebergement {
   price: string;
   rating: number;
   icon: string;
+  hebergeurName?: string;
+  hebergeurAvatar?: string;
+  hebergeurRating?: number;
+  capacite?: number;
+  description?: string;
+  adresse?: string;
 }
 
 // Types pour les informations utilisateur

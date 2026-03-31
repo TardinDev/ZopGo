@@ -49,6 +49,11 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
         to: t.ville_arrivee,
         price: `${t.prix} FCFA`,
         icon: VEHICLE_ICON[t.vehicule] || '🚗',
+        chauffeurName: t.profiles?.name,
+        chauffeurAvatar: t.profiles?.avatar,
+        chauffeurRating: t.profiles?.rating,
+        placesDisponibles: t.places_disponibles,
+        date: t.date || undefined,
       }));
       set({ trajets: mapped });
     } catch (err) {

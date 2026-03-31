@@ -145,7 +145,7 @@ export default function ProfileEditScreen() {
         colors={COLORS.gradients.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.3 }}
-        className="pb-8">
+        style={{ paddingBottom: 32 }}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
           <TouchableOpacity onPress={() => router.back()}>
@@ -165,21 +165,33 @@ export default function ProfileEditScreen() {
         className="flex-1">
         <ScrollView className="-mt-4 flex-1 px-6" showsVerticalScrollIndicator={false}>
           {/* Avatar Section */}
-          <View className="mb-6 items-center rounded-2xl bg-white p-6 shadow-sm">
-            <View className="relative">
+          <View style={{ marginBottom: 24, alignItems: 'center', backgroundColor: 'white', borderRadius: 16, padding: 24 }}>
+            <View style={{ width: 132, height: 132 }}>
               <Image
                 source={{ uri: avatarUri || generateAvatarPlaceholder(profile?.name || 'User', clerkId || 'default') }}
-                className="h-32 w-32 rounded-full border-4 border-gray-100"
+                style={{ width: 132, height: 132, borderRadius: 66, borderWidth: 4, borderColor: '#F3F4F6' }}
               />
               {isUploadingAvatar && (
-                <View className="absolute inset-0 items-center justify-center rounded-full bg-black/50">
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 66, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
                   <ActivityIndicator size="large" color="white" />
                 </View>
               )}
               <TouchableOpacity
                 onPress={handleChangePhoto}
                 disabled={isUploadingAvatar}
-                className="absolute bottom-0 right-0 rounded-full bg-blue-600 p-3 shadow-lg"
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  backgroundColor: '#2563EB',
+                  borderRadius: 50,
+                  padding: 10,
+                  elevation: 4,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 4,
+                }}
                 activeOpacity={0.7}>
                 <Ionicons name="camera" size={20} color="white" />
               </TouchableOpacity>
