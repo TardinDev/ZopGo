@@ -1,7 +1,5 @@
-import * as Sentry from '@sentry/react-native';
 import { handleError, logError, isNetworkError } from '../errorHandler';
 
-// Save original __DEV__ and console.error
 const originalDev = global.__DEV__;
 
 beforeEach(() => {
@@ -14,8 +12,6 @@ afterEach(() => {
   global.__DEV__ = originalDev;
   jest.restoreAllMocks();
 });
-
-// ─── handleError ────────────────────────────────────────────────────
 
 describe('handleError', () => {
   it('returns message from Error instance', () => {
@@ -73,19 +69,10 @@ describe('handleError', () => {
     expect(console.error).toHaveBeenCalled();
   });
 
-  it('sends to Sentry in production', () => {
+  it('does not log in production', () => {
     global.__DEV__ = false;
-    const err = new Error('prod error');
-    handleError(err, 'ProdContext');
-    expect(Sentry.captureException).toHaveBeenCalledWith(err, {
-      extra: { context: 'ProdContext' },
-    });
-  });
-
-  it('does not send to Sentry in dev', () => {
-    global.__DEV__ = true;
-    handleError(new Error('dev only'));
-    expect(Sentry.captureException).not.toHaveBeenCalled();
+    handleError(new Error('prod error'), 'ProdContext');
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it('includes error code if present', () => {
@@ -110,25 +97,18 @@ describe('handleError', () => {
   });
 });
 
-// ─── logError ───────────────────────────────────────────────────────
-
 describe('logError', () => {
   it('logs to console in dev', () => {
     logError(new Error('dev log'), 'Ctx');
     expect(console.error).toHaveBeenCalled();
   });
 
-  it('sends to Sentry in prod', () => {
+  it('does not log in production', () => {
     global.__DEV__ = false;
-    const err = new Error('prod log');
-    logError(err, 'Ctx');
-    expect(Sentry.captureException).toHaveBeenCalledWith(err, {
-      extra: { context: 'Ctx' },
-    });
+    logError(new Error('prod log'), 'Ctx');
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
-
-// ─── isNetworkError ─────────────────────────────────────────────────
 
 describe('isNetworkError', () => {
   it('returns true for network error', () => {

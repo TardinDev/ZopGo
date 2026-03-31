@@ -13,6 +13,7 @@ import {
   LocationSearchBar,
   EmptyResults,
 } from '../../../components/voyages';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HebergementsTab() {
   const {
@@ -31,6 +32,22 @@ export default function HebergementsTab() {
   useEffect(() => {
     loadHebergements();
   }, [loadHebergements]);
+
+  // Auto-refresh quand l'écran devient actif (l'utilisateur revient sur cet onglet)
+  useFocusEffect(
+    useCallback(() => {
+      // Rafraîchir immédiatement quand l'écran devient actif
+      loadHebergements();
+
+      // Auto-refresh périodique toutes les 30 secondes
+      const interval = setInterval(() => {
+        loadHebergements();
+      }, 30000); // 30 secondes
+
+      // Nettoyer l'intervalle quand l'écran devient inactif
+      return () => clearInterval(interval);
+    }, [loadHebergements])
+  );
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {

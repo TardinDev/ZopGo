@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { fetchAllAvailableHebergements } from '../lib/supabaseHebergements';
 import type { Hebergement } from '../types';
@@ -53,7 +52,7 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
       }));
       set({ listings: mapped });
     } catch (err) {
-      Sentry.captureException(err);
+      if (__DEV__) console.error('loadHebergements error:', err);
     } finally {
       set({ isLoading: false });
     }

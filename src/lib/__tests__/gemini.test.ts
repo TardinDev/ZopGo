@@ -15,11 +15,6 @@ afterEach(() => {
 function loadGemini(apiKey?: string) {
   jest.resetModules();
 
-  // Must re-mock dependencies that gemini.ts imports after resetModules
-  jest.mock('@sentry/react-native', () => ({
-    captureException: jest.fn(),
-  }));
-
   if (apiKey !== undefined) {
     process.env.EXPO_PUBLIC_GEMINI_API_KEY = apiKey;
   } else {

@@ -1,6 +1,6 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
-import { useMemo, useCallback, useEffect, useState } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl, AppState } from 'react-native';
+import { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +15,7 @@ import {
   TransportSearchBar,
   EmptyResults,
 } from '../../../components/voyages';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function VoyagesTab() {
   const router = useRouter();
@@ -39,6 +40,22 @@ export default function VoyagesTab() {
   useEffect(() => {
     loadVoyages();
   }, [loadVoyages]);
+
+  // Auto-refresh quand l'écran devient actif (l'utilisateur revient sur cet onglet)
+  useFocusEffect(
+    useCallback(() => {
+      // Rafraîchir immédiatement quand l'écran devient actif
+      loadVoyages();
+
+      // Auto-refresh périodique toutes les 30 secondes
+      const interval = setInterval(() => {
+        loadVoyages();
+      }, 30000); // 30 secondes
+
+      // Nettoyer l'intervalle quand l'écran devient inactif
+      return () => clearInterval(interval);
+    }, [loadVoyages])
+  );
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {

@@ -1,5 +1,4 @@
 import * as Network from 'expo-network';
-import * as Sentry from '@sentry/react-native';
 import { useDriversStore } from '../driversStore';
 import { supabase } from '../../lib/supabase';
 import type { Livreur } from '../../types';
@@ -130,7 +129,7 @@ describe('driversStore', () => {
       expect(drivers[0].etoiles).toBe(4.5);
     });
 
-    it('reports Supabase errors to Sentry', async () => {
+    it('logs Supabase errors in dev', async () => {
       (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: true });
       const mockChain = {
         select: jest.fn().mockReturnThis(),
@@ -142,18 +141,19 @@ describe('driversStore', () => {
       };
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       await useDriversStore.getState().loadDrivers();
-      expect(Sentry.captureException).toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalled();
     });
 
-    it('catches exceptions and reports to Sentry', async () => {
+    it('catches exceptions and resets loading', async () => {
       (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: true });
       (supabase.from as jest.Mock).mockImplementation(() => {
         throw new Error('crash');
       });
 
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       await useDriversStore.getState().loadDrivers();
-      expect(Sentry.captureException).toHaveBeenCalled();
       expect(useDriversStore.getState().isLoading).toBe(false);
     });
   });

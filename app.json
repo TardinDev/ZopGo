@@ -26,8 +26,7 @@
           "color": "#2162FE",
           "defaultChannel": "default"
         }
-      ],
-      "@sentry/react-native"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -62,8 +61,12 @@
         "root": "./src/app"
       },
       "eas": {
-        "projectId": "9b571b9b-30f7-4b83-92cd-4f0630badaae"
-      }
+        "projectId": "0fa2c027-7583-499a-b7e5-3a320db18af6"
+      },
+      "clerkPublishableKey": "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}",
+      "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
+      "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}",
+      "geminiApiKey": "${EXPO_PUBLIC_GEMINI_API_KEY}"
     },
     "owner": "tardin"
   }

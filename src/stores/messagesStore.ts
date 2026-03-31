@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { checkNetwork } from '../hooks/useNetworkStatus';
@@ -44,13 +43,11 @@ interface SupabaseNotificationRow {
 }
 
 interface MessagesState {
-  // État
   selectedTab: MessageTab;
   notifications: Notification[];
   messages: Message[];
   isLoading: boolean;
 
-  // Actions
   setSelectedTab: (tab: MessageTab) => void;
   markNotificationAsRead: (id: string) => void;
   markMessageAsRead: (id: string) => void;
@@ -60,13 +57,11 @@ interface MessagesState {
 }
 
 export const useMessagesStore = create<MessagesState>((set) => ({
-  // État initial — vide, plus de mocks
   selectedTab: 'notifications',
   notifications: [],
   messages: [],
   isLoading: false,
 
-  // Actions
   setSelectedTab: (tab) => set({ selectedTab: tab }),
 
   markNotificationAsRead: (id) =>
@@ -105,7 +100,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         .limit(50);
 
       if (error) {
-        Sentry.captureException(new Error(`Error loading notifications: ${error.message}`));
+        if (__DEV__) console.error('Error loading notifications:', error.message);
         return;
       }
 
@@ -126,7 +121,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         set({ notifications });
       }
     } catch (err) {
-      Sentry.captureException(err);
+      if (__DEV__) console.error('loadNotifications error:', err);
     } finally {
       set({ isLoading: false });
     }

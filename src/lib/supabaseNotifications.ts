@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
 import type { NotificationPreferences } from '../types';
 
@@ -16,7 +15,7 @@ export async function updatePushToken(clerkId: string, token: string | null): Pr
     .eq('clerk_id', clerkId);
 
   if (error) {
-    Sentry.captureException(new Error(`updatePushToken error: ${error.message}`));
+    if (__DEV__) console.error('updatePushToken error:', error.message);
     return false;
   }
   return true;
@@ -32,9 +31,7 @@ export async function updateNotificationPreferences(
     .eq('clerk_id', clerkId);
 
   if (error) {
-    Sentry.captureException(
-      new Error(`updateNotificationPreferences error: ${error.message}`)
-    );
+    if (__DEV__) console.error('updateNotificationPreferences error:', error.message);
     return false;
   }
   return true;

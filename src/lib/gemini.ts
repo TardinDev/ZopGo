@@ -1,6 +1,10 @@
 import { UserRole } from '../types';
+import Constants from 'expo-constants';
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+// En dev: utilise process.env, en prod: utilise Constants.expoConfig.extra
+const GEMINI_API_KEY =
+  process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
+  Constants.expoConfig?.extra?.geminiApiKey;
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash';
 
 // Rate limiter: max 14 req/min (marge sur la limite gratuite de 15)

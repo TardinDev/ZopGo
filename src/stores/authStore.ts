@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,7 +18,6 @@ import { useDriversStore } from './driversStore';
 import { upsertProfile, fetchProfileByClerkId, updateProfile as updateSupabaseProfile } from '../lib/supabaseProfile';
 import { fetchNotificationPreferences, updateNotificationPreferences, updatePushToken } from '../lib/supabaseNotifications';
 
-// Mapping des types de véhicules
 export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   velo: { type: 'velo', label: 'Vélo', icon: '🚲' },
   moto: { type: 'moto', label: 'Moto', icon: '🏍️' },
@@ -27,7 +25,6 @@ export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   camionnette: { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
 };
 
-// Mapping des types d'hébergements
 export const ACCOMMODATION_TYPES: Record<AccommodationType, AccommodationInfo> = {
   hotel: { type: 'hotel', label: 'Hôtel', icon: '🏨' },
   auberge: { type: 'auberge', label: 'Auberge', icon: '🏠' },
@@ -50,7 +47,6 @@ interface AuthState {
   notificationPreferences: NotificationPreferences;
   _hasHydrated: boolean;
 
-  // Actions
   setHasHydrated: (value: boolean) => void;
   setupProfile: (
     role: UserRole,
@@ -67,7 +63,6 @@ interface AuthState {
   setNotificationPreferences: (prefs: NotificationPreferences) => void;
 }
 
-// Profil client par défaut
 const createClientProfile = (name: string, email: string): UserInfo => ({
   name,
   email,
@@ -80,7 +75,6 @@ const createClientProfile = (name: string, email: string): UserInfo => ({
   memberSince: new Date().getFullYear().toString(),
 });
 
-// Profil chauffeur par défaut
 const createChauffeurProfile = (
   name: string,
   email: string,
@@ -99,7 +93,6 @@ const createChauffeurProfile = (
   disponible: true,
 });
 
-// Profil hébergeur par défaut
 const createHebergeurProfile = (
   name: string,
   email: string,
@@ -145,19 +138,16 @@ export const useAuthStore = create<AuthState>()(
 
         set({ user: newUser, clerkId: clerkId || null });
 
-        // Si c'est un chauffeur, l'ajouter à la liste des chauffeurs disponibles
         if (role === 'chauffeur') {
           const livreur = chauffeurToLivreur(newUser);
           useDriversStore.getState().addConnectedDriver(livreur);
         }
 
-        // Persister en Supabase de manière async
         if (clerkId) {
           (async () => {
             try {
               const existing = await fetchProfileByClerkId(clerkId);
               if (existing) {
-                // Hydrater les stats depuis Supabase
                 set((state) => {
                   if (!state.user) return state;
                   return {
@@ -174,7 +164,6 @@ export const useAuthStore = create<AuthState>()(
                     },
                   };
                 });
-                // Load notification preferences
                 const prefs = await fetchNotificationPreferences(clerkId);
                 set({ notificationPreferences: prefs });
               } else {
@@ -189,7 +178,7 @@ export const useAuthStore = create<AuthState>()(
                 }
               }
             } catch (err) {
-              Sentry.captureException(err);
+              if (__DEV__) console.error('setupProfile sync error:', err);
             }
           })();
         }
@@ -198,12 +187,10 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         const { user, clerkId } = get();
 
-        // Si c'était un chauffeur, le retirer de la liste des chauffeurs disponibles
         if (user && user.role === 'chauffeur') {
           useDriversStore.getState().removeConnectedDriver(user.id);
         }
 
-        // Clear push token in Supabase
         if (clerkId) {
           updatePushToken(clerkId, null);
         }
@@ -227,7 +214,6 @@ export const useAuthStore = create<AuthState>()(
           },
         });
 
-        // Sync avec Supabase
         if (clerkId) {
           const supabaseUpdates: Record<string, string | boolean> = {};
           if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
@@ -250,7 +236,6 @@ export const useAuthStore = create<AuthState>()(
               profile: { ...(user.profile as ChauffeurProfile), disponible },
             },
           });
-          // Mettre à jour la disponibilité dans le driversStore
           useDriversStore.getState().updateDriverAvailability(user.id, disponible);
         } else if (user.role === 'hebergeur') {
           set({
@@ -261,7 +246,6 @@ export const useAuthStore = create<AuthState>()(
           });
         }
 
-        // Sync avec Supabase
         if (clerkId) {
           updateSupabaseProfile(clerkId, { disponible });
         }
@@ -296,21 +280,18 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Helper pour vérifier si l'utilisateur est un chauffeur
 export const isChauffeur = (
   user: AuthUser | null
 ): user is AuthUser & { profile: ChauffeurProfile } => {
   return user?.role === 'chauffeur';
 };
 
-// Helper pour vérifier si l'utilisateur est un hébergeur
 export const isHebergeur = (
   user: AuthUser | null
 ): user is AuthUser & { profile: HebergeurProfile } => {
   return user?.role === 'hebergeur';
 };
 
-// Helper pour convertir un ChauffeurProfile en Livreur
 export const chauffeurToLivreur = (user: AuthUser): Livreur => {
   const profile = user.profile as ChauffeurProfile;
   return {

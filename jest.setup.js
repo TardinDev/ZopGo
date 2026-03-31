@@ -1,10 +1,3 @@
-// Mock @sentry/react-native
-jest.mock('@sentry/react-native', () => ({
-  captureException: jest.fn(),
-  init: jest.fn(),
-  wrap: (component) => component,
-}));
-
 // Mock @react-native-async-storage/async-storage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
