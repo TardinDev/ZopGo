@@ -17,6 +17,7 @@ import {
 import { useDriversStore } from './driversStore';
 import { upsertProfile, fetchProfileByClerkId, updateProfile as updateSupabaseProfile } from '../lib/supabaseProfile';
 import { fetchNotificationPreferences, updateNotificationPreferences, updatePushToken } from '../lib/supabaseNotifications';
+import { generateAvatarPlaceholder } from '../lib/supabaseAvatar';
 
 export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   velo: { type: 'velo', label: 'Vélo', icon: '🚲' },
@@ -67,8 +68,9 @@ const createClientProfile = (name: string, email: string): UserInfo => ({
   name,
   email,
   phone: '',
-  avatar:
-    'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+  address: '',
+  emergencyContact: '',
+  avatar: generateAvatarPlaceholder(name, 'new'),
   rating: 5.0,
   totalTrips: 0,
   totalDeliveries: 0,
@@ -83,8 +85,9 @@ const createChauffeurProfile = (
   name,
   email,
   phone: '',
-  avatar:
-    'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+  address: '',
+  emergencyContact: '',
+  avatar: generateAvatarPlaceholder(name, 'new'),
   rating: 5.0,
   totalTrips: 0,
   totalDeliveries: 0,
@@ -101,8 +104,9 @@ const createHebergeurProfile = (
   name,
   email,
   phone: '',
-  avatar:
-    'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+  address: '',
+  emergencyContact: '',
+  avatar: generateAvatarPlaceholder(name, 'new'),
   rating: 5.0,
   totalTrips: 0,
   totalDeliveries: 0,
@@ -157,6 +161,8 @@ export const useAuthStore = create<AuthState>()(
                       profile: {
                         ...state.user.profile,
                         avatar: existing.avatar || state.user.profile.avatar,
+                        address: existing.address || '',
+                        emergencyContact: existing.emergency_contact || '',
                         rating: existing.rating,
                         totalTrips: existing.total_trips,
                         totalDeliveries: existing.total_deliveries,
@@ -220,6 +226,8 @@ export const useAuthStore = create<AuthState>()(
           if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
           if ('phone' in updates && updates.phone) supabaseUpdates.phone = updates.phone;
           if ('avatar' in updates && updates.avatar) supabaseUpdates.avatar = updates.avatar;
+          if ('address' in updates && updates.address !== undefined) supabaseUpdates.address = updates.address;
+          if ('emergencyContact' in updates && updates.emergencyContact !== undefined) supabaseUpdates.emergency_contact = updates.emergencyContact;
           if (Object.keys(supabaseUpdates).length > 0) {
             updateSupabaseProfile(clerkId, supabaseUpdates);
           }

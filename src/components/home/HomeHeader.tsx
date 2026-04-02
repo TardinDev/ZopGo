@@ -16,6 +16,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 import { COLORS } from '../../constants';
 import { useAuthStore } from '../../stores/authStore';
+import { generateAvatarPlaceholder } from '../../lib/supabaseAvatar';
 
 interface HomeHeaderProps {
   userName: string;
@@ -70,7 +71,7 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
           accessibilityRole="button"
           accessibilityLabel="Menu profil"
           accessibilityHint="Ouvre le menu profil et déconnexion">
-          <Image source={{ uri: user?.profile?.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face' }} style={styles.avatar} />
+          <Image source={{ uri: user?.profile?.avatar || generateAvatarPlaceholder(userName, user?.id || 'default') }} style={styles.avatar} />
           {/* Indicateur du rôle / disponibilité */}
           <View
             style={[

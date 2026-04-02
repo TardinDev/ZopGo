@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Livreur } from '../types';
 import { supabase } from '../lib/supabase';
 import { checkNetwork } from '../hooks/useNetworkStatus';
+import { generateAvatarPlaceholder } from '../lib/supabaseAvatar';
 
 interface SupabaseProfileRow {
   id: string;
@@ -84,7 +85,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
           vehicule: '🚗 Voiture',
           etoiles: d.rating || 5.0,
           disponible: d.disponible,
-          photo: d.avatar || 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=150&h=150&fit=crop&crop=face',
+          photo: d.avatar || generateAvatarPlaceholder(d.name, d.clerk_id || d.id),
           commentaires: [],
           distance: Math.random() * 3 + 0.5,
         }));

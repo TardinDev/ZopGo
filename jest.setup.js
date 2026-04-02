@@ -88,3 +88,28 @@ jest.mock('./src/lib/supabaseNotifications', () => ({
   updateNotificationPreferences: jest.fn(),
   updatePushToken: jest.fn(),
 }));
+
+// Mock supabaseTrajets
+jest.mock('./src/lib/supabaseTrajets', () => ({
+  fetchTrajets: jest.fn(() => Promise.resolve([])),
+  insertTrajet: jest.fn(() => Promise.resolve(null)),
+  deleteTrajet: jest.fn(() => Promise.resolve(true)),
+  markTrajetEffectue: jest.fn(() => Promise.resolve(true)),
+  fetchAllAvailableTrajets: jest.fn(() => Promise.resolve([])),
+}));
+
+// Mock supabaseAvatar
+jest.mock('./src/lib/supabaseAvatar', () => ({
+  uploadAvatar: jest.fn(() => Promise.resolve(null)),
+  deleteAvatar: jest.fn(() => Promise.resolve(true)),
+  generateAvatarPlaceholder: jest.fn((name, userId) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563EB&color=fff&size=200&bold=true`),
+}));
+
+// Mock supabaseHebergements
+jest.mock('./src/lib/supabaseHebergements', () => ({
+  fetchHebergements: jest.fn(() => Promise.resolve([])),
+  insertHebergement: jest.fn(() => Promise.resolve(null)),
+  deleteHebergement: jest.fn(() => Promise.resolve(true)),
+  toggleHebergementStatus: jest.fn(() => Promise.resolve(true)),
+  fetchAllAvailableHebergements: jest.fn(() => Promise.resolve([])),
+}));
