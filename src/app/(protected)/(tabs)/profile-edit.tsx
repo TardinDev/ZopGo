@@ -33,8 +33,8 @@ export default function ProfileEditScreen() {
     name: profile?.name || '',
     email: profile?.email || '',
     phone: profile?.phone || '',
-    address: '',
-    emergencyContact: '',
+    address: profile?.address || '',
+    emergencyContact: profile?.emergencyContact || '',
   });
 
   const [avatarUri, setAvatarUri] = useState<string>(profile?.avatar || '');
@@ -126,7 +126,7 @@ export default function ProfileEditScreen() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      updateProfile({ name: formData.name, phone: formData.phone });
+      updateProfile({ name: formData.name, phone: formData.phone, address: formData.address, emergencyContact: formData.emergencyContact });
       setNotificationPreferences(localPrefs);
 
       Alert.alert('Succès', 'Profil mis à jour avec succès !', [

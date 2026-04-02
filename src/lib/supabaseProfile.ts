@@ -13,6 +13,8 @@ export interface SupabaseProfile {
   rating: number;
   total_trips: number;
   total_deliveries: number;
+  address: string;
+  emergency_contact: string;
   disponible: boolean;
   member_since: string;
   push_token: string | null;
@@ -51,6 +53,8 @@ export async function upsertProfile(
         email: sanitizeInput(profileData.email),
         phone: profileData.phone || '',
         avatar: profileData.avatar || '',
+        address: '',
+        emergency_contact: '',
         disponible: profileData.disponible ?? false,
       },
       { onConflict: 'clerk_id' }
@@ -71,6 +75,8 @@ export async function updateProfile(
     name: string;
     phone: string;
     avatar: string;
+    address: string;
+    emergency_contact: string;
     disponible: boolean;
     rating: number;
     total_trips: number;

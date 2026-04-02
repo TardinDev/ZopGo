@@ -35,6 +35,8 @@ export interface UserInfo {
   name: string;
   email: string;
   phone: string;
+  address: string;
+  emergencyContact: string;
   avatar: string;
   rating: number;
   totalTrips: number;
