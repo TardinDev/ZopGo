@@ -35,34 +35,36 @@ export default function ProfilTab() {
   const comingSoon = (title: string) =>
     Alert.alert(title, 'Cette fonctionnalité sera disponible prochainement.');
 
-  const handleMenuPress = (index: number) => {
-    switch (index) {
-      case 0:
-        router.push('/(protected)/(tabs)/profile-edit');
+  // Filtrer le menu selon le rôle
+  const userRole = isUserChauffeur ? 'chauffeur' : isUserHebergeur ? 'hebergeur' : 'client';
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (item.id === 'reviews') return false; // Affiché dans l'onglet Avis
+    if (!item.roles) return true; // Visible pour tous
+    return item.roles.includes(userRole);
+  });
+
+  const handleMenuPress = (id: string) => {
+    switch (id) {
+      case 'personal-info':
+        router.push('/(protected)/(tabs)/personal-info');
         break;
-      case 1:
-        // Les avis sont maintenant affichés directement dans le profil
+      case 'vehicles':
+        router.push('/(protected)/(tabs)/vehicles-edit');
         break;
-      case 2:
-        comingSoon('Mes véhicules');
+      case 'accommodations':
+        comingSoon('Mes logements');
         break;
-      case 3:
+      case 'payment':
         comingSoon('Méthodes de paiement');
         break;
-      case 4:
-        comingSoon('Adresses favorites');
+      case 'security':
+        router.push('/(protected)/(tabs)/security');
         break;
-      case 5:
-        router.push('/(protected)/(tabs)/profile-edit');
+      case 'help':
+        router.push('/(protected)/(tabs)/help-support');
         break;
-      case 6:
-        comingSoon('Sécurité');
-        break;
-      case 7:
-        comingSoon('Aide et support');
-        break;
-      case 8:
-        comingSoon('Paramètres');
+      case 'settings':
+        router.push('/(protected)/(tabs)/settings-screen');
         break;
       default:
         break;
@@ -289,12 +291,10 @@ export default function ProfilTab() {
                 <>
                   {/* Menu des options */}
                   <View className="rounded-2xl bg-white px-4 pb-2 pt-4">
-                    {menuItems
-                      .filter((_, index) => index !== 1) // Exclure "Mes avis"
-                      .map((item, index) => (
+                    {filteredMenuItems.map((item) => (
                         <TouchableOpacity
-                          key={index}
-                          onPress={() => handleMenuPress(index >= 1 ? index + 1 : index)}
+                          key={item.id}
+                          onPress={() => handleMenuPress(item.id)}
                           className="flex-row items-center border-b border-gray-100 py-4"
                           activeOpacity={0.7}>
                           <View className="mr-4 h-10 w-10 items-center justify-center rounded-full bg-blue-100">

@@ -46,9 +46,11 @@ export interface UserInfo {
 
 // Types pour les éléments de menu
 export interface MenuItem {
+  id: string;
   icon: string;
   title: string;
   subtitle: string;
+  roles?: ('client' | 'chauffeur' | 'hebergeur')[];
 }
 
 // Types pour les statistiques
