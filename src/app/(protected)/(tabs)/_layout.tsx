@@ -257,11 +257,18 @@ export default function TabLayout() {
         }}
       />
 
-    
+
 
       {/* Ecrans hors tab bar */}
       <Tabs.Screen name="voyage-detail" options={{ href: null, title: 'Détail du voyage' }} />
       <Tabs.Screen name="profile-edit" options={{ href: null, title: 'Modifier le profil' }} />
+      <Tabs.Screen name="personal-info" options={{ href: null, title: 'Informations personnelles' }} />
+      <Tabs.Screen name="vehicles-edit" options={{ href: null, title: 'Mes véhicules' }} />
+      <Tabs.Screen name="payment-methods" options={{ href: null, title: 'Méthodes de paiement' }} />
+      <Tabs.Screen name="favorite-addresses" options={{ href: null, title: 'Adresses favorites' }} />
+      <Tabs.Screen name="security" options={{ href: null, title: 'Sécurité' }} />
+      <Tabs.Screen name="help-support" options={{ href: null, title: 'Aide & Support' }} />
+      <Tabs.Screen name="settings-screen" options={{ href: null, title: 'Paramètres' }} />
     </Tabs>
   );
 }
