@@ -12,6 +12,7 @@ export interface SupabaseHebergement {
   capacite: number;
   description: string;
   status: string;
+  disponibilite: number;
   created_at: string;
   profiles?: { name: string; avatar: string; rating: number } | null;
 }
@@ -40,6 +41,8 @@ export async function insertHebergement(hebergement: {
   prix_par_nuit: number;
   capacite: number;
   description: string;
+  disponibilite?: number;
+  status?: string;
 }): Promise<SupabaseHebergement | null> {
   const sanitized = {
     ...hebergement,

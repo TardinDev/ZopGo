@@ -40,6 +40,9 @@ jest.mock('expo-device', () => ({
   modelName: 'Test Device',
 }));
 
+// Mock @react-native-community/datetimepicker
+jest.mock('@react-native-community/datetimepicker', () => 'DateTimePicker');
+
 // Mock react-native-url-polyfill
 jest.mock('react-native-url-polyfill', () => ({}));
 jest.mock('react-native-url-polyfill/auto', () => ({}));

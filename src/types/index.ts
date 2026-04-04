@@ -174,6 +174,7 @@ export interface HebergeurListing {
   capacite: number;
   description: string;
   status: HebergementStatus;
+  disponibilite: number;
   createdAt: string;
 }
 

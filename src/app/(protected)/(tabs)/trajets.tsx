@@ -1,14 +1,24 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { COLORS } from '../../../constants';
 import { useTrajetsStore } from '../../../stores/trajetsStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { VehicleType } from '../../../types';
+
+function formatDateForDisplay(date: Date): string {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day}/${month}/${year} a ${hours}h${minutes}`;
+}
 
 const VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [
   { type: 'moto', label: 'Moto', icon: '🏍️' },
@@ -19,6 +29,10 @@ const VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [
 export default function TrajetsTab() {
   const { user, supabaseProfileId } = useAuthStore();
   const { trajets, formData, addTrajet, removeTrajet, markEffectue, updateForm, loadTrajets } = useTrajetsStore();
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Charger les trajets au montage
   useEffect(() => {
@@ -197,21 +211,87 @@ export default function TrajetsTab() {
               <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                 Date et heure
               </Text>
-              <TextInput
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
                 style={{
                   backgroundColor: COLORS.gray[100],
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
-                  fontSize: 15,
-                  color: COLORS.gray[800],
-                  marginBottom: 20,
+                  marginBottom: Platform.OS === 'ios' && showDatePicker ? 8 : 20,
                 }}
-                placeholder="Ex: 15/02/2026 à 08h00"
-                placeholderTextColor={COLORS.gray[400]}
-                value={formData.date}
-                onChangeText={(v) => updateForm('date', v)}
-              />
+              >
+                <Text style={{
+                  fontSize: 15,
+                  color: selectedDate ? COLORS.gray[800] : COLORS.gray[400],
+                }}>
+                  {selectedDate ? formatDateForDisplay(selectedDate) : 'Choisir une date et heure'}
+                </Text>
+              </TouchableOpacity>
+
+              {Platform.OS === 'ios' && showDatePicker && (
+                <View style={{ marginBottom: 12 }}>
+                  <DateTimePicker
+                    value={selectedDate || new Date()}
+                    mode="datetime"
+                    display="spinner"
+                    minimumDate={new Date()}
+                    locale="fr-FR"
+                    onChange={(_event: DateTimePickerEvent, date?: Date) => {
+                      if (date) {
+                        setSelectedDate(date);
+                        updateForm('date', formatDateForDisplay(date));
+                      }
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowDatePicker(false)}
+                    style={{
+                      alignSelf: 'center',
+                      backgroundColor: COLORS.primary,
+                      borderRadius: 10,
+                      paddingHorizontal: 24,
+                      paddingVertical: 8,
+                      marginTop: 4,
+                    }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Valider</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {Platform.OS === 'android' && showDatePicker && (
+                <DateTimePicker
+                  value={selectedDate || new Date()}
+                  mode="date"
+                  display="spinner"
+                  minimumDate={new Date()}
+                  onChange={(_event: DateTimePickerEvent, date?: Date) => {
+                    setShowDatePicker(false);
+                    if (_event.type === 'dismissed') return;
+                    if (date) {
+                      setSelectedDate(date);
+                      setShowTimePicker(true);
+                    }
+                  }}
+                />
+              )}
+
+              {Platform.OS === 'android' && showTimePicker && (
+                <DateTimePicker
+                  value={selectedDate || new Date()}
+                  mode="time"
+                  display="spinner"
+                  onChange={(_event: DateTimePickerEvent, date?: Date) => {
+                    setShowTimePicker(false);
+                    if (_event.type === 'dismissed') return;
+                    if (date) {
+                      setSelectedDate(date);
+                      updateForm('date', formatDateForDisplay(date));
+                    }
+                  }}
+                />
+              )}
 
               {/* Bouton Publier */}
               <TouchableOpacity
