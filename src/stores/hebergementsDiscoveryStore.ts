@@ -49,6 +49,7 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
         price: `${h.prix_par_nuit} FCFA/nuit`,
         rating: h.profiles?.rating ?? 0,
         icon: TYPE_ICON[h.type] || '🏨',
+        images: h.images || [],
         hebergeurName: h.profiles?.name,
         hebergeurAvatar: h.profiles?.avatar,
         hebergeurRating: h.profiles?.rating,

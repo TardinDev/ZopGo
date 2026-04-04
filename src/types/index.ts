@@ -25,6 +25,7 @@ export interface Hebergement {
   price: string;
   rating: number;
   icon: string;
+  images?: string[];
   hebergeurName?: string;
   hebergeurAvatar?: string;
   hebergeurRating?: number;
@@ -181,6 +182,7 @@ export interface HebergeurListing {
   description: string;
   status: HebergementStatus;
   disponibilite: number;
+  images: string[];
   createdAt: string;
 }
 

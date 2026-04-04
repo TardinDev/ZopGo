@@ -62,6 +62,7 @@ describe('hebergementsDiscoveryStore', () => {
         price: '25000 FCFA/nuit',
         rating: 4.5,
         icon: '🏨',
+        images: [],
         hebergeurName: 'Marie',
         hebergeurAvatar: 'avatar.jpg',
         hebergeurRating: 4.5,

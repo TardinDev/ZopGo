@@ -116,3 +116,18 @@ jest.mock('./src/lib/supabaseHebergements', () => ({
   toggleHebergementStatus: jest.fn(() => Promise.resolve(true)),
   fetchAllAvailableHebergements: jest.fn(() => Promise.resolve([])),
 }));
+
+// Mock supabaseHebergementImages
+jest.mock('./src/lib/supabaseHebergementImages', () => ({
+  uploadHebergementImage: jest.fn(() => Promise.resolve(null)),
+  deleteHebergementImage: jest.fn(() => Promise.resolve(true)),
+  updateHebergementImages: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock expo-image-picker
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: [] })),
+  launchCameraAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: [] })),
+  requestMediaLibraryPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+}));

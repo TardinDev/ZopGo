@@ -1,12 +1,14 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Switch, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { useHebergementsStore } from '../../../stores/hebergementsStore';
 import { useAuthStore, ACCOMMODATION_TYPES } from '../../../stores/authStore';
+import { uploadHebergementImage } from '../../../lib/supabaseHebergementImages';
 import { AccommodationType } from '../../../types';
 
 const ACCOMMODATION_OPTIONS: { type: AccommodationType; label: string; icon: string }[] = [
@@ -19,7 +21,8 @@ const ACCOMMODATION_OPTIONS: { type: AccommodationType; label: string; icon: str
 
 export default function MesHebergementsTab() {
   const { user, supabaseProfileId } = useAuthStore();
-  const { listings, formData, addListing, removeListing, toggleStatus, updateForm, loadListings } = useHebergementsStore();
+  const { listings, formData, addListing, removeListing, toggleStatus, updateForm, addFormImage, removeFormImage, loadListings } = useHebergementsStore();
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (supabaseProfileId) {
@@ -29,13 +32,45 @@ export default function MesHebergementsTab() {
 
   const activeListings = listings.filter((l) => l.status === 'actif');
 
-  const handlePublish = () => {
+  const pickImage = async () => {
+    if (formData.images.length >= 5) {
+      Alert.alert('Limite atteinte', 'Vous pouvez ajouter maximum 5 photos.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      addFormImage(result.assets[0].uri);
+    }
+  };
+
+  const handlePublish = async () => {
     if (!formData.nom.trim() || !formData.ville.trim() || !formData.prixParNuit.trim()) {
       Alert.alert('Champs requis', 'Veuillez remplir le nom, la ville et le prix par nuit.');
       return;
     }
     if (!user) return;
-    addListing(user.id, supabaseProfileId || undefined);
+
+    let imageUrls: string[] = [];
+    if (formData.images.length > 0 && supabaseProfileId) {
+      setIsUploading(true);
+      try {
+        const tempId = Date.now().toString();
+        const uploads = await Promise.all(
+          formData.images.map((uri) => uploadHebergementImage(tempId, uri))
+        );
+        imageUrls = uploads.filter((url): url is string => url !== null);
+      } catch {
+        // continue without images on error
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
+    addListing(user.id, supabaseProfileId || undefined, imageUrls);
     Alert.alert('Logement ajouté', 'Votre logement a été publié avec succès !');
   };
 
@@ -238,6 +273,60 @@ export default function MesHebergementsTab() {
                 onChangeText={(v) => updateForm('description', v)}
               />
 
+              {/* Photos */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>
+                Photos ({formData.images.length}/5)
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 12 }}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {formData.images.map((uri, index) => (
+                  <View key={index} style={{ position: 'relative' }}>
+                    <Image
+                      source={{ uri }}
+                      style={{ width: 80, height: 80, borderRadius: 10 }}
+                    />
+                    <TouchableOpacity
+                      onPress={() => removeFormImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -6,
+                        backgroundColor: '#EF4444',
+                        borderRadius: 10,
+                        width: 20,
+                        height: 20,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <MaterialCommunityIcons name="close" size={12} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {formData.images.length < 5 && (
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 10,
+                      backgroundColor: '#F3F4F6',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: '#D1D5DB',
+                      borderStyle: 'dashed',
+                    }}
+                  >
+                    <MaterialCommunityIcons name="camera-plus" size={24} color="#9CA3AF" />
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+
               {/* Disponibilité toggle */}
               <View style={{
                 flexDirection: 'row',
@@ -293,8 +382,9 @@ export default function MesHebergementsTab() {
               {/* Bouton Publier */}
               <TouchableOpacity
                 onPress={handlePublish}
+                disabled={isUploading}
                 style={{
-                  backgroundColor: '#8B5CF6',
+                  backgroundColor: isUploading ? '#C4B5FD' : '#8B5CF6',
                   borderRadius: 14,
                   paddingVertical: 14,
                   alignItems: 'center',
@@ -303,9 +393,13 @@ export default function MesHebergementsTab() {
                   gap: 8,
                 }}
               >
-                <MaterialCommunityIcons name="plus-circle" size={20} color="white" />
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <MaterialCommunityIcons name="plus-circle" size={20} color="white" />
+                )}
                 <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>
-                  Ajouter le logement
+                  {isUploading ? 'Upload en cours...' : 'Ajouter le logement'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -333,9 +427,16 @@ export default function MesHebergementsTab() {
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                        <Text style={{ fontSize: 20 }}>
-                          {ACCOMMODATION_TYPES[listing.type]?.icon || '🏠'}
-                        </Text>
+                        {listing.images && listing.images.length > 0 ? (
+                          <Image
+                            source={{ uri: listing.images[0] }}
+                            style={{ width: 40, height: 40, borderRadius: 8 }}
+                          />
+                        ) : (
+                          <Text style={{ fontSize: 20 }}>
+                            {ACCOMMODATION_TYPES[listing.type]?.icon || '🏠'}
+                          </Text>
+                        )}
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F2937' }}>
                             {listing.nom}
