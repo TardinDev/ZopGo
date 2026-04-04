@@ -1,18 +1,24 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants';
+import { useAuthStore } from '../../../stores/authStore';
+import { useReservationsStore } from '../../../stores/reservationsStore';
 
 export default function VoyageDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [passengers, setPassengers] = useState(1);
+  const [isBooking, setIsBooking] = useState(false);
+
+  const { user, supabaseProfileId } = useAuthStore();
+  const { bookTrajet } = useReservationsStore();
 
   const voyage = {
-    id: params.id || '1',
+    id: String(params.id || ''),
     type: params.type || 'Bus',
     from: params.from || 'Libreville',
     to: params.to || 'Mouanda',
@@ -25,11 +31,48 @@ export default function VoyageDetailScreen() {
     driver: (params.chauffeurName as string) || 'Conducteur',
     driverRating: Number(params.chauffeurRating) || 0,
     driverAvatar: (params.chauffeurAvatar as string) || '',
+    chauffeurProfileId: (params.chauffeurProfileId as string) || '',
     vehicle: String(params.type || 'Véhicule'),
     amenities: ['Climatisation', 'Bagages'],
   };
 
-  const totalPrice = (parseInt(String(voyage.price).replace(/[^0-9]/g, '')) || 0) * passengers;
+  const unitPrice = parseInt(String(voyage.price).replace(/[^0-9]/g, '')) || 0;
+  const totalPrice = unitPrice * passengers;
+
+  const performBooking = async () => {
+    if (!supabaseProfileId || !voyage.chauffeurProfileId || !voyage.id) {
+      Alert.alert('Erreur', 'Informations de réservation incomplètes.');
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      const clientName = user?.profile?.name || 'Client';
+      const reservation = await bookTrajet({
+        trajetId: voyage.id,
+        clientId: supabaseProfileId,
+        chauffeurId: voyage.chauffeurProfileId,
+        nombrePlaces: passengers,
+        prixTotal: totalPrice,
+        clientName,
+        remainingPlaces: voyage.availableSeats,
+      });
+
+      if (reservation) {
+        Alert.alert(
+          'Réservation envoyée',
+          'Le chauffeur a été notifié. Vous recevrez une réponse bientôt.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      } else {
+        Alert.alert('Erreur', 'Impossible de créer la réservation. Réessayez.');
+      }
+    } catch (err) {
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la réservation.');
+    } finally {
+      setIsBooking(false);
+    }
+  };
 
   const handleBooking = () => {
     Alert.alert(
@@ -37,14 +80,7 @@ export default function VoyageDetailScreen() {
       `Réserver ${passengers} place(s) pour ${totalPrice} Fcfa ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: () => {
-            Alert.alert('Succès', 'Votre réservation a été confirmée !', [
-              { text: 'OK', onPress: () => router.back() },
-            ]);
-          },
-        },
+        { text: 'Confirmer', onPress: performBooking },
       ]
     );
   };
@@ -170,8 +206,14 @@ export default function VoyageDetailScreen() {
 
           <TouchableOpacity
             onPress={handleBooking}
-            className="items-center rounded-2xl bg-[#2162FE] py-4">
-            <Text className="text-lg font-bold text-white">Réserver maintenant</Text>
+            disabled={isBooking}
+            className="items-center rounded-2xl bg-[#2162FE] py-4"
+            style={{ opacity: isBooking ? 0.7 : 1 }}>
+            {isBooking ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-lg font-bold text-white">Réserver maintenant</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

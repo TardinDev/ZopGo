@@ -42,6 +42,8 @@ describe('voyagesStore', () => {
     it('maps Supabase data to Voyage format', async () => {
       (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
         {
+          id: 'uuid-1',
+          chauffeur_id: 'chauff-1',
           vehicule: 'moto',
           ville_depart: 'Libreville',
           ville_arrivee: 'Franceville',
@@ -56,7 +58,7 @@ describe('voyagesStore', () => {
       const state = useVoyagesStore.getState();
       expect(state.trajets).toHaveLength(1);
       expect(state.trajets[0]).toEqual({
-        id: 1,
+        id: 'uuid-1',
         type: 'Moto',
         from: 'Libreville',
         to: 'Franceville',
@@ -65,6 +67,7 @@ describe('voyagesStore', () => {
         chauffeurName: 'Pierre',
         chauffeurAvatar: 'avatar.jpg',
         chauffeurRating: 4.5,
+        chauffeurProfileId: 'chauff-1',
         placesDisponibles: 2,
         date: '2026-03-15',
       });
@@ -89,6 +92,8 @@ describe('voyagesStore', () => {
     it('handles unknown vehicle type gracefully', async () => {
       (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
         {
+          id: 'uuid-bus',
+          chauffeur_id: 'cf-bus',
           vehicule: 'bus',
           ville_depart: 'A',
           ville_arrivee: 'B',
@@ -117,15 +122,15 @@ describe('voyagesStore', () => {
 
     it('maps multiple trajets with correct ids', async () => {
       (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
-        { vehicule: 'voiture', ville_depart: 'A', ville_arrivee: 'B', prix: 1000, profiles: null, places_disponibles: 3, date: null },
-        { vehicule: 'camionnette', ville_depart: 'C', ville_arrivee: 'D', prix: 2000, profiles: null, places_disponibles: 5, date: null },
+        { id: 'uuid-a', chauffeur_id: 'cf-a', vehicule: 'voiture', ville_depart: 'A', ville_arrivee: 'B', prix: 1000, profiles: null, places_disponibles: 3, date: null },
+        { id: 'uuid-b', chauffeur_id: 'cf-b', vehicule: 'camionnette', ville_depart: 'C', ville_arrivee: 'D', prix: 2000, profiles: null, places_disponibles: 5, date: null },
       ]);
 
       await useVoyagesStore.getState().loadVoyages();
       const trajets = useVoyagesStore.getState().trajets;
       expect(trajets).toHaveLength(2);
-      expect(trajets[0].id).toBe(1);
-      expect(trajets[1].id).toBe(2);
+      expect(trajets[0].id).toBe('uuid-a');
+      expect(trajets[1].id).toBe('uuid-b');
       expect(trajets[1].type).toBe('Camionnette');
       expect(trajets[1].icon).toBe('🚐');
     });
@@ -182,7 +187,7 @@ describe('voyagesStore', () => {
     });
 
     it('does not clear trajets', () => {
-      useVoyagesStore.setState({ trajets: [{ id: 1, type: 'Moto', from: 'A', to: 'B', price: '1000', icon: '🏍️' }] });
+      useVoyagesStore.setState({ trajets: [{ id: 'uuid-x', type: 'Moto', from: 'A', to: 'B', price: '1000', icon: '🏍️' }] });
       useVoyagesStore.getState().resetFilters();
       expect(useVoyagesStore.getState().trajets).toHaveLength(1);
     });

@@ -5,11 +5,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { AnimatedTabScreen } from '../../../components/ui';
+import { AnimatedTabScreen, PickerModal, PickerOption } from '../../../components/ui';
 import { COLORS } from '../../../constants';
 import { useTrajetsStore } from '../../../stores/trajetsStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { VehicleType } from '../../../types';
+
+const MARQUES: PickerOption[] = [
+  'Toyota', 'Nissan', 'Mitsubishi', 'Hyundai', 'Kia', 'Suzuki', 'Honda',
+  'Mercedes', 'Peugeot', 'Renault', 'Ford', 'Volkswagen', 'BMW', 'Chevrolet', 'Isuzu',
+].map((m) => ({ value: m, label: m }));
+
+const COULEURS: PickerOption[] = [
+  'Blanc', 'Noir', 'Gris', 'Argent', 'Bleu', 'Rouge', 'Vert', 'Jaune', 'Orange', 'Marron', 'Beige',
+].map((c) => ({ value: c, label: c }));
+
+const PLACES: PickerOption[] = Array.from({ length: 8 }, (_, i) => ({
+  value: String(i + 1),
+  label: `${i + 1} place${i + 1 > 1 ? 's' : ''}`,
+}));
 
 function formatDateForDisplay(date: Date): string {
   const day = date.getDate().toString().padStart(2, '0');
@@ -33,6 +47,9 @@ export default function TrajetsTab() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showMarquePicker, setShowMarquePicker] = useState(false);
+  const [showCouleurPicker, setShowCouleurPicker] = useState(false);
+  const [showPlacesPicker, setShowPlacesPicker] = useState(false);
 
   // Charger les trajets au montage
   useEffect(() => {
@@ -159,21 +176,24 @@ export default function TrajetsTab() {
                   <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                     Places
                   </Text>
-                  <TextInput
+                  <TouchableOpacity
+                    onPress={() => setShowPlacesPicker(true)}
                     style={{
                       backgroundColor: COLORS.gray[100],
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
-                      fontSize: 15,
-                      color: COLORS.gray[800],
                     }}
-                    placeholder="1"
-                    placeholderTextColor={COLORS.gray[400]}
-                    keyboardType="numeric"
-                    value={formData.placesDisponibles}
-                    onChangeText={(v) => updateForm('placesDisponibles', v)}
-                  />
+                  >
+                    <Text style={{
+                      fontSize: 15,
+                      color: formData.placesDisponibles ? COLORS.gray[800] : COLORS.gray[400],
+                    }}>
+                      {formData.placesDisponibles
+                        ? `${formData.placesDisponibles} place${Number(formData.placesDisponibles) > 1 ? 's' : ''}`
+                        : 'Choisir'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -213,20 +233,22 @@ export default function TrajetsTab() {
                   <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                     Marque
                   </Text>
-                  <TextInput
+                  <TouchableOpacity
+                    onPress={() => setShowMarquePicker(true)}
                     style={{
                       backgroundColor: COLORS.gray[100],
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
-                      fontSize: 15,
-                      color: COLORS.gray[800],
                     }}
-                    placeholder="Ex: Toyota"
-                    placeholderTextColor={COLORS.gray[400]}
-                    value={formData.marque}
-                    onChangeText={(v) => updateForm('marque', v)}
-                  />
+                  >
+                    <Text style={{
+                      fontSize: 15,
+                      color: formData.marque ? COLORS.gray[800] : COLORS.gray[400],
+                    }}>
+                      {formData.marque || 'Choisir'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
@@ -253,21 +275,23 @@ export default function TrajetsTab() {
               <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                 Couleur
               </Text>
-              <TextInput
+              <TouchableOpacity
+                onPress={() => setShowCouleurPicker(true)}
                 style={{
                   backgroundColor: COLORS.gray[100],
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   paddingVertical: 12,
-                  fontSize: 15,
-                  color: COLORS.gray[800],
                   marginBottom: 12,
                 }}
-                placeholder="Ex: Blanc"
-                placeholderTextColor={COLORS.gray[400]}
-                value={formData.couleur}
-                onChangeText={(v) => updateForm('couleur', v)}
-              />
+              >
+                <Text style={{
+                  fontSize: 15,
+                  color: formData.couleur ? COLORS.gray[800] : COLORS.gray[400],
+                }}>
+                  {formData.couleur || 'Choisir une couleur'}
+                </Text>
+              </TouchableOpacity>
 
               {/* Date/Heure */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
@@ -467,6 +491,33 @@ export default function TrajetsTab() {
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
+
+      <PickerModal
+        visible={showMarquePicker}
+        title="Marque du véhicule"
+        options={MARQUES}
+        selectedValue={formData.marque}
+        onSelect={(v) => updateForm('marque', v)}
+        onClose={() => setShowMarquePicker(false)}
+      />
+
+      <PickerModal
+        visible={showCouleurPicker}
+        title="Couleur du véhicule"
+        options={COULEURS}
+        selectedValue={formData.couleur}
+        onSelect={(v) => updateForm('couleur', v)}
+        onClose={() => setShowCouleurPicker(false)}
+      />
+
+      <PickerModal
+        visible={showPlacesPicker}
+        title="Nombre de places"
+        options={PLACES}
+        selectedValue={formData.placesDisponibles}
+        onSelect={(v) => updateForm('placesDisponibles', v)}
+        onClose={() => setShowPlacesPicker(false)}
+      />
     </AnimatedTabScreen>
   );
 }
