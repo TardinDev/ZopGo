@@ -13,6 +13,10 @@ export function VoyageCard({ voyage, onPress }: VoyageCardProps) {
     ? new Date(voyage.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
     : null;
 
+  const vehicleDetails = [voyage.marque, voyage.modele, voyage.couleur]
+    .filter(Boolean)
+    .join(' · ') || null;
+
   return (
     <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
       <View style={styles.content}>
@@ -56,6 +60,12 @@ export function VoyageCard({ voyage, onPress }: VoyageCardProps) {
               <View style={styles.metaItem}>
                 <Ionicons name="calendar-outline" size={14} color="#6B7280" />
                 <Text style={styles.metaText}>{formattedDate}</Text>
+              </View>
+            )}
+            {vehicleDetails && (
+              <View style={styles.metaItem}>
+                <Ionicons name="car-outline" size={14} color="#6B7280" />
+                <Text style={styles.metaText}>{vehicleDetails}</Text>
               </View>
             )}
           </View>

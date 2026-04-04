@@ -11,6 +11,9 @@ export interface Voyage {
   chauffeurRating?: number;
   placesDisponibles?: number;
   date?: string;
+  marque?: string;
+  modele?: string;
+  couleur?: string;
 }
 
 // Types pour les hébergements
@@ -125,6 +128,9 @@ export interface Trajet {
   placesDisponibles: number;
   status: TrajetStatus;
   createdAt: string; // ISO string
+  marque?: string;
+  modele?: string;
+  couleur?: string;
 }
 
 // Types pour l'authentification et les rôles

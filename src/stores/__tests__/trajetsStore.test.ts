@@ -17,6 +17,9 @@ beforeEach(() => {
       vehicule: 'voiture',
       date: '',
       placesDisponibles: '1',
+      marque: '',
+      modele: '',
+      couleur: '',
     },
     isLoading: false,
   });
@@ -72,6 +75,9 @@ describe('trajetsStore', () => {
           vehicule: 'voiture',
           date: '2026-04-01',
           placesDisponibles: '4',
+          marque: 'Toyota',
+          modele: 'Corolla',
+          couleur: 'Blanc',
         },
       });
 
@@ -83,6 +89,9 @@ describe('trajetsStore', () => {
       expect(trajets[0].prix).toBe(15000);
       expect(trajets[0].placesDisponibles).toBe(4);
       expect(trajets[0].status).toBe('en_attente');
+      expect(trajets[0].marque).toBe('Toyota');
+      expect(trajets[0].modele).toBe('Corolla');
+      expect(trajets[0].couleur).toBe('Blanc');
     });
 
     it('resets form after adding', async () => {
@@ -94,11 +103,15 @@ describe('trajetsStore', () => {
           vehicule: 'moto',
           date: '',
           placesDisponibles: '1',
+          marque: 'Honda',
+          modele: '',
+          couleur: '',
         },
       });
 
       await useTrajetsStore.getState().addTrajet('chauffeur_1');
       expect(useTrajetsStore.getState().formData.villeDepart).toBe('');
+      expect(useTrajetsStore.getState().formData.marque).toBe('');
     });
 
     it('syncs with Supabase when supabaseProfileId provided', async () => {
@@ -111,6 +124,9 @@ describe('trajetsStore', () => {
           vehicule: 'voiture',
           date: '2026-04-01',
           placesDisponibles: '3',
+          marque: 'Toyota',
+          modele: 'Hilux',
+          couleur: 'Noir',
         },
       });
 
@@ -121,6 +137,9 @@ describe('trajetsStore', () => {
           ville_depart: 'Libreville',
           ville_arrivee: 'Franceville',
           prix: 10000,
+          marque: 'Toyota',
+          modele: 'Hilux',
+          couleur: 'Noir',
         })
       );
       expect(useTrajetsStore.getState().trajets[0].id).toBe('supa_t1');
@@ -137,6 +156,9 @@ describe('trajetsStore', () => {
           vehicule: 'moto',
           date: '',
           placesDisponibles: '1',
+          marque: '',
+          modele: '',
+          couleur: '',
         },
       });
 
@@ -153,6 +175,9 @@ describe('trajetsStore', () => {
           vehicule: 'moto',
           date: '',
           placesDisponibles: '1',
+          marque: '',
+          modele: '',
+          couleur: '',
         },
       });
 
@@ -169,6 +194,9 @@ describe('trajetsStore', () => {
           vehicule: 'moto',
           date: '',
           placesDisponibles: '1',
+          marque: '',
+          modele: '',
+          couleur: '',
         },
       });
 
@@ -185,6 +213,9 @@ describe('trajetsStore', () => {
           vehicule: 'moto',
           date: '',
           placesDisponibles: 'xyz',
+          marque: '',
+          modele: '',
+          couleur: '',
         },
       });
 
@@ -263,6 +294,9 @@ describe('trajetsStore', () => {
           places_disponibles: 4,
           status: 'en_attente',
           created_at: '2026-03-01',
+          marque: 'Toyota',
+          modele: 'Hilux',
+          couleur: 'Blanc',
         },
       ]);
 
@@ -271,6 +305,9 @@ describe('trajetsStore', () => {
       expect(trajets).toHaveLength(1);
       expect(trajets[0].villeDepart).toBe('Libreville');
       expect(trajets[0].prix).toBe(15000);
+      expect(trajets[0].marque).toBe('Toyota');
+      expect(trajets[0].modele).toBe('Hilux');
+      expect(trajets[0].couleur).toBe('Blanc');
     });
 
     it('sets isLoading during fetch', async () => {
@@ -302,11 +339,17 @@ describe('trajetsStore', () => {
           places_disponibles: 1,
           status: 'en_attente',
           created_at: '2026-01-01',
+          marque: null,
+          modele: null,
+          couleur: null,
         },
       ]);
 
       await useTrajetsStore.getState().loadTrajets('supa_1');
       expect(useTrajetsStore.getState().trajets[0].date).toBe('');
+      expect(useTrajetsStore.getState().trajets[0].marque).toBeUndefined();
+      expect(useTrajetsStore.getState().trajets[0].modele).toBeUndefined();
+      expect(useTrajetsStore.getState().trajets[0].couleur).toBeUndefined();
     });
 
     it('handles error gracefully', async () => {
