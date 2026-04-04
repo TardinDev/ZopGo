@@ -54,6 +54,9 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
         chauffeurRating: t.profiles?.rating,
         placesDisponibles: t.places_disponibles,
         date: t.date || undefined,
+        marque: t.marque || undefined,
+        modele: t.modele || undefined,
+        couleur: t.couleur || undefined,
       }));
       set({ trajets: mapped });
     } catch (err) {

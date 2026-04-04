@@ -12,6 +12,9 @@ export interface SupabaseTrajet {
   places_disponibles: number;
   status: string;
   created_at: string;
+  marque: string | null;
+  modele: string | null;
+  couleur: string | null;
   profiles?: { name: string; avatar: string; rating: number } | null;
 }
 
@@ -38,6 +41,9 @@ export async function insertTrajet(trajet: {
   vehicule: string;
   date?: string;
   places_disponibles: number;
+  marque?: string;
+  modele?: string;
+  couleur?: string;
 }): Promise<SupabaseTrajet | null> {
   if (!validateCity(trajet.ville_depart) || !validateCity(trajet.ville_arrivee)) {
     if (__DEV__) console.error('Invalid city name');
@@ -56,6 +62,9 @@ export async function insertTrajet(trajet: {
     ...trajet,
     ville_depart: sanitizeInput(trajet.ville_depart),
     ville_arrivee: sanitizeInput(trajet.ville_arrivee),
+    marque: trajet.marque ? sanitizeInput(trajet.marque) : undefined,
+    modele: trajet.modele ? sanitizeInput(trajet.modele) : undefined,
+    couleur: trajet.couleur ? sanitizeInput(trajet.couleur) : undefined,
   };
 
   const { data, error } = await supabase

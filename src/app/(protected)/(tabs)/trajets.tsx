@@ -207,6 +207,68 @@ export default function TrajetsTab() {
                 ))}
               </View>
 
+              {/* Marque et Modèle - côte à côte */}
+              <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
+                    Marque
+                  </Text>
+                  <TextInput
+                    style={{
+                      backgroundColor: COLORS.gray[100],
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: COLORS.gray[800],
+                    }}
+                    placeholder="Ex: Toyota"
+                    placeholderTextColor={COLORS.gray[400]}
+                    value={formData.marque}
+                    onChangeText={(v) => updateForm('marque', v)}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
+                    Modèle
+                  </Text>
+                  <TextInput
+                    style={{
+                      backgroundColor: COLORS.gray[100],
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: COLORS.gray[800],
+                    }}
+                    placeholder="Ex: Corolla"
+                    placeholderTextColor={COLORS.gray[400]}
+                    value={formData.modele}
+                    onChangeText={(v) => updateForm('modele', v)}
+                  />
+                </View>
+              </View>
+
+              {/* Couleur */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
+                Couleur
+              </Text>
+              <TextInput
+                style={{
+                  backgroundColor: COLORS.gray[100],
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 15,
+                  color: COLORS.gray[800],
+                  marginBottom: 12,
+                }}
+                placeholder="Ex: Blanc"
+                placeholderTextColor={COLORS.gray[400]}
+                value={formData.couleur}
+                onChangeText={(v) => updateForm('couleur', v)}
+              />
+
               {/* Date/Heure */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
                 Date et heure
@@ -240,7 +302,7 @@ export default function TrajetsTab() {
                     onChange={(_event: DateTimePickerEvent, date?: Date) => {
                       if (date) {
                         setSelectedDate(date);
-                        updateForm('date', formatDateForDisplay(date));
+                        updateForm('date', date.toISOString());
                       }
                     }}
                   />
@@ -287,7 +349,7 @@ export default function TrajetsTab() {
                     if (_event.type === 'dismissed') return;
                     if (date) {
                       setSelectedDate(date);
-                      updateForm('date', formatDateForDisplay(date));
+                      updateForm('date', date.toISOString());
                     }
                   }}
                 />
@@ -342,8 +404,13 @@ export default function TrajetsTab() {
                             {trajet.villeDepart} → {trajet.villeArrivee}
                           </Text>
                           <Text style={{ fontSize: 13, color: COLORS.gray[500], marginTop: 2 }}>
-                            {trajet.placesDisponibles} place{trajet.placesDisponibles > 1 ? 's' : ''} · {trajet.date || 'Date non définie'}
+                            {trajet.placesDisponibles} place{trajet.placesDisponibles > 1 ? 's' : ''} · {trajet.date ? new Date(trajet.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Date non définie'}
                           </Text>
+                          {[trajet.marque, trajet.modele, trajet.couleur].filter(Boolean).length > 0 && (
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 2 }}>
+                              {[trajet.marque, trajet.modele, trajet.couleur].filter(Boolean).join(' · ')}
+                            </Text>
+                          )}
                         </View>
                       </View>
                       <TouchableOpacity onPress={() => handleRemove(trajet.id)}>

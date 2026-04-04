@@ -14,6 +14,9 @@ interface TrajetFormData {
   vehicule: VehicleType;
   date: string;
   placesDisponibles: string;
+  marque: string;
+  modele: string;
+  couleur: string;
 }
 
 const initialFormData: TrajetFormData = {
@@ -23,6 +26,9 @@ const initialFormData: TrajetFormData = {
   vehicule: 'voiture',
   date: '',
   placesDisponibles: '1',
+  marque: '',
+  modele: '',
+  couleur: '',
 };
 
 interface TrajetsState {
@@ -57,6 +63,9 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
       placesDisponibles: parseInt(formData.placesDisponibles) || 1,
       status: 'en_attente',
       createdAt: new Date().toISOString(),
+      marque: formData.marque || undefined,
+      modele: formData.modele || undefined,
+      couleur: formData.couleur || undefined,
     };
     set({ trajets: [localTrajet, ...trajets], formData: { ...initialFormData } });
 
@@ -70,6 +79,9 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
           vehicule: formData.vehicule,
           date: formData.date || undefined,
           places_disponibles: parseInt(formData.placesDisponibles) || 1,
+          marque: formData.marque || undefined,
+          modele: formData.modele || undefined,
+          couleur: formData.couleur || undefined,
         });
 
         if (result) {
@@ -135,6 +147,9 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
         placesDisponibles: t.places_disponibles,
         status: t.status as 'en_attente' | 'effectue',
         createdAt: t.created_at,
+        marque: t.marque || undefined,
+        modele: t.modele || undefined,
+        couleur: t.couleur || undefined,
       }));
       set({ trajets });
     } catch (err) {
