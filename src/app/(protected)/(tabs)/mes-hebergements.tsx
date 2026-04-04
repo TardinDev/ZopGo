@@ -1,6 +1,6 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -226,7 +226,7 @@ export default function MesHebergementsTab() {
                   paddingVertical: 12,
                   fontSize: 15,
                   color: '#1F2937',
-                  marginBottom: 20,
+                  marginBottom: 12,
                   minHeight: 80,
                   textAlignVertical: 'top',
                 }}
@@ -237,6 +237,58 @@ export default function MesHebergementsTab() {
                 value={formData.description}
                 onChangeText={(v) => updateForm('description', v)}
               />
+
+              {/* Disponibilité toggle */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+                backgroundColor: '#F3F4F6',
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+              }}>
+                <Text style={{
+                  fontSize: 15,
+                  fontWeight: '600',
+                  color: formData.disponible ? '#059669' : '#DC2626',
+                }}>
+                  {formData.disponible ? 'Disponible' : 'Indisponible'}
+                </Text>
+                <Switch
+                  value={formData.disponible}
+                  onValueChange={(v) => updateForm('disponible', v)}
+                  trackColor={{ false: '#FCA5A5', true: '#6EE7B7' }}
+                  thumbColor={formData.disponible ? '#059669' : '#DC2626'}
+                />
+              </View>
+
+              {/* Nombre de disponibilités */}
+              {formData.disponible && (
+                <View style={{ marginBottom: 20 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
+                    Nombre de disponibilites
+                  </Text>
+                  <TextInput
+                    style={{
+                      backgroundColor: '#F3F4F6',
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: '#1F2937',
+                    }}
+                    placeholder="1"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                    value={formData.disponibilite}
+                    onChangeText={(v) => updateForm('disponibilite', v)}
+                  />
+                </View>
+              )}
+
+              {!formData.disponible && <View style={{ marginBottom: 20 }} />}
 
               {/* Bouton Publier */}
               <TouchableOpacity
@@ -289,7 +341,7 @@ export default function MesHebergementsTab() {
                             {listing.nom}
                           </Text>
                           <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>
-                            {listing.ville} · {listing.capacite} pers. max
+                            {listing.ville} · {listing.capacite} pers. max · {listing.disponibilite} dispo.
                           </Text>
                         </View>
                       </View>

@@ -15,6 +15,8 @@ interface HebergementFormData {
   prixParNuit: string;
   capacite: string;
   description: string;
+  disponible: boolean;
+  disponibilite: string;
 }
 
 const initialFormData: HebergementFormData = {
@@ -25,6 +27,8 @@ const initialFormData: HebergementFormData = {
   prixParNuit: '',
   capacite: '1',
   description: '',
+  disponible: true,
+  disponibilite: '1',
 };
 
 interface HebergementsState {
@@ -35,7 +39,7 @@ interface HebergementsState {
   addListing: (hebergeurId: string, supabaseProfileId?: string) => Promise<void>;
   removeListing: (id: string) => Promise<void>;
   toggleStatus: (id: string) => Promise<void>;
-  updateForm: (field: keyof HebergementFormData, value: string) => void;
+  updateForm: (field: keyof HebergementFormData, value: string | boolean) => void;
   resetForm: () => void;
   loadListings: (supabaseProfileId: string) => Promise<void>;
 }
@@ -48,6 +52,9 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
   addListing: async (hebergeurId, supabaseProfileId) => {
     const { formData, listings } = get();
 
+    const status = formData.disponible ? 'actif' : 'inactif';
+    const disponibilite = parseInt(formData.disponibilite) || 1;
+
     const localListing: HebergeurListing = {
       id: Date.now().toString(),
       hebergeurId,
@@ -58,7 +65,8 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       prixParNuit: parseInt(formData.prixParNuit) || 0,
       capacite: parseInt(formData.capacite) || 1,
       description: formData.description,
-      status: 'actif',
+      status,
+      disponibilite,
       createdAt: new Date().toISOString(),
     };
     set({ listings: [localListing, ...listings], formData: { ...initialFormData } });
@@ -74,6 +82,8 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
           prix_par_nuit: parseInt(formData.prixParNuit) || 0,
           capacite: parseInt(formData.capacite) || 1,
           description: formData.description,
+          status,
+          disponibilite,
         });
 
         if (result) {
@@ -119,7 +129,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
     }
   },
 
-  updateForm: (field, value) => {
+  updateForm: (field, value: string | boolean) => {
     set({ formData: { ...get().formData, [field]: value } });
   },
 
@@ -142,6 +152,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         capacite: h.capacite,
         description: h.description,
         status: h.status as 'actif' | 'inactif',
+        disponibilite: h.disponibilite ?? 1,
         createdAt: h.created_at,
       }));
       set({ listings });
