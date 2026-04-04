@@ -1,16 +1,18 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Alert, Platform, ActionSheetIOS, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { menuItems } from '../../../data';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { RatingSummary, ReviewCard } from '../../../components/ratings';
 import { useRatingsStore, useAuthStore, isChauffeur, isHebergeur } from '../../../stores';
 import { COLORS } from '../../../constants';
 import { ChauffeurProfile, HebergeurProfile } from '../../../types';
+import { uploadAvatar, generateAvatarPlaceholder } from '../../../lib/supabaseAvatar';
 
 type MainTabType = 'reviews' | 'settings';
 type ReviewTabType = 'received' | 'given';
@@ -20,7 +22,7 @@ export default function ProfilTab() {
   const [activeMainTab, setActiveMainTab] = useState<MainTabType>('reviews');
   const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabType>('received');
   const { receivedReviews, givenReviews, ratingSummary } = useRatingsStore();
-  const { user } = useAuthStore();
+  const { user, updateProfile, clerkId } = useAuthStore();
 
   const profile = user?.profile;
   if (!profile) return null;
@@ -29,8 +31,70 @@ export default function ProfilTab() {
   const chauffeurProfile = isUserChauffeur ? (user.profile as ChauffeurProfile) : null;
   const hebergeurProfile = isUserHebergeur ? (user.profile as HebergeurProfile) : null;
 
+  const [avatarUri, setAvatarUri] = useState<string>(profile.avatar || '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
   // Pour les chauffeurs, on affiche uniquement les avis reçus
   const reviews = activeReviewTab === 'received' ? receivedReviews : givenReviews;
+
+  const pickImage = async (source: 'camera' | 'library') => {
+    try {
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission refusée', 'Nous avons besoin de la permission pour accéder à la caméra.');
+          return;
+        }
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission refusée', 'Nous avons besoin de la permission pour accéder à la galerie.');
+          return;
+        }
+      }
+
+      const result = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: 'images', allowsEditing: true, aspect: [1, 1], quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setAvatarUri(imageUri);
+        setIsUploadingAvatar(true);
+        const userId = clerkId || user?.id || 'unknown';
+        const publicUrl = await uploadAvatar(userId, imageUri);
+        if (publicUrl) {
+          updateProfile({ avatar: publicUrl });
+          Alert.alert('Succès', 'Photo de profil mise à jour !');
+        } else {
+          Alert.alert('Erreur', "Impossible d'uploader la photo. Veuillez réessayer.");
+          setAvatarUri(profile.avatar || '');
+        }
+        setIsUploadingAvatar(false);
+      }
+    } catch {
+      setIsUploadingAvatar(false);
+      Alert.alert('Erreur', "Une erreur s'est produite lors de la sélection de l'image.");
+    }
+  };
+
+  const handleChangePhoto = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Annuler', 'Prendre une photo', 'Choisir depuis la galerie'], cancelButtonIndex: 0 },
+        (buttonIndex) => {
+          if (buttonIndex === 1) pickImage('camera');
+          if (buttonIndex === 2) pickImage('library');
+        }
+      );
+    } else {
+      Alert.alert('Changer la photo', 'Choisissez une source', [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Prendre une photo', onPress: () => pickImage('camera') },
+        { text: 'Galerie', onPress: () => pickImage('library') },
+      ]);
+    }
+  };
 
   const comingSoon = (title: string) =>
     Alert.alert(title, 'Cette fonctionnalité sera disponible prochainement.');
@@ -81,10 +145,22 @@ export default function ProfilTab() {
             contentContainerStyle={{ paddingBottom: 100 }}>
             {/* Header avec photo de profil */}
             <View className="items-center pb-6 pt-6">
-              <Image
-                source={{ uri: profile.avatar }}
-                className="mb-4 h-24 w-24 rounded-full border-4 border-white"
-              />
+              <TouchableOpacity onPress={handleChangePhoto} disabled={isUploadingAvatar} activeOpacity={0.7}>
+                <View style={{ width: 96, height: 96, marginBottom: 16 }}>
+                  <Image
+                    source={{ uri: avatarUri || generateAvatarPlaceholder(profile.name || 'User', clerkId || 'default') }}
+                    style={{ width: 96, height: 96, borderRadius: 48, borderWidth: 4, borderColor: 'white' }}
+                  />
+                  {isUploadingAvatar && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 48, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+                      <ActivityIndicator size="small" color="white" />
+                    </View>
+                  )}
+                  <View style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#2563EB', borderRadius: 14, padding: 6, borderWidth: 2, borderColor: 'white' }}>
+                    <Ionicons name="camera" size={14} color="white" />
+                  </View>
+                </View>
+              </TouchableOpacity>
               <Text className="mb-1 text-2xl font-bold text-white">{profile.name}</Text>
               <Text className="mb-2 text-white/80">{profile.email}</Text>
 
