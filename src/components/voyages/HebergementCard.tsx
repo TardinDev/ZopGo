@@ -51,7 +51,11 @@ export function HebergementCard({ hebergement, onPress }: HebergementCardProps) 
             </View>
           </View>
         </View>
-        <Text style={styles.icon}>{hebergement.icon}</Text>
+        {hebergement.images && hebergement.images.length > 0 ? (
+          <Image source={{ uri: hebergement.images[0] }} style={styles.hebergementImage} />
+        ) : (
+          <Text style={styles.icon}>{hebergement.icon}</Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -139,6 +143,12 @@ const styles = StyleSheet.create({
     color: COLORS.gray[600],
     marginLeft: 4,
     fontWeight: '600',
+  },
+  hebergementImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    marginLeft: 16,
   },
   icon: {
     fontSize: 32,

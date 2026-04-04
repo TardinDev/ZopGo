@@ -17,6 +17,7 @@ interface HebergementFormData {
   description: string;
   disponible: boolean;
   disponibilite: string;
+  images: string[];
 }
 
 const initialFormData: HebergementFormData = {
@@ -29,6 +30,7 @@ const initialFormData: HebergementFormData = {
   description: '',
   disponible: true,
   disponibilite: '1',
+  images: [],
 };
 
 interface HebergementsState {
@@ -36,10 +38,12 @@ interface HebergementsState {
   formData: HebergementFormData;
   isLoading: boolean;
 
-  addListing: (hebergeurId: string, supabaseProfileId?: string) => Promise<void>;
+  addListing: (hebergeurId: string, supabaseProfileId?: string, imageUrls?: string[]) => Promise<void>;
   removeListing: (id: string) => Promise<void>;
   toggleStatus: (id: string) => Promise<void>;
   updateForm: (field: keyof HebergementFormData, value: string | boolean) => void;
+  addFormImage: (uri: string) => void;
+  removeFormImage: (index: number) => void;
   resetForm: () => void;
   loadListings: (supabaseProfileId: string) => Promise<void>;
 }
@@ -49,11 +53,12 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
   formData: { ...initialFormData },
   isLoading: false,
 
-  addListing: async (hebergeurId, supabaseProfileId) => {
+  addListing: async (hebergeurId, supabaseProfileId, imageUrls) => {
     const { formData, listings } = get();
 
     const status = formData.disponible ? 'actif' : 'inactif';
     const disponibilite = parseInt(formData.disponibilite) || 1;
+    const images = imageUrls || [];
 
     const localListing: HebergeurListing = {
       id: Date.now().toString(),
@@ -67,6 +72,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       description: formData.description,
       status,
       disponibilite,
+      images,
       createdAt: new Date().toISOString(),
     };
     set({ listings: [localListing, ...listings], formData: { ...initialFormData } });
@@ -84,6 +90,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
           description: formData.description,
           status,
           disponibilite,
+          images,
         });
 
         if (result) {
@@ -133,6 +140,17 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
     set({ formData: { ...get().formData, [field]: value } });
   },
 
+  addFormImage: (uri) => {
+    const { formData } = get();
+    if (formData.images.length >= 5) return;
+    set({ formData: { ...formData, images: [...formData.images, uri] } });
+  },
+
+  removeFormImage: (index) => {
+    const { formData } = get();
+    set({ formData: { ...formData, images: formData.images.filter((_, i) => i !== index) } });
+  },
+
   resetForm: () => {
     set({ formData: { ...initialFormData } });
   },
@@ -153,6 +171,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         description: h.description,
         status: h.status as 'actif' | 'inactif',
         disponibilite: h.disponibilite ?? 1,
+        images: h.images || [],
         createdAt: h.created_at,
       }));
       set({ listings });

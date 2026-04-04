@@ -20,6 +20,7 @@ beforeEach(() => {
       description: '',
       disponible: true,
       disponibilite: '1',
+      images: [],
     },
     isLoading: false,
   });
@@ -79,6 +80,7 @@ describe('hebergementsStore', () => {
           description: 'Beau hotel',
           disponible: true,
           disponibilite: '1',
+          images: [],
         },
       });
 
@@ -103,6 +105,7 @@ describe('hebergementsStore', () => {
           description: 'desc',
           disponible: true,
           disponibilite: '1',
+          images: [],
         },
       });
 
@@ -123,6 +126,7 @@ describe('hebergementsStore', () => {
           description: 'desc',
           disponible: true,
           disponibilite: '1',
+          images: [],
         },
       });
 
@@ -153,6 +157,7 @@ describe('hebergementsStore', () => {
           description: 'desc',
           disponible: true,
           disponibilite: '1',
+          images: [],
         },
       });
 
@@ -172,6 +177,7 @@ describe('hebergementsStore', () => {
           description: 'D',
           disponible: true,
           disponibilite: '1',
+          images: [],
         },
       });
 
@@ -191,6 +197,7 @@ describe('hebergementsStore', () => {
           description: 'D',
           disponible: true,
           disponibilite: '1',
+          images: [],
         },
       });
 
@@ -212,12 +219,41 @@ describe('hebergementsStore', () => {
           description: 'desc',
           disponible: false,
           disponibilite: '1',
+          images: [],
         },
       });
 
       await useHebergementsStore.getState().addListing('heb_1');
       const listing = useHebergementsStore.getState().listings[0];
       expect(listing.status).toBe('inactif');
+    });
+
+    it('passes images to local listing and Supabase insert', async () => {
+      (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_img' });
+      useHebergementsStore.setState({
+        formData: {
+          nom: 'Hotel Photos',
+          type: 'hotel',
+          ville: 'Libreville',
+          adresse: 'rue',
+          prixParNuit: '10000',
+          capacite: '2',
+          description: 'desc',
+          disponible: true,
+          disponibilite: '1',
+          images: [],
+        },
+      });
+
+      const imageUrls = ['https://example.com/img1.jpg', 'https://example.com/img2.jpg'];
+      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1', imageUrls);
+      expect(insertHebergement).toHaveBeenCalledWith(
+        expect.objectContaining({
+          images: imageUrls,
+        })
+      );
+      const listing = useHebergementsStore.getState().listings[0];
+      expect(listing.images).toEqual(imageUrls);
     });
 
     it('passes disponibilite to Supabase insert', async () => {
@@ -233,6 +269,7 @@ describe('hebergementsStore', () => {
           description: 'desc',
           disponible: true,
           disponibilite: '5',
+          images: [],
         },
       });
 
@@ -252,8 +289,8 @@ describe('hebergementsStore', () => {
     it('removes listing optimistically', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, createdAt: '' },
-          { id: '2', hebergeurId: 'h1', nom: 'B', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 2000, capacite: 2, description: '', status: 'actif', disponibilite: 1, createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
+          { id: '2', hebergeurId: 'h1', nom: 'B', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 2000, capacite: 2, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
         ],
       });
 
@@ -267,7 +304,7 @@ describe('hebergementsStore', () => {
       (deleteHebergement as jest.Mock).mockRejectedValue(new Error('DB error'));
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
         ],
       });
 
@@ -280,7 +317,7 @@ describe('hebergementsStore', () => {
     it('toggles actif to inactif', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
         ],
       });
 
@@ -292,7 +329,7 @@ describe('hebergementsStore', () => {
     it('toggles inactif to actif', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'inactif', disponibilite: 1, createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'inactif', disponibilite: 1, images: [], createdAt: '' },
         ],
       });
 
@@ -311,12 +348,34 @@ describe('hebergementsStore', () => {
       (toggleHebergementStatus as jest.Mock).mockRejectedValue(new Error('error'));
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
         ],
       });
 
       await useHebergementsStore.getState().toggleStatus('1');
       expect(useHebergementsStore.getState().listings[0].status).toBe('actif');
+    });
+  });
+
+  describe('addFormImage / removeFormImage', () => {
+    it('adds an image URI to formData', () => {
+      useHebergementsStore.getState().addFormImage('file:///photo1.jpg');
+      expect(useHebergementsStore.getState().formData.images).toEqual(['file:///photo1.jpg']);
+    });
+
+    it('does not exceed 5 images', () => {
+      for (let i = 0; i < 7; i++) {
+        useHebergementsStore.getState().addFormImage(`file:///photo${i}.jpg`);
+      }
+      expect(useHebergementsStore.getState().formData.images).toHaveLength(5);
+    });
+
+    it('removes an image by index', () => {
+      useHebergementsStore.getState().addFormImage('file:///a.jpg');
+      useHebergementsStore.getState().addFormImage('file:///b.jpg');
+      useHebergementsStore.getState().addFormImage('file:///c.jpg');
+      useHebergementsStore.getState().removeFormImage(1);
+      expect(useHebergementsStore.getState().formData.images).toEqual(['file:///a.jpg', 'file:///c.jpg']);
     });
   });
 
@@ -335,6 +394,7 @@ describe('hebergementsStore', () => {
           description: 'Super hotel',
           status: 'actif',
           disponibilite: 3,
+          images: ['https://example.com/img1.jpg'],
           created_at: '2026-01-01',
         },
       ]);
@@ -344,6 +404,30 @@ describe('hebergementsStore', () => {
       expect(listings).toHaveLength(1);
       expect(listings[0].nom).toBe('Hotel Gabon');
       expect(listings[0].prixParNuit).toBe(25000);
+      expect(listings[0].images).toEqual(['https://example.com/img1.jpg']);
+    });
+
+    it('defaults images to empty array when null', async () => {
+      (fetchHebergements as jest.Mock).mockResolvedValue([
+        {
+          id: 'h2',
+          hebergeur_id: 'heb2',
+          nom: 'Old Hotel',
+          type: 'hotel',
+          ville: 'Libreville',
+          adresse: 'rue',
+          prix_par_nuit: 10000,
+          capacite: 2,
+          description: 'desc',
+          status: 'actif',
+          disponibilite: 1,
+          images: null,
+          created_at: '2026-01-01',
+        },
+      ]);
+
+      await useHebergementsStore.getState().loadListings('supa_1');
+      expect(useHebergementsStore.getState().listings[0].images).toEqual([]);
     });
 
     it('sets isLoading during fetch', async () => {
