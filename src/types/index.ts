@@ -1,6 +1,6 @@
 // Types pour les voyages
 export interface Voyage {
-  id: number;
+  id: string;
   type: string;
   from: string;
   to: string;
@@ -9,6 +9,7 @@ export interface Voyage {
   chauffeurName?: string;
   chauffeurAvatar?: string;
   chauffeurRating?: number;
+  chauffeurProfileId?: string;
   placesDisponibles?: number;
   date?: string;
   marque?: string;
@@ -116,7 +117,41 @@ export interface RatingSummaryData {
 }
 
 // Types pour les trajets proposés par les chauffeurs
-export type TrajetStatus = 'en_attente' | 'effectue';
+export type TrajetStatus = 'en_attente' | 'effectue' | 'complet';
+
+// Types pour les réservations
+export type ReservationStatus = 'en_attente' | 'acceptee' | 'refusee' | 'annulee';
+
+export interface Reservation {
+  id: string;
+  trajetId: string;
+  clientId: string;
+  chauffeurId: string;
+  nombrePlaces: number;
+  prixTotal: number;
+  status: ReservationStatus;
+  createdAt: string;
+  updatedAt: string;
+  // Optional joined data
+  clientName?: string;
+  clientAvatar?: string;
+  chauffeurName?: string;
+  chauffeurAvatar?: string;
+  villeDepart?: string;
+  villeArrivee?: string;
+  date?: string;
+}
+
+// Types pour la messagerie directe
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  reservationId?: string;
+  content: string;
+  read: boolean;
+  createdAt: string;
+}
 
 export interface Trajet {
   id: string;

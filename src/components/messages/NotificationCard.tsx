@@ -17,9 +17,16 @@ interface Notification {
 interface NotificationCardProps {
   notification: Notification;
   onPress: () => void;
+  onAction?: () => void;
+  actionLabel?: string;
 }
 
-export const NotificationCard = React.memo(function NotificationCard({ notification, onPress }: NotificationCardProps) {
+export const NotificationCard = React.memo(function NotificationCard({
+  notification,
+  onPress,
+  onAction,
+  actionLabel,
+}: NotificationCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -28,26 +35,38 @@ export const NotificationCard = React.memo(function NotificationCard({ notificat
       accessibilityRole="button"
       accessibilityLabel={`${notification.title}. ${notification.message}`}
       accessibilityState={{ selected: notification.read }}>
-      {/* Icon Badge */}
-      <View style={[styles.iconContainer, { backgroundColor: notification.iconBg }]}>
-        <Ionicons
-          name={notification.icon as keyof typeof Ionicons.glyphMap}
-          size={24}
-          color={notification.iconColor}
-        />
+      <View style={styles.row}>
+        {/* Icon Badge */}
+        <View style={[styles.iconContainer, { backgroundColor: notification.iconBg }]}>
+          <Ionicons
+            name={notification.icon as keyof typeof Ionicons.glyphMap}
+            size={24}
+            color={notification.iconColor}
+          />
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{notification.title}</Text>
+            {!notification.read && <View style={styles.unreadDot} />}
+          </View>
+          <Text style={styles.message} numberOfLines={2}>
+            {notification.message}
+          </Text>
+          <Text style={styles.time}>{notification.time}</Text>
+        </View>
       </View>
 
-      {/* Content */}
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{notification.title}</Text>
-          {!notification.read && <View style={styles.unreadDot} />}
-        </View>
-        <Text style={styles.message} numberOfLines={2}>
-          {notification.message}
-        </Text>
-        <Text style={styles.time}>{notification.time}</Text>
-      </View>
+      {onAction && (
+        <TouchableOpacity
+          onPress={onAction}
+          style={styles.actionBtn}
+          activeOpacity={0.8}>
+          <Ionicons name="chatbubble-ellipses-outline" size={16} color="#2162FE" />
+          <Text style={styles.actionText}>{actionLabel || 'Écrire'}</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 });
@@ -55,7 +74,6 @@ export const NotificationCard = React.memo(function NotificationCard({ notificat
 const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
-    flexDirection: 'row',
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
@@ -64,6 +82,24 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  actionBtn: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  actionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2162FE',
   },
   iconContainer: {
     marginRight: 16,

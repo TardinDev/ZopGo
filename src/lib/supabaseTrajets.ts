@@ -85,6 +85,7 @@ export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
     .from('trajets')
     .select('*, profiles:chauffeur_id(name, avatar, rating)')
     .eq('status', 'en_attente')
+    .gt('places_disponibles', 0)
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -93,6 +94,28 @@ export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
     return [];
   }
   return (data as SupabaseTrajet[]) || [];
+}
+
+export async function updateTrajetPlaces(trajetId: string, newPlaces: number): Promise<boolean> {
+  const updates: { places_disponibles: number; status?: string } = {
+    places_disponibles: Math.max(0, newPlaces),
+  };
+  if (newPlaces <= 0) {
+    updates.status = 'complet';
+  } else {
+    updates.status = 'en_attente';
+  }
+
+  const { error } = await supabase
+    .from('trajets')
+    .update(updates)
+    .eq('id', trajetId);
+
+  if (error) {
+    if (__DEV__) console.error('Error updating trajet places:', error.message);
+    return false;
+  }
+  return true;
 }
 
 export async function deleteTrajet(id: string): Promise<boolean> {

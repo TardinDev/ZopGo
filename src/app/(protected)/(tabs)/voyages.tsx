@@ -89,6 +89,7 @@ export default function VoyagesTab() {
           chauffeurName: voyage.chauffeurName || '',
           chauffeurAvatar: voyage.chauffeurAvatar || '',
           chauffeurRating: voyage.chauffeurRating?.toString() || '',
+          chauffeurProfileId: voyage.chauffeurProfileId || '',
           placesDisponibles: voyage.placesDisponibles?.toString() || '',
           date: voyage.date || '',
         },

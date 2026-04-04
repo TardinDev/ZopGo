@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { checkNetwork } from '../hooks/useNetworkStatus';
+import { fetchConversationsList } from '../lib/supabaseDirectMessages';
 
 type MessageTab = 'notifications' | 'messages';
 
@@ -16,6 +17,7 @@ export interface Notification {
   iconBg: string;
   recipientRole?: 'client' | 'chauffeur' | 'all';
   recipientId?: string;
+  data?: Record<string, string>;
 }
 
 export interface Message {
@@ -26,6 +28,7 @@ export interface Message {
   date: string;
   time: string;
   read: boolean;
+  partnerId?: string;
 }
 
 interface SupabaseNotificationRow {
@@ -40,6 +43,7 @@ interface SupabaseNotificationRow {
   icon_bg?: string;
   recipient_role?: 'client' | 'chauffeur' | 'all';
   recipient_id?: string;
+  data?: Record<string, string>;
 }
 
 interface MessagesState {
@@ -54,6 +58,7 @@ interface MessagesState {
   addNotification: (notification: Notification) => void;
   addMessage: (message: Message) => void;
   loadNotifications: (userId: string, userRole: string) => Promise<void>;
+  loadConversations: (userId: string) => Promise<void>;
 }
 
 export const useMessagesStore = create<MessagesState>((set) => ({
@@ -117,11 +122,42 @@ export const useMessagesStore = create<MessagesState>((set) => ({
           iconBg: n.icon_bg || '#E0E7FF',
           recipientRole: n.recipient_role,
           recipientId: n.recipient_id,
+          data: n.data || {},
         }));
         set({ notifications });
       }
     } catch (err) {
       if (__DEV__) console.error('loadNotifications error:', err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  loadConversations: async (userId: string) => {
+    set({ isLoading: true });
+    try {
+      const connected = await checkNetwork();
+      if (!connected) {
+        set({ isLoading: false });
+        return;
+      }
+      const items = await fetchConversationsList(userId);
+      const messages: Message[] = items.map((item) => {
+        const created = new Date(item.createdAt);
+        return {
+          id: item.id,
+          sender: item.partnerName || 'Utilisateur',
+          avatar: item.partnerAvatar || '',
+          content: item.content,
+          date: created.toLocaleDateString('fr-FR'),
+          time: formatTimeAgo(created),
+          read: item.read,
+          partnerId: item.partnerId,
+        };
+      });
+      set({ messages });
+    } catch (err) {
+      if (__DEV__) console.error('loadConversations error:', err);
     } finally {
       set({ isLoading: false });
     }

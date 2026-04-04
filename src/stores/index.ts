@@ -10,3 +10,4 @@ export { useHebergementsStore } from './hebergementsStore';
 export { useChatStore } from './chatStore';
 export { useRatingsStore } from './ratingsStore';
 export { useHebergementsDiscoveryStore } from './hebergementsDiscoveryStore';
+export { useReservationsStore } from './reservationsStore';

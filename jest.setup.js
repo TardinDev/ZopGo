@@ -64,6 +64,7 @@ jest.mock('./src/lib/supabase', () => {
     upsert: jest.fn().mockReturnThis(),
     delete: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
+    gt: jest.fn().mockReturnThis(),
     or: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
@@ -99,6 +100,31 @@ jest.mock('./src/lib/supabaseTrajets', () => ({
   deleteTrajet: jest.fn(() => Promise.resolve(true)),
   markTrajetEffectue: jest.fn(() => Promise.resolve(true)),
   fetchAllAvailableTrajets: jest.fn(() => Promise.resolve([])),
+  updateTrajetPlaces: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock supabaseReservations
+jest.mock('./src/lib/supabaseReservations', () => ({
+  insertReservation: jest.fn(() => Promise.resolve(null)),
+  fetchReservationsForChauffeur: jest.fn(() => Promise.resolve([])),
+  fetchReservationsForClient: jest.fn(() => Promise.resolve([])),
+  acceptReservation: jest.fn(() => Promise.resolve(true)),
+  refuseReservation: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock supabaseDirectMessages
+jest.mock('./src/lib/supabaseDirectMessages', () => ({
+  sendDirectMessage: jest.fn(() => Promise.resolve(null)),
+  fetchConversation: jest.fn(() => Promise.resolve([])),
+  fetchConversationsList: jest.fn(() => Promise.resolve([])),
+  markMessagesAsRead: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock supabaseNotificationsCreate
+jest.mock('./src/lib/supabaseNotificationsCreate', () => ({
+  createNotification: jest.fn(() => Promise.resolve(true)),
+  getProfilePushToken: jest.fn(() => Promise.resolve(null)),
+  sendPushNotification: jest.fn(() => Promise.resolve(true)),
 }));
 
 // Mock supabaseAvatar

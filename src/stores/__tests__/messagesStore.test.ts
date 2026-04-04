@@ -128,7 +128,7 @@ describe('messagesStore', () => {
           data: [
             {
               id: 'n1',
-              type: 'info',
+              type: 'reservation',
               title: 'Welcome',
               message: 'Hello',
               created_at: new Date().toISOString(),
@@ -138,6 +138,7 @@ describe('messagesStore', () => {
               icon_bg: '#000',
               recipient_role: 'client',
               recipient_id: 'user1',
+              data: { reservationId: 'res-1', clientId: 'cli-1' },
             },
           ],
           error: null,
@@ -150,6 +151,7 @@ describe('messagesStore', () => {
       expect(notifs).toHaveLength(1);
       expect(notifs[0].title).toBe('Welcome');
       expect(notifs[0].icon).toBe('star');
+      expect(notifs[0].data).toEqual({ reservationId: 'res-1', clientId: 'cli-1' });
     });
 
     it('logs Supabase errors in dev', async () => {

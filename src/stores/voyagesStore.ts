@@ -42,8 +42,8 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
     set({ isLoading: true });
     try {
       const data = await fetchAllAvailableTrajets();
-      const mapped: Voyage[] = data.map((t, index) => ({
-        id: index + 1,
+      const mapped: Voyage[] = data.map((t) => ({
+        id: t.id,
         type: VEHICLE_LABEL[t.vehicule] || t.vehicule,
         from: t.ville_depart,
         to: t.ville_arrivee,
@@ -52,6 +52,7 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
         chauffeurName: t.profiles?.name,
         chauffeurAvatar: t.profiles?.avatar,
         chauffeurRating: t.profiles?.rating,
+        chauffeurProfileId: t.chauffeur_id,
         placesDisponibles: t.places_disponibles,
         date: t.date || undefined,
         marque: t.marque || undefined,
