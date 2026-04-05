@@ -29,7 +29,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
+          "icon": "./assets/ZOPGO_new_design_assets/zopgo_notification_icon.png",
           "color": "#2162FE",
           "defaultChannel": "default"
         }
