@@ -2,10 +2,14 @@ import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { updatePushToken } from '../lib/supabaseNotifications';
 import { useMessagesStore } from '../stores/messagesStore';
+
+// Expo Go (SDK 53+) no longer supports remote push notifications on Android.
+// Detect it so we can skip token registration and avoid the runtime error.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 // Configure foreground notification behavior (module-level, runs once)
 Notifications.setNotificationHandler({
@@ -22,6 +26,17 @@ async function registerForPushNotifications(): Promise<string | null> {
   // Push notifications only work on physical devices
   if (!Device.isDevice) {
     if (__DEV__) console.log('Push notifications require a physical device');
+    return null;
+  }
+
+  // Expo Go on Android no longer supports remote push notifications (SDK 53+).
+  // Skip registration to avoid the runtime error. Use a development build in prod.
+  if (isExpoGo && Platform.OS === 'android') {
+    if (__DEV__) {
+      console.log(
+        'Push notifications disabled in Expo Go on Android. Use a development build.'
+      );
+    }
     return null;
   }
 
