@@ -269,7 +269,14 @@ export default function TabLayout() {
       <Tabs.Screen name="security" options={{ href: null, title: 'Sécurité' }} />
       <Tabs.Screen name="help-support" options={{ href: null, title: 'Aide & Support' }} />
       <Tabs.Screen name="settings-screen" options={{ href: null, title: 'Paramètres' }} />
-      <Tabs.Screen name="conversation" options={{ href: null, title: 'Conversation' }} />
+      <Tabs.Screen
+        name="conversation"
+        options={{
+          href: null,
+          title: 'Conversation',
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }
