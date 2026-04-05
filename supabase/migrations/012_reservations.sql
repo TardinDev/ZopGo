@@ -25,6 +25,7 @@ create index if not exists idx_reservations_status on public.reservations(status
 create index if not exists idx_reservations_created on public.reservations(created_at desc);
 
 -- Trigger updated_at
+drop trigger if exists set_reservations_updated_at on public.reservations;
 create trigger set_reservations_updated_at
   before update on public.reservations
   for each row execute function public.handle_updated_at();
@@ -34,12 +35,15 @@ create trigger set_reservations_updated_at
 -- ============================================
 alter table public.reservations enable row level security;
 
+drop policy if exists "Users can view their reservations" on public.reservations;
 create policy "Users can view their reservations"
   on public.reservations for select using (true);
 
+drop policy if exists "Clients can create reservations" on public.reservations;
 create policy "Clients can create reservations"
   on public.reservations for insert with check (true);
 
+drop policy if exists "Users can update their reservations" on public.reservations;
 create policy "Users can update their reservations"
   on public.reservations for update using (true);
 

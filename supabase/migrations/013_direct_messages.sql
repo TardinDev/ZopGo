@@ -22,11 +22,14 @@ create index if not exists idx_direct_messages_created on public.direct_messages
 -- ============================================
 alter table public.direct_messages enable row level security;
 
+drop policy if exists "Users can view their direct messages" on public.direct_messages;
 create policy "Users can view their direct messages"
   on public.direct_messages for select using (true);
 
+drop policy if exists "Users can send direct messages" on public.direct_messages;
 create policy "Users can send direct messages"
   on public.direct_messages for insert with check (true);
 
+drop policy if exists "Users can update received messages" on public.direct_messages;
 create policy "Users can update received messages"
   on public.direct_messages for update using (true);
