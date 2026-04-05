@@ -2,8 +2,9 @@ export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteEr
 import { View, Text, FlatList, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../../constants';
 import { useMessagesStore, useAuthStore, useReservationsStore } from '../../../stores';
 import { AnimatedTabScreen } from '../../../components/ui';
@@ -33,13 +34,21 @@ export default function MessagesTab() {
 
   const { acceptReservation, refuseReservation } = useReservationsStore();
 
-  // Charger les notifications au montage
-  useEffect(() => {
-    if (supabaseProfileId && user) {
-      loadNotifications(supabaseProfileId, user.role);
-      loadConversations(supabaseProfileId);
-    }
-  }, [supabaseProfileId, user?.role, user, loadNotifications, loadConversations]);
+  // Charger notifications et conversations au focus + polling 15s tant que l'écran est actif
+  useFocusEffect(
+    useCallback(() => {
+      if (!supabaseProfileId || !user) return;
+
+      const refresh = () => {
+        loadNotifications(supabaseProfileId, user.role);
+        loadConversations(supabaseProfileId);
+      };
+
+      refresh();
+      const interval = setInterval(refresh, 15000);
+      return () => clearInterval(interval);
+    }, [supabaseProfileId, user, loadNotifications, loadConversations])
+  );
 
   // Handlers
   const handleTabChange = useCallback(
