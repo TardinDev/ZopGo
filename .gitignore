@@ -31,6 +31,14 @@ android
 
 # MCP config (contains secrets)
 .mcp.json
+.cursor/
+
+# Firebase / Google Services (contains API keys)
+google-services.json
+GoogleService-Info.plist
+
+# Test files with hardcoded secrets
+test-env-fallback.js
 
 # Supabase CLI temp files
 supabase/.temp/
