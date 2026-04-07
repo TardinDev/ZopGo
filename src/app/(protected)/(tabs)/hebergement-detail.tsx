@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { COLORS, LAYOUT } from '../../../constants';
 import { SPRING_CONFIG } from '../../../constants/animations';
+import { hapticSelection, hapticSuccess, hapticMedium } from '../../../utils/haptics';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
 
@@ -112,12 +113,13 @@ export default function HebergementDetailScreen() {
   };
 
   const handleBooking = () => {
+    hapticMedium();
     Alert.alert(
       'Confirmer la réservation',
       `Réserver ${nights} nuit${nights > 1 ? 's' : ''} pour ${totalPrice} Fcfa ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: performBooking },
+        { text: 'Confirmer', onPress: () => { hapticSuccess(); performBooking(); } },
       ]
     );
   };
@@ -131,11 +133,11 @@ export default function HebergementDetailScreen() {
         style={{ paddingBottom: 32 }}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Retour">
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-white">Détails hébergement</Text>
-          <TouchableOpacity>
+          <Text className="text-xl font-bold text-white" accessibilityRole="header">Détails hébergement</Text>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ajouter aux favoris">
             <Ionicons name="heart-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -182,25 +184,33 @@ export default function HebergementDetailScreen() {
               <TouchableOpacity
                 onPress={() => {
                   if (nights > 1) {
+                    hapticSelection();
                     animateCounter();
                     setNights(nights - 1);
                   }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Réduire le nombre de nuits"
                 className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                 <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
               </TouchableOpacity>
               <Animated.Text
                 className="mx-4 text-lg font-bold"
-                style={counterAnimatedStyle}>
+                style={counterAnimatedStyle}
+                accessibilityRole="text"
+                accessibilityLabel={`${nights} nuit${nights > 1 ? 's' : ''}`}>
                 {nights}
               </Animated.Text>
               <TouchableOpacity
                 onPress={() => {
                   if (nights < 30) {
+                    hapticSelection();
                     animateCounter();
                     setNights(nights + 1);
                   }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Augmenter le nombre de nuits"
                 className="h-10 w-10 items-center justify-center rounded-full bg-[#8B5CF6]">
                 <Ionicons name="add" size={20} color="white" />
               </TouchableOpacity>
@@ -267,6 +277,9 @@ export default function HebergementDetailScreen() {
           <TouchableOpacity
             onPress={handleBooking}
             disabled={isBooking || hebergement.disponibilite <= 0}
+            accessibilityRole="button"
+            accessibilityLabel={hebergement.disponibilite <= 0 ? 'Hébergement complet' : `Réserver ${nights} nuit${nights > 1 ? 's' : ''} pour ${totalPrice} Fcfa`}
+            accessibilityState={{ disabled: isBooking || hebergement.disponibilite <= 0 }}
             className="items-center rounded-2xl bg-[#8B5CF6] py-4"
             style={{ opacity: isBooking || hebergement.disponibilite <= 0 ? 0.7 : 1 }}>
             {isBooking ? (

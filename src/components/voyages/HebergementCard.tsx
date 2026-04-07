@@ -10,6 +10,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, LAYOUT } from '../../constants';
 import { SPRING_CONFIG, TIMING_CONFIG } from '../../constants/animations';
+import { hapticLight } from '../../utils/haptics';
 import type { Hebergement } from '../../types';
 
 interface HebergementCardProps {
@@ -43,9 +44,11 @@ export function HebergementCard({ hebergement, onPress, index = 0 }: Hebergement
     <Animated.View style={animatedStyle}>
       <Pressable
         onPress={onPress}
-        onPressIn={() => { scale.value = withSpring(0.97, SPRING_CONFIG.fast); }}
+        onPressIn={() => { scale.value = withSpring(0.97, SPRING_CONFIG.fast); hapticLight(); }}
         onPressOut={() => { scale.value = withSpring(1, SPRING_CONFIG.bouncy); }}
-        style={styles.card}>
+        style={styles.card}
+        accessibilityRole="button"
+        accessibilityLabel={`${hebergement.name}, ${hebergement.location}, ${hebergement.price}${hebergement.capacite != null ? `, ${hebergement.capacite} personnes` : ''}, note ${ratingDisplay}`}>
         <View style={styles.content}>
           <View style={styles.textContainer}>
             <Text style={styles.title}>{hebergement.name}</Text>

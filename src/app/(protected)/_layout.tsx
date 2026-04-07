@@ -1,12 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Stack, Redirect, useRouter } from 'expo-router';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, View } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { TabAnimationProvider } from '../../hooks/useTabAnimation';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { useAuthStore } from '../../stores/authStore';
 import { setClerkTokenProvider } from '../../lib/supabase';
 import { logError } from '../../utils/errorHandler';
+import { OfflineBanner } from '../../components/ui/OfflineBanner';
 import { UserRole, VehicleType, AccommodationType } from '../../types';
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -88,9 +89,12 @@ export default function ProtectedLayout() {
 
   return (
     <TabAnimationProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
+      <View style={{ flex: 1 }}>
+        <OfflineBanner />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </View>
     </TabAnimationProvider>
   );
 }

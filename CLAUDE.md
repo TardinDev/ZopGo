@@ -2,6 +2,11 @@
 
 Plateforme mobile de transport, livraison, hebergement et location de vehicules en Afrique (Gabon).
 
+## Regles Claude
+
+- **TOUJOURS demander confirmation avant de `git push`**. Ne jamais push automatiquement.
+- Commit quand demande, mais attendre le feu vert explicite pour push.
+
 ## Stack Technique
 
 - **Runtime**: Expo SDK 54 (`~54.0.33`), React Native 0.81.5, React 19.1

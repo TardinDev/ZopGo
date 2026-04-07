@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { COLORS, LAYOUT } from '../../../constants';
 import { SPRING_CONFIG } from '../../../constants/animations';
+import { hapticSelection, hapticSuccess, hapticMedium } from '../../../utils/haptics';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
 
@@ -114,12 +115,13 @@ export default function VoyageDetailScreen() {
   };
 
   const handleBooking = () => {
+    hapticMedium();
     Alert.alert(
       'Confirmer la réservation',
       `Réserver ${passengers} place(s) pour ${totalPrice} Fcfa ?`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: performBooking },
+        { text: 'Confirmer', onPress: () => { hapticSuccess(); performBooking(); } },
       ]
     );
   };
@@ -133,11 +135,11 @@ export default function VoyageDetailScreen() {
         style={{ paddingBottom: 32 }}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Retour">
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-white">Détails du voyage</Text>
-          <TouchableOpacity>
+          <Text className="text-xl font-bold text-white" accessibilityRole="header">Détails du voyage</Text>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ajouter aux favoris">
             <Ionicons name="heart-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -180,25 +182,33 @@ export default function VoyageDetailScreen() {
               <TouchableOpacity
                 onPress={() => {
                   if (passengers > 1) {
+                    hapticSelection();
                     animateCounter();
                     setPassengers(passengers - 1);
                   }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Réduire le nombre de passagers"
                 className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                 <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
               </TouchableOpacity>
               <Animated.Text
                 className="mx-4 text-lg font-bold"
-                style={counterAnimatedStyle}>
+                style={counterAnimatedStyle}
+                accessibilityRole="text"
+                accessibilityLabel={`${passengers} passager${passengers > 1 ? 's' : ''}`}>
                 {passengers}
               </Animated.Text>
               <TouchableOpacity
                 onPress={() => {
                   if (passengers < voyage.availableSeats) {
+                    hapticSelection();
                     animateCounter();
                     setPassengers(passengers + 1);
                   }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Augmenter le nombre de passagers"
                 className="h-10 w-10 items-center justify-center rounded-full bg-[#2162FE]">
                 <Ionicons name="add" size={20} color="white" />
               </TouchableOpacity>
@@ -268,6 +278,9 @@ export default function VoyageDetailScreen() {
           <TouchableOpacity
             onPress={handleBooking}
             disabled={isBooking}
+            accessibilityRole="button"
+            accessibilityLabel={`Réserver ${passengers} place${passengers > 1 ? 's' : ''} pour ${totalPrice} Fcfa`}
+            accessibilityState={{ disabled: isBooking }}
             className="items-center rounded-2xl bg-[#2162FE] py-4"
             style={{ opacity: isBooking ? 0.7 : 1 }}>
             {isBooking ? (
