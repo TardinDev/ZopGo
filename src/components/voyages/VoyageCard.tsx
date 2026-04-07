@@ -1,14 +1,30 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withDelay,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, LAYOUT } from '../../constants';
+import { SPRING_CONFIG, TIMING_CONFIG } from '../../constants/animations';
 import type { Voyage } from '../../types';
 
 interface VoyageCardProps {
   voyage: Voyage;
   onPress: () => void;
+  index?: number;
 }
 
-export function VoyageCard({ voyage, onPress }: VoyageCardProps) {
+function getAvailabilityStyle(count: number) {
+  if (count <= 0) return { color: COLORS.error, bg: `${COLORS.error}26`, label: 'Complet' };
+  if (count <= 2) return { color: COLORS.warning, bg: `${COLORS.warning}26`, label: `Plus que ${count} !` };
+  return { color: COLORS.success, bg: `${COLORS.success}26`, label: `${count} places` };
+}
+
+export function VoyageCard({ voyage, onPress, index = 0 }: VoyageCardProps) {
   const formattedDate = voyage.date
     ? new Date(voyage.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
     : null;
@@ -17,62 +33,92 @@ export function VoyageCard({ voyage, onPress }: VoyageCardProps) {
     .filter(Boolean)
     .join(' · ') || null;
 
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
-      <View style={styles.content}>
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>
-            {voyage.from} ➔ {voyage.to}
-          </Text>
-          <Text style={styles.subtitle}>
-            {voyage.type} • {voyage.price}
-          </Text>
+  // Press animation
+  const scale = useSharedValue(1);
 
-          {/* Creator info */}
-          {voyage.chauffeurName && (
-            <View style={styles.creatorRow}>
-              {voyage.chauffeurAvatar ? (
-                <Image source={{ uri: voyage.chauffeurAvatar }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Ionicons name="person" size={12} color="#9CA3AF" />
+  // Stagger entrance animation
+  const translateY = useSharedValue(20);
+  const cardOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    const delay = Math.min(index, 10) * 80;
+    translateY.value = withDelay(delay, withSpring(0, SPRING_CONFIG.default));
+    cardOpacity.value = withDelay(delay, withTiming(1, TIMING_CONFIG.normal));
+  }, [index, translateY, cardOpacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    opacity: cardOpacity.value,
+  }));
+
+  const availability = voyage.placesDisponibles != null
+    ? getAvailabilityStyle(voyage.placesDisponibles)
+    : null;
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.97, SPRING_CONFIG.fast); }}
+        onPressOut={() => { scale.value = withSpring(1, SPRING_CONFIG.bouncy); }}
+        style={styles.card}>
+        <View style={styles.content}>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>
+              {voyage.from} ➔ {voyage.to}
+            </Text>
+            <Text style={styles.subtitle}>
+              {voyage.type} • {voyage.price}
+            </Text>
+
+            {/* Creator info */}
+            {voyage.chauffeurName && (
+              <View style={styles.creatorRow}>
+                {voyage.chauffeurAvatar ? (
+                  <Image source={{ uri: voyage.chauffeurAvatar }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                    <Ionicons name="person" size={12} color={COLORS.gray[400]} />
+                  </View>
+                )}
+                <Text style={styles.creatorName} numberOfLines={1}>{voyage.chauffeurName}</Text>
+                {voyage.chauffeurRating != null && voyage.chauffeurRating > 0 && (
+                  <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={12} color={COLORS.star} />
+                    <Text style={styles.ratingText}>{voyage.chauffeurRating.toFixed(1)}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Meta info */}
+            <View style={styles.metaRow}>
+              {availability && (
+                <View style={[styles.availabilityBadge, { backgroundColor: availability.bg }]}>
+                  <Ionicons name="people-outline" size={13} color={availability.color} />
+                  <Text style={[styles.availabilityText, { color: availability.color }]}>
+                    {availability.label}
+                  </Text>
                 </View>
               )}
-              <Text style={styles.creatorName} numberOfLines={1}>{voyage.chauffeurName}</Text>
-              {voyage.chauffeurRating != null && voyage.chauffeurRating > 0 && (
-                <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color="#FFA500" />
-                  <Text style={styles.ratingText}>{voyage.chauffeurRating.toFixed(1)}</Text>
+              {formattedDate && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="calendar-outline" size={14} color={COLORS.gray[500]} />
+                  <Text style={styles.metaText}>{formattedDate}</Text>
+                </View>
+              )}
+              {vehicleDetails && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="car-outline" size={14} color={COLORS.gray[500]} />
+                  <Text style={styles.metaText}>{vehicleDetails}</Text>
                 </View>
               )}
             </View>
-          )}
-
-          {/* Meta info */}
-          <View style={styles.metaRow}>
-            {voyage.placesDisponibles != null && (
-              <View style={styles.metaItem}>
-                <Ionicons name="people-outline" size={14} color="#6B7280" />
-                <Text style={styles.metaText}>{voyage.placesDisponibles} places</Text>
-              </View>
-            )}
-            {formattedDate && (
-              <View style={styles.metaItem}>
-                <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-                <Text style={styles.metaText}>{formattedDate}</Text>
-              </View>
-            )}
-            {vehicleDetails && (
-              <View style={styles.metaItem}>
-                <Ionicons name="car-outline" size={14} color="#6B7280" />
-                <Text style={styles.metaText}>{vehicleDetails}</Text>
-              </View>
-            )}
           </View>
+          <Text style={styles.icon}>{voyage.icon}</Text>
         </View>
-        <Text style={styles.icon}>{voyage.icon}</Text>
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -80,13 +126,9 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: LAYOUT.borderRadius.large,
     padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...LAYOUT.shadows.medium,
   },
   content: {
     flexDirection: 'row',
@@ -99,10 +141,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: COLORS.gray[800],
   },
   subtitle: {
-    color: '#6B7280',
+    color: COLORS.gray[500],
     marginTop: 4,
   },
   creatorRow: {
@@ -116,13 +158,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   avatarPlaceholder: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.gray[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   creatorName: {
     fontSize: 13,
-    color: '#374151',
+    color: COLORS.gray[700],
     marginLeft: 6,
     flexShrink: 1,
   },
@@ -133,15 +175,16 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: COLORS.gray[500],
     marginLeft: 2,
     fontWeight: '600',
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
-    gap: 12,
+    marginTop: 8,
+    gap: 10,
+    flexWrap: 'wrap',
   },
   metaItem: {
     flexDirection: 'row',
@@ -150,7 +193,19 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: COLORS.gray[500],
+  },
+  availabilityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: LAYOUT.borderRadius.full,
+  },
+  availabilityText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   icon: {
     fontSize: 32,

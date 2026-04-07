@@ -1,5 +1,5 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { Hebergement } from '../../../types';
 import { COLORS } from '../../../constants';
 import { useHebergementsDiscoveryStore } from '../../../stores';
+import { SkeletonList } from '../../../components/ui';
 import { hebergementTypes } from '../../../stores/hebergementsDiscoveryStore';
 import {
   HebergementCard,
@@ -124,19 +125,22 @@ export default function HebergementsTab() {
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="white" />
           }>
           {isLoading ? (
-            <ActivityIndicator size="large" color="white" style={{ marginTop: 40 }} />
+            <SkeletonList count={4} />
           ) : filteredHebergements.length > 0 ? (
-            filteredHebergements.map((hebergement) => (
+            filteredHebergements.map((hebergement, i) => (
               <HebergementCard
                 key={hebergement.id}
                 hebergement={hebergement}
                 onPress={() => handleHebergementPress(hebergement)}
+                index={i}
               />
             ))
           ) : (
             <EmptyResults
               message="Aucun hébergement trouvé"
               subMessage="Essayez une autre recherche ou un autre filtre"
+              actionLabel="Voir tous"
+              onAction={() => { setSelectedType('All'); setSearchLocation(''); }}
             />
           )}
         </ScrollView>

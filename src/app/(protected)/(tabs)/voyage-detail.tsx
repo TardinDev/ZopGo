@@ -4,9 +4,22 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../../constants';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
+import { COLORS, LAYOUT } from '../../../constants';
+import { SPRING_CONFIG } from '../../../constants/animations';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
+
+function getAvailabilityStyle(count: number) {
+  if (count <= 0) return { color: COLORS.error, label: 'Complet' };
+  if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
+  return { color: COLORS.success, label: `${count} places` };
+}
 
 export default function VoyageDetailScreen() {
   const router = useRouter();
@@ -16,6 +29,29 @@ export default function VoyageDetailScreen() {
 
   const { user, supabaseProfileId } = useAuthStore();
   const { bookTrajet } = useReservationsStore();
+
+  // Counter bounce animation
+  const counterScale = useSharedValue(1);
+  const totalScale = useSharedValue(1);
+
+  const animateCounter = () => {
+    counterScale.value = withSequence(
+      withSpring(1.3, SPRING_CONFIG.fast),
+      withSpring(1, SPRING_CONFIG.bouncy)
+    );
+    totalScale.value = withSequence(
+      withSpring(1.15, SPRING_CONFIG.fast),
+      withSpring(1, SPRING_CONFIG.bouncy)
+    );
+  };
+
+  const counterAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: counterScale.value }],
+  }));
+
+  const totalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: totalScale.value }],
+  }));
 
   const voyage = {
     id: String(params.id || ''),
@@ -38,6 +74,7 @@ export default function VoyageDetailScreen() {
 
   const unitPrice = parseInt(String(voyage.price).replace(/[^0-9]/g, '')) || 0;
   const totalPrice = unitPrice * passengers;
+  const availability = getAvailabilityStyle(voyage.availableSeats);
 
   const performBooking = async () => {
     if (!supabaseProfileId || !voyage.chauffeurProfileId || !voyage.id) {
@@ -69,7 +106,7 @@ export default function VoyageDetailScreen() {
       } else {
         Alert.alert('Erreur', 'Impossible de créer la réservation. Réessayez.');
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la réservation.');
     } finally {
       setIsBooking(false);
@@ -141,13 +178,27 @@ export default function VoyageDetailScreen() {
             <Text className="font-medium text-gray-700">Nombre de passagers</Text>
             <View className="flex-row items-center">
               <TouchableOpacity
-                onPress={() => passengers > 1 && setPassengers(passengers - 1)}
+                onPress={() => {
+                  if (passengers > 1) {
+                    animateCounter();
+                    setPassengers(passengers - 1);
+                  }
+                }}
                 className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                 <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
               </TouchableOpacity>
-              <Text className="mx-4 text-lg font-bold">{passengers}</Text>
+              <Animated.Text
+                className="mx-4 text-lg font-bold"
+                style={counterAnimatedStyle}>
+                {passengers}
+              </Animated.Text>
               <TouchableOpacity
-                onPress={() => passengers < voyage.availableSeats && setPassengers(passengers + 1)}
+                onPress={() => {
+                  if (passengers < voyage.availableSeats) {
+                    animateCounter();
+                    setPassengers(passengers + 1);
+                  }
+                }}
                 className="h-10 w-10 items-center justify-center rounded-full bg-[#2162FE]">
                 <Ionicons name="add" size={20} color="white" />
               </TouchableOpacity>
@@ -166,7 +217,9 @@ export default function VoyageDetailScreen() {
 
           <View className="mb-3 flex-row items-center justify-between">
             <Text className="text-gray-600">Places disponibles</Text>
-            <Text className="font-medium text-green-600">{voyage.availableSeats} places</Text>
+            <Text style={{ fontWeight: '600', color: availability.color }}>
+              {availability.label}
+            </Text>
           </View>
 
           <View className="mb-4 flex-row items-center justify-between">
@@ -200,10 +253,16 @@ export default function VoyageDetailScreen() {
         </View>
 
         {/* Total and Book Button */}
-        <View className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+        <View
+          className="mb-8 rounded-2xl bg-white p-6"
+          style={{ ...LAYOUT.shadows.large, borderLeftWidth: 4, borderLeftColor: COLORS.primary }}>
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-lg font-bold text-gray-800">Total</Text>
-            <Text className="text-2xl font-bold text-[#2162FE]">{totalPrice} Fcfa</Text>
+            <Animated.Text
+              className="text-2xl font-bold text-[#2162FE]"
+              style={totalAnimatedStyle}>
+              {totalPrice} Fcfa
+            </Animated.Text>
           </View>
 
           <TouchableOpacity

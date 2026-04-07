@@ -1,5 +1,5 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl, AppState } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, AppState } from 'react-native';
 import { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,7 @@ import type { Voyage } from '../../../types';
 import { COLORS } from '../../../constants';
 import { useVoyagesStore } from '../../../stores';
 import { transportTypes } from '../../../stores/voyagesStore';
-import { AnimatedTabScreen } from '../../../components/ui';
+import { AnimatedTabScreen, SkeletonList } from '../../../components/ui';
 import {
   VoyageCard,
   TypeFilter,
@@ -32,6 +32,7 @@ export default function VoyagesTab() {
     setFromCity,
     setToCity,
     swapCities,
+    resetFilters,
   } = useVoyagesStore();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -138,19 +139,22 @@ export default function VoyagesTab() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="white" />
             }>
             {isLoading ? (
-              <ActivityIndicator size="large" color="white" style={{ marginTop: 40 }} />
+              <SkeletonList count={4} />
             ) : filteredVoyages.length > 0 ? (
-              filteredVoyages.map((voyage) => (
+              filteredVoyages.map((voyage, i) => (
                 <VoyageCard
                   key={voyage.id}
                   voyage={voyage}
                   onPress={() => handleVoyagePress(voyage)}
+                  index={i}
                 />
               ))
             ) : (
               <EmptyResults
                 message="Aucun voyage trouvé"
                 subMessage="Essayez une autre recherche ou un autre filtre"
+                actionLabel="Voir tous les voyages"
+                onAction={resetFilters}
               />
             )}
           </ScrollView>

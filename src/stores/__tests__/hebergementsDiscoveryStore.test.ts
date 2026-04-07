@@ -40,12 +40,15 @@ describe('hebergementsDiscoveryStore', () => {
     it('maps Supabase data to Hebergement format', async () => {
       (fetchAllAvailableHebergements as jest.Mock).mockResolvedValue([
         {
+          id: 'uuid-1',
+          hebergeur_id: 'heb-1',
           type: 'hotel',
           nom: 'Hotel Gabon',
           ville: 'Libreville',
           prix_par_nuit: 25000,
           profiles: { name: 'Marie', avatar: 'avatar.jpg', rating: 4.5 },
           capacite: 4,
+          disponibilite: 3,
           description: 'Super hotel',
           adresse: '123 rue',
         },
@@ -56,17 +59,21 @@ describe('hebergementsDiscoveryStore', () => {
       expect(state.listings).toHaveLength(1);
       expect(state.listings[0]).toEqual({
         id: 1,
+        supabaseId: 'uuid-1',
         type: 'Hôtel',
         name: 'Hotel Gabon',
         location: 'Libreville',
         price: '25000 FCFA/nuit',
+        prixParNuit: 25000,
         rating: 4.5,
         icon: '🏨',
         images: [],
         hebergeurName: 'Marie',
         hebergeurAvatar: 'avatar.jpg',
         hebergeurRating: 4.5,
+        hebergeurProfileId: 'heb-1',
         capacite: 4,
+        disponibilite: 3,
         description: 'Super hotel',
         adresse: '123 rue',
       });

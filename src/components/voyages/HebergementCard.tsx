@@ -1,63 +1,96 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withDelay,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants';
+import { COLORS, LAYOUT } from '../../constants';
+import { SPRING_CONFIG, TIMING_CONFIG } from '../../constants/animations';
 import type { Hebergement } from '../../types';
 
 interface HebergementCardProps {
   hebergement: Hebergement;
   onPress: () => void;
+  index?: number;
 }
 
-export function HebergementCard({ hebergement, onPress }: HebergementCardProps) {
+export function HebergementCard({ hebergement, onPress, index = 0 }: HebergementCardProps) {
   const ratingDisplay = hebergement.rating > 0 ? hebergement.rating.toFixed(1) : 'N/A';
 
+  // Press animation
+  const scale = useSharedValue(1);
+
+  // Stagger entrance animation
+  const translateY = useSharedValue(20);
+  const cardOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    const delay = Math.min(index, 10) * 80;
+    translateY.value = withDelay(delay, withSpring(0, SPRING_CONFIG.default));
+    cardOpacity.value = withDelay(delay, withTiming(1, TIMING_CONFIG.normal));
+  }, [index, translateY, cardOpacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    opacity: cardOpacity.value,
+  }));
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
-      <View style={styles.content}>
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{hebergement.name}</Text>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.97, SPRING_CONFIG.fast); }}
+        onPressOut={() => { scale.value = withSpring(1, SPRING_CONFIG.bouncy); }}
+        style={styles.card}>
+        <View style={styles.content}>
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>{hebergement.name}</Text>
 
-          <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={14} color={COLORS.gray[500]} />
-            <Text style={styles.location}>{hebergement.location}</Text>
-          </View>
-
-          {/* Creator info */}
-          {hebergement.hebergeurName && (
-            <View style={styles.creatorRow}>
-              {hebergement.hebergeurAvatar ? (
-                <Image source={{ uri: hebergement.hebergeurAvatar }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Ionicons name="person" size={12} color="#9CA3AF" />
-                </View>
-              )}
-              <Text style={styles.creatorName} numberOfLines={1}>{hebergement.hebergeurName}</Text>
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={14} color={COLORS.gray[500]} />
+              <Text style={styles.location}>{hebergement.location}</Text>
             </View>
-          )}
 
-          <View style={styles.bottomRow}>
-            <Text style={styles.price}>{hebergement.price}</Text>
-            {hebergement.capacite != null && (
-              <View style={styles.capacityBadge}>
-                <Ionicons name="people-outline" size={14} color={COLORS.gray[500]} />
-                <Text style={styles.capacityText}>{hebergement.capacite}</Text>
+            {/* Creator info */}
+            {hebergement.hebergeurName && (
+              <View style={styles.creatorRow}>
+                {hebergement.hebergeurAvatar ? (
+                  <Image source={{ uri: hebergement.hebergeurAvatar }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                    <Ionicons name="person" size={12} color={COLORS.gray[400]} />
+                  </View>
+                )}
+                <Text style={styles.creatorName} numberOfLines={1}>{hebergement.hebergeurName}</Text>
               </View>
             )}
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color={COLORS.star} />
-              <Text style={styles.rating}>{ratingDisplay}</Text>
+
+            <View style={styles.bottomRow}>
+              <Text style={styles.price}>{hebergement.price}</Text>
+              {hebergement.capacite != null && (
+                <View style={styles.capacityBadge}>
+                  <Ionicons name="people-outline" size={14} color={COLORS.gray[500]} />
+                  <Text style={styles.capacityText}>{hebergement.capacite}</Text>
+                </View>
+              )}
+              <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={16} color={COLORS.star} />
+                <Text style={styles.rating}>{ratingDisplay}</Text>
+              </View>
             </View>
           </View>
+          {hebergement.images && hebergement.images.length > 0 ? (
+            <Image source={{ uri: hebergement.images[0] }} style={styles.hebergementImage} />
+          ) : (
+            <Text style={styles.icon}>{hebergement.icon}</Text>
+          )}
         </View>
-        {hebergement.images && hebergement.images.length > 0 ? (
-          <Image source={{ uri: hebergement.images[0] }} style={styles.hebergementImage} />
-        ) : (
-          <Text style={styles.icon}>{hebergement.icon}</Text>
-        )}
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -65,13 +98,9 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: LAYOUT.borderRadius.large,
     padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...LAYOUT.shadows.medium,
   },
   content: {
     flexDirection: 'row',
@@ -106,13 +135,13 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   avatarPlaceholder: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.gray[100],
     alignItems: 'center',
     justifyContent: 'center',
   },
   creatorName: {
     fontSize: 13,
-    color: '#374151',
+    color: COLORS.gray[700],
     marginLeft: 6,
     flexShrink: 1,
   },

@@ -4,9 +4,22 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../../constants';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
+import { COLORS, LAYOUT } from '../../../constants';
+import { SPRING_CONFIG } from '../../../constants/animations';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
+
+function getAvailabilityStyle(count: number) {
+  if (count <= 0) return { color: COLORS.error, label: 'Complet' };
+  if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
+  return { color: COLORS.success, label: `${count} disponible${count > 1 ? 's' : ''}` };
+}
 
 export default function HebergementDetailScreen() {
   const router = useRouter();
@@ -16,6 +29,29 @@ export default function HebergementDetailScreen() {
 
   const { user, supabaseProfileId } = useAuthStore();
   const { bookHebergement } = useReservationsStore();
+
+  // Counter bounce animation
+  const counterScale = useSharedValue(1);
+  const totalScale = useSharedValue(1);
+
+  const animateCounter = () => {
+    counterScale.value = withSequence(
+      withSpring(1.3, SPRING_CONFIG.fast),
+      withSpring(1, SPRING_CONFIG.bouncy)
+    );
+    totalScale.value = withSequence(
+      withSpring(1.15, SPRING_CONFIG.fast),
+      withSpring(1, SPRING_CONFIG.bouncy)
+    );
+  };
+
+  const counterAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: counterScale.value }],
+  }));
+
+  const totalAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: totalScale.value }],
+  }));
 
   const hebergement = {
     supabaseId: String(params.supabaseId || ''),
@@ -36,6 +72,7 @@ export default function HebergementDetailScreen() {
   };
 
   const totalPrice = hebergement.prixParNuit * nights;
+  const availability = getAvailabilityStyle(hebergement.disponibilite);
 
   const performBooking = async () => {
     if (!supabaseProfileId || !hebergement.hebergeurProfileId || !hebergement.supabaseId) {
@@ -143,13 +180,27 @@ export default function HebergementDetailScreen() {
             <Text className="font-medium text-gray-700">Nombre de nuits</Text>
             <View className="flex-row items-center">
               <TouchableOpacity
-                onPress={() => nights > 1 && setNights(nights - 1)}
+                onPress={() => {
+                  if (nights > 1) {
+                    animateCounter();
+                    setNights(nights - 1);
+                  }
+                }}
                 className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
                 <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
               </TouchableOpacity>
-              <Text className="mx-4 text-lg font-bold">{nights}</Text>
+              <Animated.Text
+                className="mx-4 text-lg font-bold"
+                style={counterAnimatedStyle}>
+                {nights}
+              </Animated.Text>
               <TouchableOpacity
-                onPress={() => nights < 30 && setNights(nights + 1)}
+                onPress={() => {
+                  if (nights < 30) {
+                    animateCounter();
+                    setNights(nights + 1);
+                  }
+                }}
                 className="h-10 w-10 items-center justify-center rounded-full bg-[#8B5CF6]">
                 <Ionicons name="add" size={20} color="white" />
               </TouchableOpacity>
@@ -168,8 +219,8 @@ export default function HebergementDetailScreen() {
 
           <View className="mb-3 flex-row items-center justify-between">
             <Text className="text-gray-600">Disponibilité</Text>
-            <Text className="font-medium text-green-600">
-              {hebergement.disponibilite > 0 ? `${hebergement.disponibilite} disponible${hebergement.disponibilite > 1 ? 's' : ''}` : 'Complet'}
+            <Text style={{ fontWeight: '600', color: availability.color }}>
+              {availability.label}
             </Text>
           </View>
 
@@ -201,10 +252,16 @@ export default function HebergementDetailScreen() {
         </View>
 
         {/* Total et bouton */}
-        <View className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+        <View
+          className="mb-8 rounded-2xl bg-white p-6"
+          style={{ ...LAYOUT.shadows.large, borderLeftWidth: 4, borderLeftColor: '#8B5CF6' }}>
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-lg font-bold text-gray-800">Total</Text>
-            <Text className="text-2xl font-bold text-[#8B5CF6]">{totalPrice} Fcfa</Text>
+            <Animated.Text
+              className="text-2xl font-bold text-[#8B5CF6]"
+              style={totalAnimatedStyle}>
+              {totalPrice} Fcfa
+            </Animated.Text>
           </View>
 
           <TouchableOpacity
