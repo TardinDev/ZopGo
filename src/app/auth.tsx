@@ -71,6 +71,8 @@ export default function AuthScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showNewResetPassword, setShowNewResetPassword] = useState(false);
+  const [showConfirmResetPassword, setShowConfirmResetPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const nameRef = useRef<TextInput>(null);
@@ -493,11 +495,20 @@ export default function AuthScreen() {
                     placeholderTextColor={COLORS.gray[400]}
                     value={newPassword}
                     onChangeText={setNewPassword}
-                    secureTextEntry
+                    secureTextEntry={!showNewResetPassword}
                     onFocus={() => setFocusedField('newPassword')}
                     onBlur={() => setFocusedField(null)}
                     style={styles.input}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowNewResetPassword(!showNewResetPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Ionicons
+                      name={showNewResetPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color={COLORS.gray[400]}
+                    />
+                  </TouchableOpacity>
                 </Pressable>
               </View>
 
@@ -513,11 +524,20 @@ export default function AuthScreen() {
                     placeholderTextColor={COLORS.gray[400]}
                     value={confirmNewPassword}
                     onChangeText={setConfirmNewPassword}
-                    secureTextEntry
+                    secureTextEntry={!showConfirmResetPassword}
                     onFocus={() => setFocusedField('confirmNewPassword')}
                     onBlur={() => setFocusedField(null)}
                     style={styles.input}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmResetPassword(!showConfirmResetPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Ionicons
+                      name={showConfirmResetPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color={COLORS.gray[400]}
+                    />
+                  </TouchableOpacity>
                 </Pressable>
               </View>
 
