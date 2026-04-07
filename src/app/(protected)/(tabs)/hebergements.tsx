@@ -1,6 +1,7 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Hebergement } from '../../../types';
@@ -16,6 +17,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function HebergementsTab() {
+  const router = useRouter();
   const {
     listings,
     isLoading,
@@ -67,8 +69,27 @@ export default function HebergementsTab() {
   }, [listings, selectedType, searchLocation]);
 
   const handleHebergementPress = useCallback((hebergement: Hebergement) => {
-    Alert.alert(hebergement.name, `${hebergement.location}\n${hebergement.price}\nNote : ${hebergement.rating > 0 ? hebergement.rating.toFixed(1) + '/5' : 'N/A'}`);
-  }, []);
+    router.push({
+      pathname: '/(protected)/(tabs)/hebergement-detail',
+      params: {
+        supabaseId: hebergement.supabaseId,
+        name: hebergement.name,
+        type: hebergement.type,
+        location: hebergement.location,
+        adresse: hebergement.adresse || '',
+        description: hebergement.description || '',
+        icon: hebergement.icon,
+        prixParNuit: String(hebergement.prixParNuit),
+        capacite: String(hebergement.capacite || 1),
+        disponibilite: String(hebergement.disponibilite || 0),
+        hebergeurProfileId: hebergement.hebergeurProfileId || '',
+        hebergeurName: hebergement.hebergeurName || '',
+        hebergeurAvatar: hebergement.hebergeurAvatar || '',
+        hebergeurRating: String(hebergement.hebergeurRating || 0),
+        image: hebergement.images?.[0] || '',
+      },
+    });
+  }, [router]);
 
   return (
     <LinearGradient colors={COLORS.gradients.hebergeur} style={{ flex: 1 }}>

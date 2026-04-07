@@ -21,6 +21,7 @@ export interface ConversationListItem {
   content: string;
   read: boolean;
   createdAt: string;
+  reservationId?: string;
 }
 
 function mapRow(row: SupabaseDirectMessageRow): DirectMessage {
@@ -119,6 +120,7 @@ export async function fetchConversationsList(userId: string): Promise<Conversati
       content: row.content,
       read: row.read,
       createdAt: row.created_at,
+      reservationId: row.reservation_id || undefined,
     });
   }
 

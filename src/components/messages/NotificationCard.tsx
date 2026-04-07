@@ -12,6 +12,7 @@ interface Notification {
   icon: string;
   iconColor: string;
   iconBg: string;
+  data?: Record<string, string>;
 }
 
 interface NotificationCardProps {
@@ -30,35 +31,58 @@ export const NotificationCard = React.memo(function NotificationCard({
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={styles.card}
+      style={[styles.card, notification.read && styles.cardRead]}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={`${notification.title}. ${notification.message}`}
       accessibilityState={{ selected: notification.read }}>
       <View style={styles.row}>
         {/* Icon Badge */}
-        <View style={[styles.iconContainer, { backgroundColor: notification.iconBg }]}>
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: notification.iconBg },
+            notification.read && styles.iconContainerRead,
+          ]}>
           <Ionicons
             name={notification.icon as keyof typeof Ionicons.glyphMap}
             size={24}
-            color={notification.iconColor}
+            color={notification.read ? '#9CA3AF' : notification.iconColor}
           />
         </View>
 
         {/* Content */}
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>{notification.title}</Text>
+            <Text style={[styles.title, notification.read && styles.titleRead]}>
+              {notification.title}
+            </Text>
             {!notification.read && <View style={styles.unreadDot} />}
           </View>
-          <Text style={styles.message} numberOfLines={2}>
+          <Text
+            style={[styles.message, notification.read && styles.messageRead]}
+            numberOfLines={2}>
             {notification.message}
           </Text>
+          {notification.data?.villeDepart && notification.data?.villeArrivee && (
+            <View style={styles.routeBadge}>
+              <Text style={styles.routeText}>
+                {notification.data.villeDepart} → {notification.data.villeArrivee}
+              </Text>
+            </View>
+          )}
+          {notification.data?.hebergementNom && notification.data?.hebergementVille && (
+            <View style={styles.hebergementBadge}>
+              <Text style={styles.hebergementBadgeText}>
+                {notification.data.hebergementNom} — {notification.data.hebergementVille}
+              </Text>
+            </View>
+          )}
           <Text style={styles.time}>{notification.time}</Text>
         </View>
       </View>
 
-      {onAction && (
+      {onAction && !notification.read && (
         <TouchableOpacity
           onPress={onAction}
           style={styles.actionBtn}
@@ -82,6 +106,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+  },
+  cardRead: {
+    backgroundColor: '#F9FAFB',
+    shadowOpacity: 0.04,
+    elevation: 1,
   },
   row: {
     flexDirection: 'row',
@@ -109,6 +138,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
   },
+  iconContainerRead: {
+    backgroundColor: '#F3F4F6',
+  },
   content: {
     flex: 1,
   },
@@ -123,6 +155,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111827',
   },
+  titleRead: {
+    fontWeight: '500',
+    color: '#6B7280',
+  },
   unreadDot: {
     height: 10,
     width: 10,
@@ -132,6 +168,35 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 14,
     color: '#4B5563',
+  },
+  messageRead: {
+    color: '#9CA3AF',
+  },
+  routeBadge: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#DBEAFE',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  routeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2162FE',
+  },
+  hebergementBadge: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#EDE9FE',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  hebergementBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#8B5CF6',
   },
   time: {
     marginTop: 4,

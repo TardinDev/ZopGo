@@ -125,6 +125,25 @@ export default function SettingsScreen() {
             />
           </View>
 
+          {/* Notification Sound */}
+          <View className="flex-row items-center justify-between border-b border-gray-100 py-4">
+            <View className="flex-row items-center">
+              <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-orange-50">
+                <Ionicons name="notifications-outline" size={20} color="#F59E0B" />
+              </View>
+              <View>
+                <Text className="text-base font-semibold text-gray-800">Son des notifications</Text>
+                <Text className="text-sm text-gray-500">Jouer un son pour les notifications</Text>
+              </View>
+            </View>
+            <Switch
+              value={generalSettings.notificationSound}
+              onValueChange={(value) => updateGeneralSettings({ notificationSound: value })}
+              trackColor={{ false: COLORS.gray[200], true: COLORS.primary }}
+              thumbColor="white"
+            />
+          </View>
+
           {/* Share Location */}
           <View className="flex-row items-center justify-between py-4">
             <View className="flex-row items-center">

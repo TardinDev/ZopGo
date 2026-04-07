@@ -30,6 +30,19 @@ export async function createNotification(params: CreateNotificationParams): Prom
   return true;
 }
 
+export async function markNotificationAsReadInDb(notificationId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
+
+  if (error) {
+    if (__DEV__) console.error('markNotificationAsReadInDb error:', error.message);
+    return false;
+  }
+  return true;
+}
+
 export async function getProfilePushToken(profileId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('profiles')
@@ -63,6 +76,8 @@ export async function sendPushNotification(
         body,
         data: data || {},
         sound: 'default',
+        priority: 'high',
+        channelId: 'default',
       }),
     });
 

@@ -20,17 +20,21 @@ export interface Voyage {
 // Types pour les hébergements
 export interface Hebergement {
   id: number;
+  supabaseId: string;
   type: string;
   name: string;
   location: string;
   price: string;
+  prixParNuit: number;
   rating: number;
   icon: string;
   images?: string[];
   hebergeurName?: string;
   hebergeurAvatar?: string;
   hebergeurRating?: number;
+  hebergeurProfileId?: string;
   capacite?: number;
+  disponibilite?: number;
   description?: string;
   adresse?: string;
 }
@@ -140,6 +144,25 @@ export interface Reservation {
   villeDepart?: string;
   villeArrivee?: string;
   date?: string;
+}
+
+// Types pour les réservations d'hébergements
+export interface HebergementReservation {
+  id: string;
+  hebergementId: string;
+  clientId: string;
+  hebergeurId: string;
+  nombreNuits: number;
+  prixTotal: number;
+  status: ReservationStatus;
+  createdAt: string;
+  updatedAt: string;
+  clientName?: string;
+  clientAvatar?: string;
+  hebergeurName?: string;
+  hebergeurAvatar?: string;
+  hebergementNom?: string;
+  hebergementVille?: string;
 }
 
 // Types pour la messagerie directe

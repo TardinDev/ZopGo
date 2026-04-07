@@ -9,6 +9,7 @@ interface Message {
   date: string;
   time: string;
   read: boolean;
+  contextLabel?: string;
 }
 
 interface MessageCardProps {
@@ -18,20 +19,33 @@ interface MessageCardProps {
 
 export function MessageCard({ message, onPress }: MessageCardProps) {
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.card, message.read && styles.cardRead]}
+      activeOpacity={0.8}>
       {/* Avatar with online indicator */}
       <View style={styles.avatarContainer}>
-        <Image source={{ uri: message.avatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: message.avatar }}
+          style={[styles.avatar, message.read && styles.avatarRead]}
+        />
         {!message.read && <View style={styles.onlineIndicator} />}
       </View>
 
       {/* Message Content */}
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.sender}>{message.sender}</Text>
+          <Text style={[styles.sender, message.read && styles.senderRead]}>
+            {message.sender}
+          </Text>
           <Text style={styles.time}>{message.time}</Text>
         </View>
-        <Text numberOfLines={2} style={styles.messageText}>
+        {message.contextLabel && (
+          <Text style={styles.routeLabel}>{message.contextLabel}</Text>
+        )}
+        <Text
+          numberOfLines={2}
+          style={[styles.messageText, message.read && styles.messageTextRead]}>
           {message.content}
         </Text>
         {!message.read && (
@@ -58,6 +72,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
+  cardRead: {
+    backgroundColor: '#F9FAFB',
+    shadowOpacity: 0.04,
+    elevation: 1,
+  },
   avatarContainer: {
     marginRight: 16,
   },
@@ -65,6 +84,9 @@ const styles = StyleSheet.create({
     height: 56,
     width: 56,
     borderRadius: 28,
+  },
+  avatarRead: {
+    opacity: 0.6,
   },
   onlineIndicator: {
     position: 'absolute',
@@ -91,13 +113,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111827',
   },
+  senderRead: {
+    fontWeight: '500',
+    color: '#6B7280',
+  },
   time: {
     fontSize: 12,
     color: '#9CA3AF',
   },
+  routeLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
   messageText: {
     fontSize: 14,
     color: '#4B5563',
+  },
+  messageTextRead: {
+    color: '#9CA3AF',
   },
   newBadge: {
     marginTop: 6,

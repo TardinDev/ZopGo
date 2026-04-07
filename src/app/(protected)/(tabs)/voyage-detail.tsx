@@ -56,6 +56,8 @@ export default function VoyageDetailScreen() {
         prixTotal: totalPrice,
         clientName,
         remainingPlaces: voyage.availableSeats,
+        villeDepart: String(voyage.from),
+        villeArrivee: String(voyage.to),
       });
 
       if (reservation) {

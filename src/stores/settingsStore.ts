@@ -36,6 +36,7 @@ export interface FavoriteAddress {
 export interface GeneralSettings {
   language: 'fr' | 'en';
   darkMode: boolean;
+  notificationSound: boolean;
   shareLocation: boolean;
 }
 
@@ -79,6 +80,7 @@ export const useSettingsStore = create<SettingsState>()(
       generalSettings: {
         language: 'fr',
         darkMode: false,
+        notificationSound: true,
         shareLocation: true,
       },
 

@@ -32,6 +32,7 @@ export default function ConversationScreen() {
   const receiverName = String(params.receiverName || 'Utilisateur');
   const receiverAvatar = String(params.receiverAvatar || '');
   const reservationId = String(params.reservationId || '') || undefined;
+  const contextLabel = String(params.contextLabel || '') || undefined;
 
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [input, setInput] = useState('');
@@ -165,17 +166,28 @@ export default function ConversationScreen() {
             <Ionicons name="person" size={20} color={COLORS.gray[500]} />
           </View>
         )}
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '700',
-            color: COLORS.gray[900],
-            marginLeft: 12,
-            flex: 1,
-          }}
-        >
-          {receiverName}
-        </Text>
+        <View style={{ marginLeft: 12, flex: 1 }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: '700',
+              color: COLORS.gray[900],
+            }}
+          >
+            {receiverName}
+          </Text>
+          {contextLabel && (
+            <Text
+              style={{
+                fontSize: 13,
+                color: COLORS.gray[500],
+                marginTop: 1,
+              }}
+            >
+              {contextLabel}
+            </Text>
+          )}
+        </View>
       </View>
 
       <KeyboardAvoidingView

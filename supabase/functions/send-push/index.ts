@@ -29,7 +29,7 @@ function getCategoryMeta(category: NotificationCategory) {
 }
 
 async function sendExpoPush(tokens: string[], title: string, body: string, data: Record<string, string>) {
-  const messages = tokens.map((to) => ({ to, title, body, sound: 'default' as const, data }));
+  const messages = tokens.map((to) => ({ to, title, body, sound: 'default' as const, priority: 'high' as const, channelId: 'default', data }));
 
   // Send in chunks of 100
   for (let i = 0; i < messages.length; i += 100) {

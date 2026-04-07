@@ -32,7 +32,12 @@ export default function MessagesTab() {
     loadConversations,
   } = useMessagesStore();
 
-  const { acceptReservation, refuseReservation } = useReservationsStore();
+  const {
+    acceptReservation,
+    refuseReservation,
+    acceptHebergementReservation,
+    refuseHebergementReservation,
+  } = useReservationsStore();
 
   // Charger notifications et conversations au focus + polling 15s tant que l'écran est actif
   useFocusEffect(
@@ -73,7 +78,7 @@ export default function MessagesTab() {
   );
 
   const openConversation = useCallback(
-    (partnerId: string, partnerName: string, partnerAvatar: string, reservationId?: string) => {
+    (partnerId: string, partnerName: string, partnerAvatar: string, reservationId?: string, contextLabel?: string) => {
       router.push({
         pathname: '/(protected)/(tabs)/conversation',
         params: {
@@ -81,6 +86,7 @@ export default function MessagesTab() {
           receiverName: partnerName,
           receiverAvatar: partnerAvatar,
           reservationId: reservationId || '',
+          contextLabel: contextLabel || '',
         },
       });
     },
@@ -94,14 +100,21 @@ export default function MessagesTab() {
       const clientId = data.clientId;
       const clientName = data.clientName || 'Client';
       const trajetId = data.trajetId;
+      const villeDepart = data.villeDepart;
+      const villeArrivee = data.villeArrivee;
+      const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
 
       if (!reservationId || !clientId || !supabaseProfileId || !user) {
         return;
       }
 
+      const alertMessage = routeLabel
+        ? `${clientName} souhaite réserver votre trajet ${routeLabel}.`
+        : `${clientName} souhaite réserver votre trajet.`;
+
       Alert.alert(
         'Réservation',
-        `${clientName} souhaite réserver votre trajet.`,
+        alertMessage,
         [
           { text: 'Annuler', style: 'cancel' },
           {
@@ -115,6 +128,8 @@ export default function MessagesTab() {
                 trajetId: trajetId || '',
                 nombrePlaces: 1,
                 currentPlaces: 0,
+                villeDepart,
+                villeArrivee,
               });
               markNotificationAsRead(notification.id);
             },
@@ -128,6 +143,8 @@ export default function MessagesTab() {
                 clientId,
                 chauffeurName,
                 chauffeurId: supabaseProfileId,
+                villeDepart,
+                villeArrivee,
               });
               markNotificationAsRead(notification.id);
             },
@@ -136,6 +153,69 @@ export default function MessagesTab() {
       );
     },
     [supabaseProfileId, user, acceptReservation, refuseReservation, markNotificationAsRead]
+  );
+
+  const handleHebergementReservationAction = useCallback(
+    (notification: typeof notifications[number]) => {
+      const data = notification.data || {};
+      const reservationId = data.hebergementReservationId;
+      const clientId = data.clientId;
+      const clientName = data.clientName || 'Client';
+      const hebergementId = data.hebergementId;
+      const hebergementNom = data.hebergementNom;
+      const hebergementVille = data.hebergementVille;
+
+      if (!reservationId || !clientId || !supabaseProfileId || !user) {
+        return;
+      }
+
+      const contextLabel = hebergementNom && hebergementVille
+        ? `${hebergementNom} — ${hebergementVille}`
+        : '';
+      const alertMessage = contextLabel
+        ? `${clientName} souhaite réserver ${contextLabel}.`
+        : `${clientName} souhaite réserver votre hébergement.`;
+
+      Alert.alert(
+        'Demande de réservation',
+        alertMessage,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Refuser',
+            style: 'destructive',
+            onPress: async () => {
+              await refuseHebergementReservation({
+                reservationId,
+                clientId,
+                hebergeurId: supabaseProfileId,
+                hebergementId: hebergementId || '',
+                currentDisponibilite: 0,
+                hebergementNom,
+                hebergementVille,
+              });
+              markNotificationAsRead(notification.id);
+            },
+          },
+          {
+            text: 'Accepter',
+            onPress: async () => {
+              const hebergeurName = user.profile?.name || 'Hébergeur';
+              await acceptHebergementReservation({
+                reservationId,
+                clientId,
+                hebergeurName,
+                hebergeurId: supabaseProfileId,
+                hebergementNom,
+                hebergementVille,
+              });
+              markNotificationAsRead(notification.id);
+            },
+          },
+        ]
+      );
+    },
+    [supabaseProfileId, user, acceptHebergementReservation, refuseHebergementReservation, markNotificationAsRead]
   );
 
   const getNotificationAction = useCallback(
@@ -150,26 +230,77 @@ export default function MessagesTab() {
       }
 
       if (notification.type === 'reservation_acceptee' && data.chauffeurId) {
+        const label = data.villeDepart && data.villeArrivee
+          ? `${data.villeDepart} → ${data.villeArrivee}`
+          : '';
         return {
           onAction: () =>
             openConversation(
               data.chauffeurId,
               data.chauffeurName || 'Chauffeur',
               '',
-              data.reservationId
+              data.reservationId,
+              label
             ),
           actionLabel: 'Écrire au chauffeur',
         };
       }
 
       if (notification.type === 'reservation_refusee' && data.chauffeurId) {
+        const label = data.villeDepart && data.villeArrivee
+          ? `${data.villeDepart} → ${data.villeArrivee}`
+          : '';
         return {
           onAction: () =>
             openConversation(
               data.chauffeurId,
               data.chauffeurName || 'Chauffeur',
               '',
-              data.reservationId
+              data.reservationId,
+              label
+            ),
+          actionLabel: 'Écrire',
+        };
+      }
+
+      // ── Hébergement reservations ──
+
+      if (notification.type === 'hebergement_reservation') {
+        return {
+          onAction: () => handleHebergementReservationAction(notification),
+          actionLabel: 'Accepter / Refuser',
+        };
+      }
+
+      if (notification.type === 'hebergement_reservation_acceptee' && data.hebergeurId) {
+        const label = data.hebergementNom && data.hebergementVille
+          ? `${data.hebergementNom} — ${data.hebergementVille}`
+          : '';
+        return {
+          onAction: () =>
+            openConversation(
+              data.hebergeurId,
+              data.hebergeurName || 'Hébergeur',
+              '',
+              data.hebergementReservationId,
+              label
+            ),
+          actionLabel: "Écrire à l'hébergeur",
+        };
+      }
+
+      if (notification.type === 'hebergement_reservation_refusee' && data.hebergeurId) {
+        const label = data.hebergementNom && data.hebergementVille
+          ? `${data.hebergementNom} — ${data.hebergementVille}`
+          : '';
+        return {
+          onAction: () =>
+            openConversation(
+              data.hebergeurId,
+              data.hebergeurName || 'Hébergeur',
+              '',
+              data.hebergementReservationId,
+              label
             ),
           actionLabel: 'Écrire',
         };
@@ -177,7 +308,7 @@ export default function MessagesTab() {
 
       return {};
     },
-    [handleReservationAction, openConversation]
+    [handleReservationAction, handleHebergementReservationAction, openConversation]
   );
 
   return (
@@ -225,7 +356,7 @@ export default function MessagesTab() {
                   onPress={() => {
                     handleMessagePress(item.id);
                     if (item.partnerId) {
-                      openConversation(item.partnerId, item.sender, item.avatar);
+                      openConversation(item.partnerId, item.sender, item.avatar, item.reservationId, item.contextLabel);
                     }
                   }}
                 />

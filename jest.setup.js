@@ -110,6 +110,7 @@ jest.mock('./src/lib/supabaseReservations', () => ({
   fetchReservationsForClient: jest.fn(() => Promise.resolve([])),
   acceptReservation: jest.fn(() => Promise.resolve(true)),
   refuseReservation: jest.fn(() => Promise.resolve(true)),
+  fetchReservationContexts: jest.fn(() => Promise.resolve({})),
 }));
 
 // Mock supabaseDirectMessages
@@ -125,6 +126,7 @@ jest.mock('./src/lib/supabaseNotificationsCreate', () => ({
   createNotification: jest.fn(() => Promise.resolve(true)),
   getProfilePushToken: jest.fn(() => Promise.resolve(null)),
   sendPushNotification: jest.fn(() => Promise.resolve(true)),
+  markNotificationAsReadInDb: jest.fn(() => Promise.resolve(true)),
 }));
 
 // Mock supabaseAvatar

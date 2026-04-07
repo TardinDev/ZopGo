@@ -94,6 +94,34 @@ export async function fetchReservationsForClient(clientId: string): Promise<Rese
   return ((data as SupabaseReservation[]) || []).map(mapReservation);
 }
 
+export async function fetchReservationContexts(
+  reservationIds: string[]
+): Promise<Record<string, { villeDepart: string; villeArrivee: string }>> {
+  if (reservationIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('id, trajet:trajet_id(ville_depart, ville_arrivee)')
+    .in('id', reservationIds);
+
+  if (error) {
+    if (__DEV__) console.error('fetchReservationContexts error:', error.message);
+    return {};
+  }
+
+  const result: Record<string, { villeDepart: string; villeArrivee: string }> = {};
+  for (const row of data || []) {
+    const trajet = row.trajet as unknown as { ville_depart: string; ville_arrivee: string } | null;
+    if (trajet?.ville_depart && trajet?.ville_arrivee) {
+      result[row.id] = {
+        villeDepart: trajet.ville_depart,
+        villeArrivee: trajet.ville_arrivee,
+      };
+    }
+  }
+  return result;
+}
+
 export async function acceptReservation(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('reservations')

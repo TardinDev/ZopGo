@@ -95,6 +95,22 @@ export async function deleteHebergement(id: string): Promise<boolean> {
   return true;
 }
 
+export async function updateHebergementDisponibilite(
+  id: string,
+  newDisponibilite: number
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('hebergements')
+    .update({ disponibilite: newDisponibilite })
+    .eq('id', id);
+
+  if (error) {
+    if (__DEV__) console.error('Error updating hebergement disponibilite:', error.message);
+    return false;
+  }
+  return true;
+}
+
 export async function toggleHebergementStatus(id: string, newStatus: string): Promise<boolean> {
   const { error } = await supabase
     .from('hebergements')

@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { checkNetwork } from '../hooks/useNetworkStatus';
 import { fetchConversationsList } from '../lib/supabaseDirectMessages';
+import { fetchReservationContexts } from '../lib/supabaseReservations';
+import { fetchHebergementReservationContexts } from '../lib/supabaseHebergementReservations';
+import { markNotificationAsReadInDb } from '../lib/supabaseNotificationsCreate';
 
 type MessageTab = 'notifications' | 'messages';
 
@@ -29,6 +32,8 @@ export interface Message {
   time: string;
   read: boolean;
   partnerId?: string;
+  reservationId?: string;
+  contextLabel?: string;
 }
 
 interface SupabaseNotificationRow {
@@ -69,15 +74,20 @@ export const useMessagesStore = create<MessagesState>((set) => ({
 
   setSelectedTab: (tab) => set({ selectedTab: tab }),
 
-  markNotificationAsRead: (id) =>
+  markNotificationAsRead: (id) => {
     set((state) => ({
       notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    })),
+    }));
+    // Persist to Supabase (fire-and-forget)
+    markNotificationAsReadInDb(id);
+  },
 
-  markMessageAsRead: (id) =>
+  markMessageAsRead: (id) => {
     set((state) => ({
       messages: state.messages.map((m) => (m.id === id ? { ...m, read: true } : m)),
-    })),
+    }));
+    // Supabase persistence is handled by the conversation screen's markMessagesAsRead
+  },
 
   addNotification: (notification) =>
     set((state) => ({
@@ -142,8 +152,32 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         return;
       }
       const items = await fetchConversationsList(userId);
+
+      // Batch-fetch route context for conversations linked to reservations
+      const reservationIds = items
+        .map((item) => item.reservationId)
+        .filter((id): id is string => !!id);
+      const uniqueIds = [...new Set(reservationIds)];
+
+      // Fetch trajet contexts
+      const trajetContexts = uniqueIds.length > 0 ? await fetchReservationContexts(uniqueIds) : {};
+
+      // Fetch hébergement contexts for IDs not found in trajet contexts
+      const remainingIds = uniqueIds.filter((id) => !trajetContexts[id]);
+      const hebContexts = remainingIds.length > 0
+        ? await fetchHebergementReservationContexts(remainingIds)
+        : {};
+
       const messages: Message[] = items.map((item) => {
         const created = new Date(item.createdAt);
+        const trajetCtx = item.reservationId ? trajetContexts[item.reservationId] : undefined;
+        const hebCtx = item.reservationId ? hebContexts[item.reservationId] : undefined;
+        let contextLabel: string | undefined;
+        if (trajetCtx) {
+          contextLabel = `${trajetCtx.villeDepart} → ${trajetCtx.villeArrivee}`;
+        } else if (hebCtx) {
+          contextLabel = `${hebCtx.hebergementNom} — ${hebCtx.hebergementVille}`;
+        }
         return {
           id: item.id,
           sender: item.partnerName || 'Utilisateur',
@@ -153,6 +187,8 @@ export const useMessagesStore = create<MessagesState>((set) => ({
           time: formatTimeAgo(created),
           read: item.read,
           partnerId: item.partnerId,
+          reservationId: item.reservationId,
+          contextLabel,
         };
       });
       set({ messages });

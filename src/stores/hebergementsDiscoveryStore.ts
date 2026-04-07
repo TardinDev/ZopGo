@@ -43,17 +43,21 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
       const data = await fetchAllAvailableHebergements();
       const mapped: Hebergement[] = data.map((h, index) => ({
         id: index + 1,
+        supabaseId: h.id,
         type: TYPE_LABEL[h.type] || h.type,
         name: h.nom,
         location: h.ville,
         price: `${h.prix_par_nuit} FCFA/nuit`,
+        prixParNuit: h.prix_par_nuit,
         rating: h.profiles?.rating ?? 0,
         icon: TYPE_ICON[h.type] || '🏨',
         images: h.images || [],
         hebergeurName: h.profiles?.name,
         hebergeurAvatar: h.profiles?.avatar,
         hebergeurRating: h.profiles?.rating,
+        hebergeurProfileId: h.hebergeur_id,
         capacite: h.capacite,
+        disponibilite: h.disponibilite,
         description: h.description,
         adresse: h.adresse,
       }));
