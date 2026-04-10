@@ -39,6 +39,7 @@ const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
   trajets: true,
   hebergements: true,
   promotions: true,
+  messages: true,
 };
 
 interface AuthState {

@@ -6,15 +6,25 @@ const EXPO_ACCESS_TOKEN = Deno.env.get('EXPO_ACCESS_TOKEN'); // optional
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-type NotificationCategory = 'courses' | 'trajets' | 'promotions';
+type NotificationCategory =
+  | 'courses'
+  | 'trajets'
+  | 'hebergements'
+  | 'promotions'
+  | 'messages';
 
 interface SendPushBody {
-  recipientIds?: string[];
-  recipientRole?: 'client' | 'chauffeur' | 'all';
+  // Either: clerk IDs (legacy) OR profile UUIDs (preferred) OR a role broadcast
+  recipientIds?: string[];          // clerk_id list (kept for back-compat)
+  recipientProfileIds?: string[];   // profiles.id (UUID) — preferred
+  recipientRole?: 'client' | 'chauffeur' | 'hebergeur' | 'all';
   category: NotificationCategory;
   title: string;
   message: string;
   data?: Record<string, string>;
+  // If true, skip creating in-app notifications rows (used for chat which
+  // lives in direct_messages and has its own unread tracking).
+  skipInAppRecord?: boolean;
 }
 
 function getCategoryMeta(category: NotificationCategory) {
@@ -23,13 +33,30 @@ function getCategoryMeta(category: NotificationCategory) {
       return { icon: 'car', iconColor: '#2162FE', iconBg: '#DBEAFE' };
     case 'trajets':
       return { icon: 'navigate', iconColor: '#10B981', iconBg: '#D1FAE5' };
+    case 'hebergements':
+      return { icon: 'bed', iconColor: '#8B5CF6', iconBg: '#EDE9FE' };
     case 'promotions':
       return { icon: 'megaphone', iconColor: '#F59E0B', iconBg: '#FEF3C7' };
+    case 'messages':
+      return { icon: 'chatbubble', iconColor: '#2162FE', iconBg: '#DBEAFE' };
   }
 }
 
-async function sendExpoPush(tokens: string[], title: string, body: string, data: Record<string, string>) {
-  const messages = tokens.map((to) => ({ to, title, body, sound: 'default' as const, priority: 'high' as const, channelId: 'default', data }));
+async function sendExpoPush(
+  tokens: string[],
+  title: string,
+  body: string,
+  data: Record<string, string>
+) {
+  const messages = tokens.map((to) => ({
+    to,
+    title,
+    body,
+    sound: 'default' as const,
+    priority: 'high' as const,
+    channelId: 'default',
+    data,
+  }));
 
   // Send in chunks of 100
   for (let i = 0; i < messages.length; i += 100) {
@@ -55,7 +82,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Verify service role auth
+  // Accept either the service role key or an authenticated user JWT.
+  // The mobile app invokes this function via `supabase.functions.invoke`
+  // which forwards the user's session token.
   const authHeader = req.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -66,7 +95,16 @@ Deno.serve(async (req) => {
 
   try {
     const body: SendPushBody = await req.json();
-    const { recipientIds, recipientRole, category, title, message, data } = body;
+    const {
+      recipientIds,
+      recipientProfileIds,
+      recipientRole,
+      category,
+      title,
+      message,
+      data,
+      skipInAppRecord,
+    } = body;
 
     if (!category || !title || !message) {
       return new Response(
@@ -75,14 +113,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build query for profiles with push tokens
+    // Build query for profiles with push tokens.
+    // NOTE: we always select `id` (profile UUID) because notifications.recipient_id
+    // references profiles(id) — inserting a clerk_id there is a FK violation.
     let query = supabase
       .from('profiles')
-      .select('clerk_id, push_token, notification_preferences')
+      .select('id, clerk_id, push_token, notification_preferences')
       .not('push_token', 'is', null)
       .is('deleted_at', null);
 
-    if (recipientIds && recipientIds.length > 0) {
+    if (recipientProfileIds && recipientProfileIds.length > 0) {
+      query = query.in('id', recipientProfileIds);
+    } else if (recipientIds && recipientIds.length > 0) {
       query = query.in('clerk_id', recipientIds);
     } else if (recipientRole && recipientRole !== 'all') {
       query = query.eq('role', recipientRole);
@@ -104,13 +146,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Filter by notification preferences
+    // Filter by notification preferences. A missing pref means opt-in.
     const eligible = profiles.filter((p) => {
       const prefs = p.notification_preferences as Record<string, boolean> | null;
       return !prefs || prefs[category] !== false;
     });
 
-    const tokens = eligible.map((p) => p.push_token as string);
+    const tokens = eligible
+      .map((p) => p.push_token as string | null)
+      .filter((t): t is string => !!t);
     const meta = getCategoryMeta(category);
 
     // Send push notifications
@@ -124,28 +168,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Insert in-app notification records
-    const recipientClerkIds = eligible.map((p) => p.clerk_id);
-    const notificationRecords = recipientClerkIds.map((clerkId) => ({
-      type: category,
-      title,
-      message,
-      icon: meta.icon,
-      icon_color: meta.iconColor,
-      icon_bg: meta.iconBg,
-      recipient_id: clerkId,
-      recipient_role: recipientRole || null,
-      read: false,
-    }));
+    // Insert in-app notification records — keyed by profile UUID (FK target).
+    let inAppInserted = 0;
+    if (!skipInAppRecord) {
+      const notificationRecords = eligible
+        .filter((p) => !!p.id)
+        .map((p) => ({
+          type: category,
+          title,
+          message,
+          icon: meta.icon,
+          icon_color: meta.iconColor,
+          icon_bg: meta.iconBg,
+          recipient_id: p.id as string,
+          recipient_role: recipientRole || null,
+          read: false,
+        }));
 
-    // Insert in batches of 500
-    for (let i = 0; i < notificationRecords.length; i += 500) {
-      const batch = notificationRecords.slice(i, i + 500);
-      await supabase.from('notifications').insert(batch);
+      for (let i = 0; i < notificationRecords.length; i += 500) {
+        const batch = notificationRecords.slice(i, i + 500);
+        const { error: insertError } = await supabase
+          .from('notifications')
+          .insert(batch);
+        if (!insertError) {
+          inAppInserted += batch.length;
+        }
+      }
     }
 
     return new Response(
-      JSON.stringify({ sent: tokens.length, inApp: recipientClerkIds.length }),
+      JSON.stringify({ sent: tokens.length, inApp: inAppInserted }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {

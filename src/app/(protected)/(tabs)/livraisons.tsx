@@ -1,11 +1,13 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TIMEOUTS, COLORS } from '../../../constants';
 import { useLivraisonsStore } from '../../../stores';
 import { useDriversStore } from '../../../stores/driversStore';
+import { useAuthStore } from '../../../stores/authStore';
+import { supabase } from '../../../lib/supabase';
 import { AnimatedTabScreen } from '../../../components/ui';
 import {
   LivraisonHeader,
@@ -25,46 +27,101 @@ export default function LivraisonsTab() {
     waitingForAcceptance,
     accepted,
     noResponse,
+    currentLivraison,
     setShowResults,
     setSelectedLivreur,
     setWaitingForAcceptance,
     setAccepted,
     setNoResponse,
     resetAll,
+    createLivraisonRequest,
   } = useLivraisonsStore();
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const acceptanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, supabaseProfileId } = useAuthStore();
+  const clientName = user?.profile.name || 'Client';
 
-  // Utilise le driversStore pour obtenir tous les livreurs (statiques + chauffeurs connectés)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Filter out drivers without a Supabase profile UUID (static demo drivers),
+  // because livraisons.livreur_id is a real FK to profiles(id).
   const { getAllDrivers } = useDriversStore();
-  const livreurs = getAllDrivers();
+  const livreurs = useMemo(
+    () => getAllDrivers().filter((l) => !!l.supabaseProfileId),
+    [getAllDrivers]
+  );
   const currentLivreur = livreurs.find((l) => l.id === selectedLivreur);
 
-  // Nettoyage des timeouts
+  // Cleanup
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (acceptanceTimeoutRef.current) clearTimeout(acceptanceTimeoutRef.current);
     };
   }, []);
 
-  const handleConfirmLivraison = () => {
+  // Realtime subscription: watch the created livraison and reflect status
+  // transitions directly in the UI (acceptee → accepted view).
+  useEffect(() => {
+    if (!currentLivraison?.id) return;
+
+    const channel = supabase
+      .channel(`livraison-${currentLivraison.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'livraisons',
+          filter: `id=eq.${currentLivraison.id}`,
+        },
+        (payload) => {
+          const next = payload.new as { status?: string };
+          if (next.status === 'acceptee') {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setWaitingForAcceptance(false);
+            setAccepted(true);
+          } else if (next.status === 'refusee' || next.status === 'expiree') {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setWaitingForAcceptance(false);
+            setNoResponse(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentLivraison?.id, setAccepted, setNoResponse, setWaitingForAcceptance]);
+
+  const handleConfirmLivraison = async () => {
+    if (!supabaseProfileId || !currentLivreur?.supabaseProfileId) {
+      // No backing profile — bail early so we don't hit an FK violation.
+      setNoResponse(true);
+      return;
+    }
+
     setWaitingForAcceptance(true);
     setNoResponse(false);
 
-    // Timeout de non-réponse
+    const created = await createLivraisonRequest({
+      clientId: supabaseProfileId,
+      livreurProfileId: currentLivreur.supabaseProfileId,
+      pickupLocation,
+      dropoffLocation,
+      clientName,
+    });
+
+    if (!created) {
+      setWaitingForAcceptance(false);
+      setNoResponse(true);
+      return;
+    }
+
+    // Expiration safeguard: if no realtime update arrives, surface "no response"
     timeoutRef.current = setTimeout(() => {
       setWaitingForAcceptance(false);
       setNoResponse(true);
     }, TIMEOUTS.DELIVERY_ACCEPTANCE);
-
-    // Simulation d'acceptation (Demo)
-    acceptanceTimeoutRef.current = setTimeout(() => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setWaitingForAcceptance(false);
-      setAccepted(true);
-    }, TIMEOUTS.DEMO_ACCEPTANCE);
   };
 
   const handleRetrySearch = () => {

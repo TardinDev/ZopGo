@@ -79,6 +79,29 @@ export async function fetchReservationsForChauffeur(chauffeurId: string): Promis
   return ((data as SupabaseReservation[]) || []).map(mapReservation);
 }
 
+export async function fetchReservationsByTrajetId(
+  trajetId: string,
+  statuses?: ReservationStatus[]
+): Promise<Reservation[]> {
+  let query = supabase
+    .from('reservations')
+    .select('*, client:client_id(name, avatar)')
+    .eq('trajet_id', trajetId);
+
+  if (statuses && statuses.length > 0) {
+    query = query.in('status', statuses);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    if (__DEV__)
+      console.error('Error fetching reservations by trajet:', error.message);
+    return [];
+  }
+  return ((data as SupabaseReservation[]) || []).map(mapReservation);
+}
+
 export async function fetchReservationsForClient(clientId: string): Promise<Reservation[]> {
   const { data, error } = await supabase
     .from('reservations')

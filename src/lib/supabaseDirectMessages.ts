@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { sendPushIfAllowed } from './pushNotifications';
 import type { DirectMessage } from '../types';
 
 interface SupabaseDirectMessageRow {
@@ -50,14 +51,38 @@ export async function sendDirectMessage(params: {
       reservation_id: params.reservationId || null,
       content: params.content,
     })
-    .select()
+    .select('*, sender:sender_id(name)')
     .single();
 
   if (error) {
     if (__DEV__) console.error('sendDirectMessage error:', error.message);
     return null;
   }
-  return mapRow(data as SupabaseDirectMessageRow);
+
+  const row = data as SupabaseDirectMessageRow;
+  const senderName = row.sender?.name || 'Nouveau message';
+  const preview =
+    params.content.length > 100
+      ? params.content.slice(0, 97) + '...'
+      : params.content;
+
+  // Fire-and-forget push. `createInAppRecord: false` is CRITICAL: chat
+  // unread is tracked in `direct_messages.read`, not in `notifications`.
+  void sendPushIfAllowed({
+    recipientProfileId: params.receiverId,
+    category: 'messages',
+    type: 'direct_message',
+    title: senderName,
+    body: preview,
+    createInAppRecord: false,
+    data: {
+      type: 'direct_message',
+      senderId: params.senderId,
+      ...(params.reservationId && { reservationId: params.reservationId }),
+    },
+  });
+
+  return mapRow(row);
 }
 
 export async function fetchConversation(

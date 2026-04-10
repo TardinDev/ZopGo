@@ -87,10 +87,23 @@ jest.mock('./src/lib/supabaseProfile', () => ({
 // Mock supabaseNotifications
 jest.mock('./src/lib/supabaseNotifications', () => ({
   fetchNotificationPreferences: jest.fn(() =>
-    Promise.resolve({ courses: true, trajets: true, hebergements: true, promotions: true })
+    Promise.resolve({
+      courses: true,
+      trajets: true,
+      hebergements: true,
+      promotions: true,
+      messages: true,
+    })
   ),
   updateNotificationPreferences: jest.fn(),
   updatePushToken: jest.fn(),
+  DEFAULT_PREFS: {
+    courses: true,
+    trajets: true,
+    hebergements: true,
+    promotions: true,
+    messages: true,
+  },
 }));
 
 // Mock supabaseTrajets
@@ -108,6 +121,7 @@ jest.mock('./src/lib/supabaseReservations', () => ({
   insertReservation: jest.fn(() => Promise.resolve(null)),
   fetchReservationsForChauffeur: jest.fn(() => Promise.resolve([])),
   fetchReservationsForClient: jest.fn(() => Promise.resolve([])),
+  fetchReservationsByTrajetId: jest.fn(() => Promise.resolve([])),
   acceptReservation: jest.fn(() => Promise.resolve(true)),
   refuseReservation: jest.fn(() => Promise.resolve(true)),
   fetchReservationContexts: jest.fn(() => Promise.resolve({})),
@@ -127,6 +141,16 @@ jest.mock('./src/lib/supabaseNotificationsCreate', () => ({
   getProfilePushToken: jest.fn(() => Promise.resolve(null)),
   sendPushNotification: jest.fn(() => Promise.resolve(true)),
   markNotificationAsReadInDb: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock pushNotifications (central helper). Individual tests (e.g. the
+// helper's own unit tests) should `jest.unmock('../pushNotifications')`.
+jest.mock('./src/lib/pushNotifications', () => ({
+  sendPushIfAllowed: jest.fn(() =>
+    Promise.resolve({ inAppCreated: true, pushSent: true })
+  ),
+  sendPushBroadcast: jest.fn(() => Promise.resolve({ invoked: true })),
+  getCategoryMeta: jest.fn(() => ({ icon: 'bell', color: '#000', bg: '#fff' })),
 }));
 
 // Mock supabaseAvatar

@@ -6,7 +6,10 @@ const DEFAULT_PREFS: NotificationPreferences = {
   trajets: true,
   hebergements: true,
   promotions: true,
+  messages: true,
 };
+
+export { DEFAULT_PREFS };
 
 export async function updatePushToken(clerkId: string, token: string | null): Promise<boolean> {
   const { error } = await supabase

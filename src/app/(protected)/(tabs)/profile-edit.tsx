@@ -336,7 +336,7 @@ export default function ProfileEditScreen() {
               </TouchableOpacity>
             </View>
 
-            <View className="flex-row items-center justify-between">
+            <View className="mb-4 flex-row items-center justify-between">
               <View className="flex-1 pr-4">
                 <Text className="font-medium text-gray-800">Promotions et infos</Text>
                 <Text className="text-sm text-gray-500">Marketing, promos, annonces</Text>
@@ -351,6 +351,28 @@ export default function ProfileEditScreen() {
                 <View
                   className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-all ${
                     localPrefs.promotions ? 'ml-6' : 'ml-0.5'
+                  }`}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-4">
+                <Text className="font-medium text-gray-800">Messages</Text>
+                <Text className="text-sm text-gray-500">
+                  Messages directs de vos contacts
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  setLocalPrefs({ ...localPrefs, messages: !localPrefs.messages })
+                }
+                className={`h-6 w-12 rounded-full ${
+                  localPrefs.messages ? 'bg-[#2162FE]' : 'bg-gray-300'
+                }`}>
+                <View
+                  className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    localPrefs.messages ? 'ml-6' : 'ml-0.5'
                   }`}
                 />
               </TouchableOpacity>

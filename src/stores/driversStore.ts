@@ -88,6 +88,7 @@ export const useDriversStore = create<DriversState>((set, get) => ({
           photo: d.avatar || generateAvatarPlaceholder(d.name, d.clerk_id || d.id),
           commentaires: [],
           distance: Math.random() * 3 + 0.5,
+          supabaseProfileId: d.id,
         }));
         set({ connectedDrivers: drivers });
       }

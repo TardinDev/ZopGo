@@ -93,6 +93,9 @@ export interface Livreur {
   photo: string;
   commentaires: string[];
   distance: number;
+  // Supabase profile UUID — required to create real livraisons (FK target).
+  // Absent on static demo drivers; livraisons.tsx filters those out.
+  supabaseProfileId?: string;
 }
 
 // Types pour les évaluations
@@ -250,8 +253,45 @@ export interface NotificationPreferences {
   trajets: boolean;
   hebergements: boolean;
   promotions: boolean;
+  messages: boolean;
 }
 export type NotificationCategory = keyof NotificationPreferences;
+
+// Types pour les livraisons
+export type LivraisonStatus =
+  | 'en_attente'
+  | 'acceptee'
+  | 'refusee'
+  | 'en_cours'
+  | 'livree'
+  | 'annulee'
+  | 'expiree';
+
+export interface Livraison {
+  id: string;
+  clientId: string;
+  livreurId: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
+  description?: string | null;
+  prixEstime: number;
+  status: LivraisonStatus;
+  acceptedAt?: string | null;
+  pickedUpAt?: string | null;
+  deliveredAt?: string | null;
+  cancelledAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Optional joined fields
+  clientName?: string;
+  clientAvatar?: string;
+  livreurName?: string;
+  livreurAvatar?: string;
+}
 
 // Utilisateur authentifié (peut être client, chauffeur ou hébergeur)
 export interface AuthUser {

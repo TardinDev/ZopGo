@@ -7,11 +7,7 @@ import {
   refuseReservation as refuseApi,
 } from '../../lib/supabaseReservations';
 import { updateTrajetPlaces } from '../../lib/supabaseTrajets';
-import {
-  createNotification,
-  getProfilePushToken,
-  sendPushNotification,
-} from '../../lib/supabaseNotificationsCreate';
+import { sendPushIfAllowed } from '../../lib/pushNotifications';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -37,9 +33,6 @@ describe('reservationsStore', () => {
         updatedAt: '2026-01-01',
       });
       (updateTrajetPlaces as jest.Mock).mockResolvedValue(true);
-      (createNotification as jest.Mock).mockResolvedValue(true);
-      (getProfilePushToken as jest.Mock).mockResolvedValue('ExpoPushToken[abc]');
-      (sendPushNotification as jest.Mock).mockResolvedValue(true);
 
       const result = await useReservationsStore.getState().bookTrajet({
         trajetId: 't1',
@@ -54,8 +47,13 @@ describe('reservationsStore', () => {
       expect(result).not.toBeNull();
       expect(insertReservation).toHaveBeenCalled();
       expect(updateTrajetPlaces).toHaveBeenCalledWith('t1', 2);
-      expect(createNotification).toHaveBeenCalled();
-      expect(sendPushNotification).toHaveBeenCalled();
+      expect(sendPushIfAllowed).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientProfileId: 'cf1',
+          category: 'trajets',
+          type: 'reservation',
+        })
+      );
     });
 
     it('returns null when insertReservation fails', async () => {
@@ -75,7 +73,7 @@ describe('reservationsStore', () => {
       expect(updateTrajetPlaces).not.toHaveBeenCalled();
     });
 
-    it('does not send push if no token', async () => {
+    it('still triggers push helper even when token is absent (helper handles filtering)', async () => {
       (insertReservation as jest.Mock).mockResolvedValue({
         id: 'res-2',
         trajetId: 't1',
@@ -87,7 +85,11 @@ describe('reservationsStore', () => {
         createdAt: '2026-01-01',
         updatedAt: '2026-01-01',
       });
-      (getProfilePushToken as jest.Mock).mockResolvedValue(null);
+      (sendPushIfAllowed as jest.Mock).mockResolvedValue({
+        inAppCreated: true,
+        pushSent: false,
+        skippedReason: 'no_token',
+      });
 
       await useReservationsStore.getState().bookTrajet({
         trajetId: 't1',
@@ -99,15 +101,13 @@ describe('reservationsStore', () => {
         remainingPlaces: 2,
       });
 
-      expect(sendPushNotification).not.toHaveBeenCalled();
+      expect(sendPushIfAllowed).toHaveBeenCalled();
     });
   });
 
   describe('acceptReservation', () => {
     it('accepts, notifies client, and updates local state', async () => {
       (acceptApi as jest.Mock).mockResolvedValue(true);
-      (createNotification as jest.Mock).mockResolvedValue(true);
-      (getProfilePushToken as jest.Mock).mockResolvedValue(null);
 
       useReservationsStore.setState({
         chauffeurReservations: [
@@ -134,7 +134,13 @@ describe('reservationsStore', () => {
 
       expect(ok).toBe(true);
       expect(acceptApi).toHaveBeenCalledWith('res-1');
-      expect(createNotification).toHaveBeenCalled();
+      expect(sendPushIfAllowed).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientProfileId: 'c1',
+          category: 'trajets',
+          type: 'reservation_acceptee',
+        })
+      );
       expect(useReservationsStore.getState().chauffeurReservations[0].status).toBe('acceptee');
     });
 
@@ -149,7 +155,7 @@ describe('reservationsStore', () => {
       });
 
       expect(ok).toBe(false);
-      expect(createNotification).not.toHaveBeenCalled();
+      expect(sendPushIfAllowed).not.toHaveBeenCalled();
     });
   });
 
@@ -157,8 +163,6 @@ describe('reservationsStore', () => {
     it('refuses, restores places, and notifies client', async () => {
       (refuseApi as jest.Mock).mockResolvedValue(true);
       (updateTrajetPlaces as jest.Mock).mockResolvedValue(true);
-      (createNotification as jest.Mock).mockResolvedValue(true);
-      (getProfilePushToken as jest.Mock).mockResolvedValue(null);
 
       const ok = await useReservationsStore.getState().refuseReservation({
         reservationId: 'res-1',
@@ -171,7 +175,13 @@ describe('reservationsStore', () => {
 
       expect(ok).toBe(true);
       expect(updateTrajetPlaces).toHaveBeenCalledWith('t1', 3);
-      expect(createNotification).toHaveBeenCalled();
+      expect(sendPushIfAllowed).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientProfileId: 'c1',
+          category: 'trajets',
+          type: 'reservation_refusee',
+        })
+      );
     });
 
     it('returns false when API fails', async () => {

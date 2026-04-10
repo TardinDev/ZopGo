@@ -18,7 +18,7 @@ beforeEach(() => {
     user: null,
     clerkId: null,
     supabaseProfileId: null,
-    notificationPreferences: { courses: true, trajets: true, hebergements: true, promotions: true },
+    notificationPreferences: { courses: true, trajets: true, hebergements: true, promotions: true, messages: true },
     _hasHydrated: false,
   });
   useDriversStore.setState({
@@ -168,7 +168,7 @@ describe('logout', () => {
 
   it('resets notification preferences to defaults', () => {
     useAuthStore.setState({
-      notificationPreferences: { courses: false, trajets: false, hebergements: false, promotions: false },
+      notificationPreferences: { courses: false, trajets: false, hebergements: false, promotions: false, messages: false },
     });
     useAuthStore.getState().logout();
     const prefs = useAuthStore.getState().notificationPreferences;
@@ -251,14 +251,14 @@ describe('loadNotificationPreferences', () => {
 describe('setNotificationPreferences', () => {
   it('updates prefs locally and syncs to Supabase', () => {
     useAuthStore.setState({ clerkId: 'clerk_1' });
-    const prefs = { courses: false, trajets: false, hebergements: true, promotions: true };
+    const prefs = { courses: false, trajets: false, hebergements: true, promotions: true, messages: true };
     useAuthStore.getState().setNotificationPreferences(prefs);
     expect(useAuthStore.getState().notificationPreferences).toEqual(prefs);
     expect(updateNotificationPreferences).toHaveBeenCalledWith('clerk_1', prefs);
   });
 
   it('does not sync to Supabase when no clerkId', () => {
-    const prefs = { courses: false, trajets: false, hebergements: true, promotions: true };
+    const prefs = { courses: false, trajets: false, hebergements: true, promotions: true, messages: true };
     useAuthStore.getState().setNotificationPreferences(prefs);
     expect(updateNotificationPreferences).not.toHaveBeenCalled();
   });

@@ -15,11 +15,7 @@ import {
 } from '../lib/supabaseHebergementReservations';
 import { updateTrajetPlaces } from '../lib/supabaseTrajets';
 import { updateHebergementDisponibilite } from '../lib/supabaseHebergements';
-import {
-  createNotification,
-  getProfilePushToken,
-  sendPushNotification,
-} from '../lib/supabaseNotificationsCreate';
+import { sendPushIfAllowed } from '../lib/pushNotifications';
 import type { Reservation, HebergementReservation } from '../types';
 
 interface ReservationsState {
@@ -136,14 +132,18 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       await updateTrajetPlaces(trajetId, newPlaces);
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
-      await createNotification({
-        recipient_id: chauffeurId,
+      const pushBody = routeLabel
+        ? `${clientName} souhaite réserver ${nombrePlaces} place(s) — ${routeLabel}`
+        : `${clientName} souhaite réserver ${nombrePlaces} place(s)`;
+
+      void sendPushIfAllowed({
+        recipientProfileId: chauffeurId,
+        category: 'trajets',
         type: 'reservation',
         title: 'Nouvelle réservation',
+        body: pushBody,
         message: `${clientName} souhaite réserver ${nombrePlaces} place${nombrePlaces > 1 ? 's' : ''} pour votre trajet`,
         icon: 'calendar-check',
-        icon_color: '#2162FE',
-        icon_bg: '#DBEAFE',
         data: {
           reservationId: reservation.id,
           clientId,
@@ -153,19 +153,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
           ...(villeArrivee && { villeArrivee }),
         },
       });
-
-      const pushToken = await getProfilePushToken(chauffeurId);
-      if (pushToken) {
-        const pushBody = routeLabel
-          ? `${clientName} souhaite réserver ${nombrePlaces} place(s) — ${routeLabel}`
-          : `${clientName} souhaite réserver ${nombrePlaces} place(s)`;
-        await sendPushNotification(
-          pushToken,
-          'Nouvelle réservation',
-          pushBody,
-          { reservationId: reservation.id, type: 'reservation' }
-        );
-      }
 
       return reservation;
     } catch (err) {
@@ -183,14 +170,20 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       if (!ok) return false;
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
-      await createNotification({
-        recipient_id: clientId,
+      const pushBody = routeLabel
+        ? `${chauffeurName} a accepté votre réservation — ${routeLabel}`
+        : `${chauffeurName} a accepté votre réservation`;
+
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'trajets',
         type: 'reservation_acceptee',
         title: 'Réservation acceptée',
+        body: pushBody,
         message: `${chauffeurName} a accepté votre réservation`,
         icon: 'check-circle',
-        icon_color: '#10B981',
-        icon_bg: '#D1FAE5',
+        iconColor: '#10B981',
+        iconBg: '#D1FAE5',
         data: {
           reservationId,
           chauffeurId,
@@ -199,19 +192,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
           ...(villeArrivee && { villeArrivee }),
         },
       });
-
-      const pushToken = await getProfilePushToken(clientId);
-      if (pushToken) {
-        const pushBody = routeLabel
-          ? `${chauffeurName} a accepté votre réservation — ${routeLabel}`
-          : `${chauffeurName} a accepté votre réservation`;
-        await sendPushNotification(
-          pushToken,
-          'Réservation acceptée',
-          pushBody,
-          { reservationId, type: 'reservation_acceptee' }
-        );
-      }
 
       set((state) => ({
         chauffeurReservations: state.chauffeurReservations.map((r) =>
@@ -246,14 +226,20 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       await updateTrajetPlaces(trajetId, currentPlaces + nombrePlaces);
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
-      await createNotification({
-        recipient_id: clientId,
+      const pushBody = routeLabel
+        ? `Le chauffeur a refusé votre réservation — ${routeLabel}`
+        : 'Le chauffeur a refusé votre réservation';
+
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'trajets',
         type: 'reservation_refusee',
         title: 'Réservation refusée',
+        body: pushBody,
         message: 'Le chauffeur a refusé votre réservation',
         icon: 'close-circle',
-        icon_color: '#EF4444',
-        icon_bg: '#FEE2E2',
+        iconColor: '#EF4444',
+        iconBg: '#FEE2E2',
         data: {
           reservationId,
           chauffeurId,
@@ -262,19 +248,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
           ...(villeArrivee && { villeArrivee }),
         },
       });
-
-      const pushToken = await getProfilePushToken(clientId);
-      if (pushToken) {
-        const pushBody = routeLabel
-          ? `Le chauffeur a refusé votre réservation — ${routeLabel}`
-          : 'Le chauffeur a refusé votre réservation';
-        await sendPushNotification(
-          pushToken,
-          'Réservation refusée',
-          pushBody,
-          { reservationId, type: 'reservation_refusee' }
-        );
-      }
 
       set((state) => ({
         chauffeurReservations: state.chauffeurReservations.map((r) =>
@@ -323,14 +296,15 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       await updateHebergementDisponibilite(hebergementId, newDispo);
 
       const contextLabel = `${hebergementNom} — ${hebergementVille}`;
-      await createNotification({
-        recipient_id: hebergeurId,
+
+      void sendPushIfAllowed({
+        recipientProfileId: hebergeurId,
+        category: 'hebergements',
         type: 'hebergement_reservation',
         title: 'Nouvelle demande',
+        body: `${clientName} souhaite réserver ${nombreNuits} nuit(s) — ${contextLabel}`,
         message: `${clientName} souhaite réserver ${nombreNuits} nuit${nombreNuits > 1 ? 's' : ''} dans votre hébergement`,
         icon: 'bed-outline',
-        icon_color: '#8B5CF6',
-        icon_bg: '#EDE9FE',
         data: {
           hebergementReservationId: reservation.id,
           clientId,
@@ -340,16 +314,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
           hebergementVille,
         },
       });
-
-      const pushToken = await getProfilePushToken(hebergeurId);
-      if (pushToken) {
-        await sendPushNotification(
-          pushToken,
-          'Nouvelle demande',
-          `${clientName} souhaite réserver ${nombreNuits} nuit(s) — ${contextLabel}`,
-          { hebergementReservationId: reservation.id, type: 'hebergement_reservation' }
-        );
-      }
 
       return reservation;
     } catch (err) {
@@ -376,15 +340,20 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       const contextLabel = hebergementNom && hebergementVille
         ? `${hebergementNom} — ${hebergementVille}`
         : '';
+      const pushBody = contextLabel
+        ? `${hebergeurName} a accepté votre demande — ${contextLabel}`
+        : `${hebergeurName} a accepté votre demande d'hébergement`;
 
-      await createNotification({
-        recipient_id: clientId,
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'hebergements',
         type: 'hebergement_reservation_acceptee',
         title: 'Demande acceptée',
+        body: pushBody,
         message: `${hebergeurName} a accepté votre demande d'hébergement`,
         icon: 'check-circle',
-        icon_color: '#10B981',
-        icon_bg: '#D1FAE5',
+        iconColor: '#10B981',
+        iconBg: '#D1FAE5',
         data: {
           hebergementReservationId: reservationId,
           hebergeurId,
@@ -393,19 +362,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
           ...(hebergementVille && { hebergementVille }),
         },
       });
-
-      const pushToken = await getProfilePushToken(clientId);
-      if (pushToken) {
-        const pushBody = contextLabel
-          ? `${hebergeurName} a accepté votre demande — ${contextLabel}`
-          : `${hebergeurName} a accepté votre demande d'hébergement`;
-        await sendPushNotification(
-          pushToken,
-          'Demande acceptée',
-          pushBody,
-          { hebergementReservationId: reservationId, type: 'hebergement_reservation_acceptee' }
-        );
-      }
 
       set((state) => ({
         hebergeurHebergementReservations: state.hebergeurHebergementReservations.map((r) =>
@@ -442,15 +398,20 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       const contextLabel = hebergementNom && hebergementVille
         ? `${hebergementNom} — ${hebergementVille}`
         : '';
+      const pushBody = contextLabel
+        ? `L'hébergeur a refusé votre demande — ${contextLabel}`
+        : "L'hébergeur a refusé votre demande";
 
-      await createNotification({
-        recipient_id: clientId,
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'hebergements',
         type: 'hebergement_reservation_refusee',
         title: 'Demande refusée',
+        body: pushBody,
         message: "L'hébergeur a refusé votre demande",
         icon: 'close-circle',
-        icon_color: '#EF4444',
-        icon_bg: '#FEE2E2',
+        iconColor: '#EF4444',
+        iconBg: '#FEE2E2',
         data: {
           hebergementReservationId: reservationId,
           hebergeurId,
@@ -459,19 +420,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
           ...(hebergementVille && { hebergementVille }),
         },
       });
-
-      const pushToken = await getProfilePushToken(clientId);
-      if (pushToken) {
-        const pushBody = contextLabel
-          ? `L'hébergeur a refusé votre demande — ${contextLabel}`
-          : "L'hébergeur a refusé votre demande";
-        await sendPushNotification(
-          pushToken,
-          'Demande refusée',
-          pushBody,
-          { hebergementReservationId: reservationId, type: 'hebergement_reservation_refusee' }
-        );
-      }
 
       set((state) => ({
         hebergeurHebergementReservations: state.hebergeurHebergementReservations.map((r) =>

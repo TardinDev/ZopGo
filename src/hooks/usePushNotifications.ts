@@ -116,10 +116,30 @@ export function usePushNotifications(clerkId: string | null) {
         });
       });
 
-      // Tap on notification → navigate to messages
-      responseListener = Notifications.addNotificationResponseReceivedListener(() => {
-        router.push('/(protected)/(tabs)/messages');
-      });
+      // Tap on notification → route based on payload type
+      responseListener = Notifications.addNotificationResponseReceivedListener(
+        (response) => {
+          const data = response.notification.request.content.data as
+            | Record<string, string>
+            | undefined;
+          const type = data?.type;
+
+          // Chat messages deep-link to the conversation with the sender
+          if (type === 'direct_message' && data?.senderId) {
+            router.push({
+              pathname: '/(protected)/(tabs)/conversation',
+              params: {
+                receiverId: data.senderId,
+                ...(data.reservationId && { reservationId: data.reservationId }),
+              },
+            });
+            return;
+          }
+
+          // Default: open the messages tab
+          router.push('/(protected)/(tabs)/messages');
+        }
+      );
     })();
 
     return () => {
