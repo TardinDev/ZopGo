@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,10 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  ActivityIndicator,
 } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, FadeIn, LinearTransition } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -132,12 +135,37 @@ export default function AuthScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clerkUser, showTransition, isRoleSwitch]);
 
+  // Force de mot de passe (pour inscription)
+  const passwordStrength = useMemo(() => {
+    const pwd = formData.password;
+    if (!pwd) return { score: 0, label: '', color: COLORS.gray[300] };
+    let score = 0;
+    if (pwd.length >= 8) score += 1;
+    if (pwd.length >= 12) score += 1;
+    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score += 1;
+    if (/\d/.test(pwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+    const labels = ['Faible', 'Faible', 'Moyen', 'Bon', 'Fort', 'Excellent'];
+    const colors = ['#EF4444', '#EF4444', '#F59E0B', '#EAB308', '#10B981', '#059669'];
+    return { score, label: labels[score], color: colors[score] };
+  }, [formData.password]);
+
   const handleRoleChange = (newRole: UserRole) => {
     if (newRole !== selectedRole) {
+      if (Platform.OS === 'ios') {
+        Haptics.selectionAsync().catch(() => {});
+      }
       setTransitionRole(newRole);
       setIsRoleSwitch(true);
       setShowTransition(true);
     }
+  };
+
+  const handleToggleMode = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync().catch(() => {});
+    }
+    setIsLogin(!isLogin);
   };
 
   const handleRoleSwitchComplete = () => {
@@ -148,17 +176,28 @@ export default function AuthScreen() {
 
   const handleSubmit = async () => {
     const email = formData.email.trim();
+    const notifyError = () => {
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      }
+    };
     if (!email || !formData.password) {
+      notifyError();
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
     if (!isLogin && !formData.name.trim()) {
+      notifyError();
       Alert.alert('Erreur', 'Veuillez entrer votre nom');
       return;
     }
     if (!isLogin && formData.password !== formData.confirmPassword) {
+      notifyError();
       Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
       return;
+    }
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     }
 
     if (isLogin && (!isSignInLoaded || !signIn)) {
@@ -221,6 +260,9 @@ export default function AuthScreen() {
         setPendingVerification(true);
       }
     } catch (err: unknown) {
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      }
       const clerkErr = err as ClerkError;
       const errorMessage =
         clerkErr?.errors?.[0]?.longMessage ||
@@ -242,6 +284,9 @@ export default function AuthScreen() {
       });
 
       if (result.status === 'complete') {
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        }
         await setSignUpActive({ session: result.createdSessionId });
 
         // Configurer le profil immédiatement avec les données du formulaire
@@ -260,6 +305,9 @@ export default function AuthScreen() {
         setShowTransition(true);
       }
     } catch (err: unknown) {
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      }
       const clerkErr = err as ClerkError;
       const errorMessage =
         clerkErr?.errors?.[0]?.longMessage ||
@@ -282,6 +330,9 @@ export default function AuthScreen() {
       });
 
       if (result.status === 'complete') {
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        }
         await setActive!({ session: result.createdSessionId });
         setPendingSecondFactor(false);
         setVerificationCode('');
@@ -293,6 +344,9 @@ export default function AuthScreen() {
         Alert.alert('Erreur', `Statut inattendu: ${result.status}`);
       }
     } catch (err: unknown) {
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      }
       const clerkErr = err as ClerkError;
       const errorMessage =
         clerkErr?.errors?.[0]?.longMessage ||
@@ -364,6 +418,9 @@ export default function AuthScreen() {
       });
 
       if (result.status === 'complete') {
+        if (Platform.OS === 'ios') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        }
         await setActive!({ session: result.createdSessionId });
         setPendingPasswordReset(false);
         setNewPassword('');
@@ -396,6 +453,9 @@ export default function AuthScreen() {
         setPendingSecondFactor(true);
       }
     } catch (err: unknown) {
+      if (Platform.OS === 'ios') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      }
       const clerkErr = err as ClerkError;
       const errorMessage =
         clerkErr?.errors?.[0]?.longMessage ||
@@ -545,15 +605,21 @@ export default function AuthScreen() {
               <TouchableOpacity
                 onPress={handleResetPassword}
                 disabled={isLoading}
+                activeOpacity={0.85}
                 style={isLoading ? styles.buttonDisabled : undefined}>
                 <LinearGradient
                   colors={[ACCENT, '#065F46']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.submitButton}>
-                  <Text style={styles.submitText}>
-                    {isLoading ? 'Chargement...' : 'Réinitialiser'}
-                  </Text>
+                  {isLoading ? (
+                    <View style={styles.submitLoadingRow}>
+                      <ActivityIndicator color={COLORS.white} size="small" />
+                      <Text style={styles.submitText}>Chargement...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.submitText}>Réinitialiser</Text>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -667,15 +733,21 @@ export default function AuthScreen() {
               <TouchableOpacity
                 onPress={handleVerifySecondFactor}
                 disabled={isLoading || verificationCode.length < 6}
+                activeOpacity={0.85}
                 style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
                 <LinearGradient
                   colors={[ACCENT, '#065F46']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.submitButton}>
-                  <Text style={styles.submitText}>
-                    {isLoading ? 'Vérification...' : 'Vérifier'}
-                  </Text>
+                  {isLoading ? (
+                    <View style={styles.submitLoadingRow}>
+                      <ActivityIndicator color={COLORS.white} size="small" />
+                      <Text style={styles.submitText}>Vérification...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.submitText}>Vérifier</Text>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -797,15 +869,21 @@ export default function AuthScreen() {
               <TouchableOpacity
                 onPress={handleVerifyEmail}
                 disabled={isLoading || verificationCode.length < 6}
+                activeOpacity={0.85}
                 style={isLoading || verificationCode.length < 6 ? styles.buttonDisabled : undefined}>
                 <LinearGradient
                   colors={[ACCENT, '#065F46']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.submitButton}>
-                  <Text style={styles.submitText}>
-                    {isLoading ? 'Vérification...' : 'Vérifier'}
-                  </Text>
+                  {isLoading ? (
+                    <View style={styles.submitLoadingRow}>
+                      <ActivityIndicator color={COLORS.white} size="small" />
+                      <Text style={styles.submitText}>Vérification...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.submitText}>Vérifier</Text>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -869,20 +947,26 @@ export default function AuthScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
             {/* Header */}
-            <View style={styles.header}>
+            <Animated.View
+              entering={FadeInDown.duration(500).springify().damping(18)}
+              style={styles.header}>
               <Text style={styles.logo}>ZopGo</Text>
               <Text style={styles.subtitle}>
                 {isLogin ? 'Bon retour parmi nous' : 'Créez votre compte'}
               </Text>
-            </View>
+            </Animated.View>
 
             {/* Card */}
-            <View style={styles.cardContainer}>
-              <View style={[styles.card, {
-                borderColor: selectedRole === 'chauffeur' ? GOLD
-                  : selectedRole === 'hebergeur' ? VIOLET
-                  : 'rgba(255, 255, 255, 0.4)'
-              }]}>
+            <Animated.View
+              entering={FadeInUp.duration(600).delay(100).springify().damping(18)}
+              style={styles.cardContainer}>
+              <Animated.View
+                layout={LinearTransition.springify().damping(22)}
+                style={[styles.card, {
+                  borderColor: selectedRole === 'chauffeur' ? GOLD
+                    : selectedRole === 'hebergeur' ? VIOLET
+                    : 'rgba(255, 255, 255, 0.4)'
+                }]}>
                 {/* Accent bar top */}
                 <LinearGradient
                   colors={
@@ -1040,6 +1124,12 @@ export default function AuthScreen() {
                         onChangeText={(text) => setFormData({ ...formData, name: text })}
                         onFocus={() => setFocusedField('name')}
                         onBlur={() => setFocusedField(null)}
+                        autoCapitalize="words"
+                        autoComplete="name"
+                        textContentType="name"
+                        returnKeyType="next"
+                        onSubmitEditing={() => emailRef.current?.focus()}
+                        blurOnSubmit={false}
                         style={styles.input}
                       />
                     </Pressable>
@@ -1063,6 +1153,12 @@ export default function AuthScreen() {
                       onChangeText={(text) => setFormData({ ...formData, email: text })}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="email"
+                      textContentType="emailAddress"
+                      returnKeyType="next"
+                      onSubmitEditing={() => passwordRef.current?.focus()}
+                      blurOnSubmit={false}
                       onFocus={() => setFocusedField('email')}
                       onBlur={() => setFocusedField(null)}
                       style={styles.input}
@@ -1086,6 +1182,19 @@ export default function AuthScreen() {
                       value={formData.password}
                       onChangeText={(text) => setFormData({ ...formData, password: text })}
                       secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete={isLogin ? 'current-password' : 'new-password'}
+                      textContentType={isLogin ? 'password' : 'newPassword'}
+                      returnKeyType={isLogin ? 'done' : 'next'}
+                      onSubmitEditing={() => {
+                        if (isLogin) {
+                          handleSubmit();
+                        } else {
+                          confirmPasswordRef.current?.focus();
+                        }
+                      }}
+                      blurOnSubmit={isLogin}
                       onFocus={() => setFocusedField('password')}
                       onBlur={() => setFocusedField(null)}
                       style={styles.input}
@@ -1101,6 +1210,33 @@ export default function AuthScreen() {
                     </TouchableOpacity>
                   </Pressable>
                 </View>
+
+                {/* Password strength (sign-up only) */}
+                {!isLogin && formData.password.length > 0 && (
+                  <Animated.View
+                    entering={FadeIn.duration(200)}
+                    style={styles.strengthContainer}>
+                    <View style={styles.strengthBarTrack}>
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.strengthSegment,
+                            {
+                              backgroundColor:
+                                i < passwordStrength.score
+                                  ? passwordStrength.color
+                                  : COLORS.gray[200],
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
+                    <Text style={[styles.strengthLabel, { color: passwordStrength.color }]}>
+                      {passwordStrength.label}
+                    </Text>
+                  </Animated.View>
+                )}
 
                 {/* Confirm Password (only for register) */}
                 {!isLogin && (
@@ -1119,6 +1255,12 @@ export default function AuthScreen() {
                         value={formData.confirmPassword}
                         onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                         secureTextEntry={!showConfirmPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="new-password"
+                        textContentType="newPassword"
+                        returnKeyType="done"
+                        onSubmitEditing={handleSubmit}
                         onFocus={() => setFocusedField('confirmPassword')}
                         onBlur={() => setFocusedField(null)}
                         style={styles.input}
@@ -1150,15 +1292,23 @@ export default function AuthScreen() {
                 <TouchableOpacity
                   onPress={handleSubmit}
                   disabled={isLoading}
+                  activeOpacity={0.85}
                   style={[styles.submitTouchable, isLoading && styles.buttonDisabled]}>
                   <LinearGradient
                     colors={[ACCENT, '#065F46']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.submitButton}>
-                    <Text style={styles.submitText}>
-                      {isLoading ? 'Chargement...' : isLogin ? 'Se connecter' : 'Créer le compte'}
-                    </Text>
+                    {isLoading ? (
+                      <View style={styles.submitLoadingRow}>
+                        <ActivityIndicator color={COLORS.white} size="small" />
+                        <Text style={styles.submitText}>Chargement...</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.submitText}>
+                        {isLogin ? 'Se connecter' : 'Créer le compte'}
+                      </Text>
+                    )}
                   </LinearGradient>
                 </TouchableOpacity>
 
@@ -1170,7 +1320,7 @@ export default function AuthScreen() {
                 </View>
 
                 {/* Toggle */}
-                <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.toggleButton}>
+                <TouchableOpacity onPress={handleToggleMode} style={styles.toggleButton}>
                   <Text style={styles.toggleText}>
                     {isLogin ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
                     <Text style={styles.toggleTextBold}>
@@ -1178,8 +1328,8 @@ export default function AuthScreen() {
                     </Text>
                   </Text>
                 </TouchableOpacity>
-              </View>
-            </View>
+              </Animated.View>
+            </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -1403,11 +1553,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     boxShadow: `0 6px 14px ${ACCENT}66`,
   },
+  submitLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   submitText: {
     color: COLORS.white,
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  strengthContainer: {
+    marginTop: -4,
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  strengthBarTrack: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 4,
+  },
+  strengthSegment: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
+  strengthLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'right',
   },
   buttonDisabled: {
     opacity: 0.5,
