@@ -12,7 +12,7 @@ import {
 
 function createMockChain(resolvedValue: { data: unknown; error: unknown }) {
   const chain: Record<string, jest.Mock> & { then?: jest.Mock } = {};
-  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'or', 'order', 'limit', 'single'];
+  const methods = ['select', 'insert', 'update', 'delete', 'eq', 'gt', 'or', 'order', 'limit', 'single'];
   methods.forEach((m) => {
     chain[m] = jest.fn().mockReturnValue(chain);
   });

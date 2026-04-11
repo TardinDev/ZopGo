@@ -72,6 +72,7 @@ export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergeme
     .from('hebergements')
     .select('*, profiles:hebergeur_id(name, avatar, rating)')
     .eq('status', 'actif')
+    .gt('disponibilite', 0)
     .order('created_at', { ascending: false })
     .limit(100);
 

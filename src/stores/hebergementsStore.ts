@@ -6,6 +6,7 @@ import {
   deleteHebergement as deleteSupabaseHebergement,
   toggleHebergementStatus as toggleSupabaseStatus,
 } from '../lib/supabaseHebergements';
+import { sendPushBroadcast } from '../lib/pushNotifications';
 
 interface HebergementFormData {
   nom: string;
@@ -99,6 +100,25 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
               l.id === localListing.id ? { ...l, id: result.id } : l
             ),
           }));
+
+          // Broadcast to all clients (respects notification_preferences on
+          // the Edge Function side). Only notifies if the listing is
+          // actually discoverable (actif + at least one unit available).
+          // Fire-and-forget.
+          if (status === 'actif' && disponibilite > 0) {
+            void sendPushBroadcast({
+              category: 'hebergements',
+              recipientRole: 'client',
+              title: 'Nouvel hébergement disponible',
+              message: `${formData.nom} — ${formData.ville} — ${parseInt(formData.prixParNuit) || 0} FCFA/nuit`,
+              data: {
+                hebergementId: result.id,
+                type: 'new_hebergement',
+                ville: formData.ville,
+                nom: formData.nom,
+              },
+            });
+          }
         }
       } catch (err) {
         set((state) => ({ listings: state.listings.filter((l) => l.id !== localListing.id) }));
