@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 const GEMINI_API_KEY =
   process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
   Constants.expoConfig?.extra?.geminiApiKey;
-const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash';
+const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash';
 
 // Rate limiter: max 14 req/min (marge sur la limite gratuite de 15)
 const RATE_LIMIT = 14;
@@ -195,7 +195,9 @@ export async function sendMessage(
   signal?: AbortSignal
 ): Promise<string> {
   if (!GEMINI_API_KEY) {
-    throw new Error('Clé API Gemini manquante. Configurez EXPO_PUBLIC_GEMINI_API_KEY dans .env');
+    throw new Error(
+      "Assistant indisponible : clé API Gemini manquante. Ajoutez EXPO_PUBLIC_GEMINI_API_KEY dans le fichier .env (obtenir une clé sur aistudio.google.com/apikey), puis redémarrez l'application."
+    );
   }
 
   if (!checkRateLimit()) {

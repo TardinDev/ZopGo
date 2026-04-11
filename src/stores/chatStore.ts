@@ -20,6 +20,8 @@ interface ChatState {
 
   // Actions
   sendUserMessage: (text: string, userRole: UserRole) => Promise<void>;
+  stopStreaming: () => void;
+  retryLastMessage: (userRole: UserRole) => Promise<void>;
   clearChat: () => void;
   dismissError: () => void;
 }
@@ -120,6 +122,35 @@ export const useChatStore = create<ChatState>()(
         } finally {
           abortController = null;
         }
+      },
+
+      stopStreaming: () => {
+        if (abortController) {
+          abortController.abort();
+          abortController = null;
+        }
+        set({ isStreaming: false, streamingContent: '' });
+      },
+
+      retryLastMessage: async (userRole: UserRole) => {
+        const { messages, isStreaming } = get();
+        if (isStreaming) return;
+
+        // Trouver le dernier message utilisateur (celui qui a échoué)
+        const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+        if (!lastUser) {
+          set({ error: null });
+          return;
+        }
+
+        // Retirer ce dernier message utilisateur du state : sendUserMessage
+        // va le réinjecter pour que le contexte Gemini reste cohérent.
+        set({
+          messages: messages.filter((m) => m.id !== lastUser.id),
+          error: null,
+        });
+
+        await get().sendUserMessage(lastUser.content, userRole);
       },
 
       clearChat: () => {

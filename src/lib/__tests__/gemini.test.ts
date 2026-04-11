@@ -36,14 +36,14 @@ describe('sendMessage', () => {
     it('throws when API key is missing', async () => {
       const send = loadGemini(undefined);
       await expect(send(makeMessages(), 'client')).rejects.toThrow(
-        /Clé API Gemini manquante/
+        /clé API Gemini manquante/i
       );
     });
 
     it('throws when API key is empty string', async () => {
       const send = loadGemini('');
       await expect(send(makeMessages(), 'client')).rejects.toThrow(
-        /Clé API Gemini manquante/
+        /clé API Gemini manquante/i
       );
     });
   });
