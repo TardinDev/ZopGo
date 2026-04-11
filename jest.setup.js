@@ -19,9 +19,25 @@ jest.mock('expo-secure-store', () => ({
 
 // Mock expo-network
 jest.mock('expo-network', () => ({
+  NetworkStateType: {
+    NONE: 'NONE',
+    UNKNOWN: 'UNKNOWN',
+    CELLULAR: 'CELLULAR',
+    WIFI: 'WIFI',
+    BLUETOOTH: 'BLUETOOTH',
+    ETHERNET: 'ETHERNET',
+    WIMAX: 'WIMAX',
+    VPN: 'VPN',
+    OTHER: 'OTHER',
+  },
   getNetworkStateAsync: jest.fn(() =>
-    Promise.resolve({ isConnected: true, isInternetReachable: true })
+    Promise.resolve({
+      type: 'WIFI',
+      isConnected: true,
+      isInternetReachable: true,
+    })
   ),
+  addNetworkStateListener: jest.fn(() => ({ remove: jest.fn() })),
 }));
 
 // Mock expo-notifications
@@ -47,8 +63,15 @@ jest.mock('@react-native-community/datetimepicker', () => 'DateTimePicker');
 jest.mock('react-native-url-polyfill', () => ({}));
 jest.mock('react-native-url-polyfill/auto', () => ({}));
 
-// Mock global fetch
-global.fetch = jest.fn();
+// Mock global fetch — reset to success before each test to avoid
+// cross-test pollution from mockRejectedValue/mockResolvedValue calls.
+global.fetch = jest.fn(() => Promise.resolve({ ok: true, status: 200 }));
+beforeEach(() => {
+  global.fetch.mockReset();
+  global.fetch.mockImplementation(() =>
+    Promise.resolve({ ok: true, status: 200 })
+  );
+});
 
 // Mock __DEV__
 if (typeof global.__DEV__ === 'undefined') {
@@ -114,6 +137,7 @@ jest.mock('./src/lib/supabaseTrajets', () => ({
   markTrajetEffectue: jest.fn(() => Promise.resolve(true)),
   fetchAllAvailableTrajets: jest.fn(() => Promise.resolve([])),
   updateTrajetPlaces: jest.fn(() => Promise.resolve(true)),
+  decrementTrajetPlaces: jest.fn(() => Promise.resolve(true)),
 }));
 
 // Mock supabaseReservations
@@ -122,6 +146,7 @@ jest.mock('./src/lib/supabaseReservations', () => ({
   fetchReservationsForChauffeur: jest.fn(() => Promise.resolve([])),
   fetchReservationsForClient: jest.fn(() => Promise.resolve([])),
   fetchReservationsByTrajetId: jest.fn(() => Promise.resolve([])),
+  fetchReservationById: jest.fn(() => Promise.resolve(null)),
   acceptReservation: jest.fn(() => Promise.resolve(true)),
   refuseReservation: jest.fn(() => Promise.resolve(true)),
   fetchReservationContexts: jest.fn(() => Promise.resolve({})),

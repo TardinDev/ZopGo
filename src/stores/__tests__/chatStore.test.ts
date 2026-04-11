@@ -64,7 +64,8 @@ describe('chatStore', () => {
     });
 
     it('sets error when offline', async () => {
-      (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: false });
+      (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ type: 'NONE', isConnected: false });
+      (global.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
 
       await useChatStore.getState().sendUserMessage('Hello', 'client');
       const state = useChatStore.getState();

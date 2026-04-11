@@ -112,7 +112,8 @@ describe('messagesStore', () => {
     });
 
     it('does nothing when offline', async () => {
-      (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: false });
+      (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ type: 'NONE', isConnected: false });
+      (global.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
       await useMessagesStore.getState().loadNotifications('user1', 'client');
       expect(supabase.from).not.toHaveBeenCalled();
       expect(useMessagesStore.getState().isLoading).toBe(false);

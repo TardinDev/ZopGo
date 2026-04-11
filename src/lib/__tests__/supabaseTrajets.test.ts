@@ -8,6 +8,7 @@ import {
   fetchAllAvailableTrajets,
   deleteTrajet,
   markTrajetEffectue,
+  decrementTrajetPlaces,
 } from '../supabaseTrajets';
 
 // Create a fully chainable mock where every method returns the chain itself,
@@ -195,6 +196,58 @@ describe('supabaseTrajets', () => {
 
       const result = await deleteTrajet('t1');
       expect(result).toBe(false);
+    });
+  });
+
+  describe('decrementTrajetPlaces', () => {
+    it('reads current places and writes back the decremented value', async () => {
+      // 1er from(): SELECT places_disponibles
+      const fetchChain = createMockChain({
+        data: { places_disponibles: 4 },
+        error: null,
+      });
+      // 2e from(): UPDATE places_disponibles
+      const updateChain = createMockChain({ data: null, error: null });
+
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(fetchChain)
+        .mockReturnValueOnce(updateChain);
+
+      const ok = await decrementTrajetPlaces('t1', 2);
+      expect(ok).toBe(true);
+      // Vérifie que l'update a bien été appelée avec la nouvelle valeur (4 - 2 = 2)
+      expect(updateChain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ places_disponibles: 2, status: 'en_attente' })
+      );
+    });
+
+    it('clamps to 0 and sets status to complet when decrement reaches zero', async () => {
+      const fetchChain = createMockChain({
+        data: { places_disponibles: 1 },
+        error: null,
+      });
+      const updateChain = createMockChain({ data: null, error: null });
+
+      (supabase.from as jest.Mock)
+        .mockReturnValueOnce(fetchChain)
+        .mockReturnValueOnce(updateChain);
+
+      const ok = await decrementTrajetPlaces('t1', 5);
+      expect(ok).toBe(true);
+      expect(updateChain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ places_disponibles: 0, status: 'complet' })
+      );
+    });
+
+    it('returns false when fetching the trajet fails', async () => {
+      const fetchChain = createMockChain({
+        data: null,
+        error: { message: 'not found' },
+      });
+      (supabase.from as jest.Mock).mockReturnValueOnce(fetchChain);
+
+      const ok = await decrementTrajetPlaces('t1', 1);
+      expect(ok).toBe(false);
     });
   });
 

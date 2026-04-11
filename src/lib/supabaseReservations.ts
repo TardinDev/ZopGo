@@ -145,6 +145,31 @@ export async function fetchReservationContexts(
   return result;
 }
 
+/**
+ * Récupère les infos minimales d'une réservation (trajet_id et nombre_places)
+ * pour permettre aux flux d'acceptation de décrémenter le bon nombre de places
+ * sans dépendre d'un état local potentiellement périmé.
+ */
+export async function fetchReservationById(
+  id: string
+): Promise<{ trajetId: string; nombrePlaces: number } | null> {
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('trajet_id, nombre_places')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    if (__DEV__) console.error('Error fetching reservation:', error?.message);
+    return null;
+  }
+
+  return {
+    trajetId: (data as { trajet_id: string }).trajet_id,
+    nombrePlaces: (data as { nombre_places: number }).nombre_places,
+  };
+}
+
 export async function acceptReservation(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('reservations')

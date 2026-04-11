@@ -3,10 +3,11 @@ import {
   insertReservation,
   fetchReservationsForChauffeur,
   fetchReservationsForClient,
+  fetchReservationById,
   acceptReservation as acceptApi,
   refuseReservation as refuseApi,
 } from '../../lib/supabaseReservations';
-import { updateTrajetPlaces } from '../../lib/supabaseTrajets';
+import { decrementTrajetPlaces, updateTrajetPlaces } from '../../lib/supabaseTrajets';
 import { sendPushIfAllowed } from '../../lib/pushNotifications';
 
 beforeEach(() => {
@@ -20,7 +21,7 @@ beforeEach(() => {
 
 describe('reservationsStore', () => {
   describe('bookTrajet', () => {
-    it('creates reservation, updates places, and notifies chauffeur', async () => {
+    it('creates reservation and notifies chauffeur WITHOUT decrementing places', async () => {
       (insertReservation as jest.Mock).mockResolvedValue({
         id: 'res-1',
         trajetId: 't1',
@@ -32,7 +33,6 @@ describe('reservationsStore', () => {
         createdAt: '2026-01-01',
         updatedAt: '2026-01-01',
       });
-      (updateTrajetPlaces as jest.Mock).mockResolvedValue(true);
 
       const result = await useReservationsStore.getState().bookTrajet({
         trajetId: 't1',
@@ -41,12 +41,14 @@ describe('reservationsStore', () => {
         nombrePlaces: 2,
         prixTotal: 10000,
         clientName: 'Alice',
-        remainingPlaces: 4,
       });
 
       expect(result).not.toBeNull();
       expect(insertReservation).toHaveBeenCalled();
-      expect(updateTrajetPlaces).toHaveBeenCalledWith('t1', 2);
+      // Régression: bookTrajet ne doit PAS décrémenter les places (sinon le
+      // trajet bascule prématurément en 'complet' avant l'acceptation chauffeur).
+      expect(updateTrajetPlaces).not.toHaveBeenCalled();
+      expect(decrementTrajetPlaces).not.toHaveBeenCalled();
       expect(sendPushIfAllowed).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientProfileId: 'cf1',
@@ -66,11 +68,11 @@ describe('reservationsStore', () => {
         nombrePlaces: 1,
         prixTotal: 5000,
         clientName: 'Alice',
-        remainingPlaces: 2,
       });
 
       expect(result).toBeNull();
       expect(updateTrajetPlaces).not.toHaveBeenCalled();
+      expect(decrementTrajetPlaces).not.toHaveBeenCalled();
     });
 
     it('still triggers push helper even when token is absent (helper handles filtering)', async () => {
@@ -98,7 +100,6 @@ describe('reservationsStore', () => {
         nombrePlaces: 1,
         prixTotal: 5000,
         clientName: 'Alice',
-        remainingPlaces: 2,
       });
 
       expect(sendPushIfAllowed).toHaveBeenCalled();
@@ -106,8 +107,13 @@ describe('reservationsStore', () => {
   });
 
   describe('acceptReservation', () => {
-    it('accepts, notifies client, and updates local state', async () => {
+    it('accepts, decrements trajet places, notifies client, and updates local state', async () => {
       (acceptApi as jest.Mock).mockResolvedValue(true);
+      (fetchReservationById as jest.Mock).mockResolvedValue({
+        trajetId: 't1',
+        nombrePlaces: 2,
+      });
+      (decrementTrajetPlaces as jest.Mock).mockResolvedValue(true);
 
       useReservationsStore.setState({
         chauffeurReservations: [
@@ -116,7 +122,7 @@ describe('reservationsStore', () => {
             trajetId: 't1',
             clientId: 'c1',
             chauffeurId: 'cf1',
-            nombrePlaces: 1,
+            nombrePlaces: 2,
             prixTotal: 5000,
             status: 'en_attente',
             createdAt: '',
@@ -134,6 +140,8 @@ describe('reservationsStore', () => {
 
       expect(ok).toBe(true);
       expect(acceptApi).toHaveBeenCalledWith('res-1');
+      expect(fetchReservationById).toHaveBeenCalledWith('res-1');
+      expect(decrementTrajetPlaces).toHaveBeenCalledWith('t1', 2);
       expect(sendPushIfAllowed).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientProfileId: 'c1',
@@ -144,8 +152,12 @@ describe('reservationsStore', () => {
       expect(useReservationsStore.getState().chauffeurReservations[0].status).toBe('acceptee');
     });
 
-    it('returns false when API fails', async () => {
+    it('returns false when API fails and does not decrement places', async () => {
       (acceptApi as jest.Mock).mockResolvedValue(false);
+      (fetchReservationById as jest.Mock).mockResolvedValue({
+        trajetId: 't1',
+        nombrePlaces: 1,
+      });
 
       const ok = await useReservationsStore.getState().acceptReservation({
         reservationId: 'res-1',
@@ -155,26 +167,26 @@ describe('reservationsStore', () => {
       });
 
       expect(ok).toBe(false);
+      expect(decrementTrajetPlaces).not.toHaveBeenCalled();
       expect(sendPushIfAllowed).not.toHaveBeenCalled();
     });
   });
 
   describe('refuseReservation', () => {
-    it('refuses, restores places, and notifies client', async () => {
+    it('refuses and notifies client WITHOUT touching trajet places', async () => {
       (refuseApi as jest.Mock).mockResolvedValue(true);
-      (updateTrajetPlaces as jest.Mock).mockResolvedValue(true);
 
       const ok = await useReservationsStore.getState().refuseReservation({
         reservationId: 'res-1',
         clientId: 'c1',
         chauffeurId: 'cf1',
-        trajetId: 't1',
-        nombrePlaces: 2,
-        currentPlaces: 1,
       });
 
       expect(ok).toBe(true);
-      expect(updateTrajetPlaces).toHaveBeenCalledWith('t1', 3);
+      // Régression: refuseReservation ne doit plus restaurer les places
+      // car elles ne sont plus décrémentées au moment de la réservation.
+      expect(updateTrajetPlaces).not.toHaveBeenCalled();
+      expect(decrementTrajetPlaces).not.toHaveBeenCalled();
       expect(sendPushIfAllowed).toHaveBeenCalledWith(
         expect.objectContaining({
           recipientProfileId: 'c1',
@@ -191,9 +203,6 @@ describe('reservationsStore', () => {
         reservationId: 'res-1',
         clientId: 'c1',
         chauffeurId: 'cf1',
-        trajetId: 't1',
-        nombrePlaces: 1,
-        currentPlaces: 2,
       });
 
       expect(ok).toBe(false);

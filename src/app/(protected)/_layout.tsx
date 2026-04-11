@@ -7,7 +7,6 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { useAuthStore } from '../../stores/authStore';
 import { setClerkTokenProvider } from '../../lib/supabase';
 import { logError } from '../../utils/errorHandler';
-import { OfflineBanner } from '../../components/ui/OfflineBanner';
 import { UserRole, VehicleType, AccommodationType } from '../../types';
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -90,7 +89,6 @@ export default function ProtectedLayout() {
   return (
     <TabAnimationProvider>
       <View style={{ flex: 1 }}>
-        <OfflineBanner />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>

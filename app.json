@@ -59,7 +59,10 @@
       "package": "com.zopgo.app",
       "versionCode": 1,
       "googleServicesFile": "./google-services.json",
-      "permissions": [],
+      "permissions": [
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_adaptive_foreground_432.png",
         "backgroundColor": "#FFFFFF"

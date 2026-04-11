@@ -99,7 +99,6 @@ export default function MessagesTab() {
       const reservationId = data.reservationId;
       const clientId = data.clientId;
       const clientName = data.clientName || 'Client';
-      const trajetId = data.trajetId;
       const villeDepart = data.villeDepart;
       const villeArrivee = data.villeArrivee;
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
@@ -125,9 +124,6 @@ export default function MessagesTab() {
                 reservationId,
                 clientId,
                 chauffeurId: supabaseProfileId,
-                trajetId: trajetId || '',
-                nombrePlaces: 1,
-                currentPlaces: 0,
                 villeDepart,
                 villeArrivee,
               });

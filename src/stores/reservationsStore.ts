@@ -3,6 +3,7 @@ import {
   insertReservation,
   fetchReservationsForChauffeur,
   fetchReservationsForClient,
+  fetchReservationById,
   acceptReservation as acceptReservationApi,
   refuseReservation as refuseReservationApi,
 } from '../lib/supabaseReservations';
@@ -13,7 +14,7 @@ import {
   fetchHebergementReservationsForClient,
   fetchHebergementReservationsForHebergeur,
 } from '../lib/supabaseHebergementReservations';
-import { updateTrajetPlaces } from '../lib/supabaseTrajets';
+import { decrementTrajetPlaces } from '../lib/supabaseTrajets';
 import { updateHebergementDisponibilite } from '../lib/supabaseHebergements';
 import { sendPushIfAllowed } from '../lib/pushNotifications';
 import type { Reservation, HebergementReservation } from '../types';
@@ -32,7 +33,6 @@ interface ReservationsState {
     nombrePlaces: number;
     prixTotal: number;
     clientName: string;
-    remainingPlaces: number;
     villeDepart?: string;
     villeArrivee?: string;
   }) => Promise<Reservation | null>;
@@ -50,9 +50,6 @@ interface ReservationsState {
     reservationId: string;
     clientId: string;
     chauffeurId: string;
-    trajetId: string;
-    nombrePlaces: number;
-    currentPlaces: number;
     villeDepart?: string;
     villeArrivee?: string;
   }) => Promise<boolean>;
@@ -110,7 +107,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
     nombrePlaces,
     prixTotal,
     clientName,
-    remainingPlaces,
     villeDepart,
     villeArrivee,
   }) => {
@@ -128,8 +124,10 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
         return null;
       }
 
-      const newPlaces = Math.max(0, remainingPlaces - nombrePlaces);
-      await updateTrajetPlaces(trajetId, newPlaces);
+      // NB: on ne décrémente PAS les places ici. La décrémentation a lieu
+      // uniquement quand le chauffeur accepte la réservation. Cela évite
+      // qu'un trajet bascule prématurément en 'complet' à cause de
+      // demandes en attente, le faisant disparaître de la liste voyages.
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
       const pushBody = routeLabel
@@ -166,8 +164,22 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
   acceptReservation: async ({ reservationId, clientId, chauffeurName, chauffeurId, villeDepart, villeArrivee }) => {
     set({ isLoading: true });
     try {
+      // On récupère trajet_id + nombre_places côté serveur pour pouvoir
+      // décrémenter les places après acceptation, sans dépendre d'un état local.
+      const details = await fetchReservationById(reservationId);
+
       const ok = await acceptReservationApi(reservationId);
       if (!ok) return false;
+
+      // Décrémenter les places maintenant que le chauffeur s'engage.
+      // Si la décrémentation échoue, on ne rollback pas l'acceptation pour
+      // éviter de bloquer l'utilisateur — on log seulement.
+      if (details) {
+        const decremented = await decrementTrajetPlaces(details.trajetId, details.nombrePlaces);
+        if (!decremented && __DEV__) {
+          console.error('acceptReservation: failed to decrement trajet places');
+        }
+      }
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
       const pushBody = routeLabel
@@ -212,9 +224,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
     reservationId,
     clientId,
     chauffeurId,
-    trajetId,
-    nombrePlaces,
-    currentPlaces,
     villeDepart,
     villeArrivee,
   }) => {
@@ -223,7 +232,8 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       const ok = await refuseReservationApi(reservationId);
       if (!ok) return false;
 
-      await updateTrajetPlaces(trajetId, currentPlaces + nombrePlaces);
+      // Pas de restauration de places: elles ne sont décrémentées qu'à
+      // l'acceptation, donc rien à restaurer ici.
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
       const pushBody = routeLabel
@@ -243,7 +253,6 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
         data: {
           reservationId,
           chauffeurId,
-          trajetId,
           ...(villeDepart && { villeDepart }),
           ...(villeArrivee && { villeArrivee }),
         },

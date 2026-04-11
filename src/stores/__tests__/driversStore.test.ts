@@ -102,7 +102,8 @@ describe('driversStore', () => {
 
   describe('loadDrivers', () => {
     it('does nothing when offline', async () => {
-      (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ isConnected: false });
+      (Network.getNetworkStateAsync as jest.Mock).mockResolvedValue({ type: 'NONE', isConnected: false });
+      (global.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
       await useDriversStore.getState().loadDrivers();
       expect(supabase.from).not.toHaveBeenCalled();
       expect(useDriversStore.getState().isLoading).toBe(false);

@@ -118,6 +118,28 @@ export async function updateTrajetPlaces(trajetId: string, newPlaces: number): P
   return true;
 }
 
+/**
+ * Décrémente atomiquement les places disponibles d'un trajet.
+ * Lit la valeur courante depuis la BD puis applique updateTrajetPlaces,
+ * pour éviter de se baser sur un cache local potentiellement périmé
+ * (plusieurs réservations concurrentes).
+ */
+export async function decrementTrajetPlaces(trajetId: string, by: number): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('trajets')
+    .select('places_disponibles')
+    .eq('id', trajetId)
+    .single();
+
+  if (error || !data) {
+    if (__DEV__) console.error('Error fetching trajet for decrement:', error?.message);
+    return false;
+  }
+
+  const current = (data as { places_disponibles: number }).places_disponibles ?? 0;
+  return updateTrajetPlaces(trajetId, Math.max(0, current - by));
+}
+
 export async function deleteTrajet(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('trajets')

@@ -6,6 +6,7 @@ import {
   insertReservation,
   fetchReservationsForChauffeur,
   fetchReservationsForClient,
+  fetchReservationById,
   acceptReservation,
   refuseReservation,
 } from '../supabaseReservations';
@@ -144,6 +145,30 @@ describe('supabaseReservations', () => {
       const result = await fetchReservationsForClient('c1');
       expect(result).toHaveLength(1);
       expect(result[0].chauffeurName).toBe('Bob');
+    });
+  });
+
+  describe('fetchReservationById', () => {
+    it('returns trajetId and nombrePlaces on success', async () => {
+      const mockChain = createMockChain({
+        data: { trajet_id: 't1', nombre_places: 3 },
+        error: null,
+      });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      const result = await fetchReservationById('res-1');
+      expect(result).toEqual({ trajetId: 't1', nombrePlaces: 3 });
+    });
+
+    it('returns null on error', async () => {
+      const mockChain = createMockChain({
+        data: null,
+        error: { message: 'not found' },
+      });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      const result = await fetchReservationById('res-missing');
+      expect(result).toBeNull();
     });
   });
 
