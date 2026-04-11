@@ -20,6 +20,15 @@
       "expo-web-browser",
       "expo-secure-store",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
+          "imageWidth": 260,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "L'application a besoin d'accéder à vos photos pour définir votre photo de profil.",
@@ -43,11 +52,6 @@
     "orientation": "portrait",
     "icon": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -64,8 +68,8 @@
         "ACCESS_WIFI_STATE"
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_adaptive_foreground_432.png",
+        "backgroundColor": "#14181E"
       }
     },
     "extra": {

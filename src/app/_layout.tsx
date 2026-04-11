@@ -1,6 +1,6 @@
 import '../../global.css';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
 import { Stack } from 'expo-router';
 import { View, Text } from 'react-native';
@@ -11,8 +11,12 @@ import Constants from 'expo-constants';
 import { tokenCache } from '../utils/tokenCache';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-// Prevent splash from auto-hiding until the app is ready
-SplashScreen.preventAutoHideAsync();
+// Prevent splash from auto-hiding until the app is ready.
+// Wrapped in try/catch because on some Android builds this can throw
+// if the module is already past its initial lifecycle.
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* noop */
+});
 
 // En dev: utilise process.env, en prod: utilise Constants.expoConfig.extra
 const CLERK_PUBLISHABLE_KEY =
@@ -20,8 +24,17 @@ const CLERK_PUBLISHABLE_KEY =
   Constants.expoConfig?.extra?.clerkPublishableKey;
 
 function RootLayout() {
-  const onLayoutReady = useCallback(async () => {
-    await SplashScreen.hideAsync();
+  // Hide the splash from a top-level effect (runs regardless of Clerk state).
+  // Previously this was tied to <GestureHandlerRootView onLayout={...}> inside
+  // <ClerkLoaded>, so on Android when Clerk was slow to initialize the splash
+  // would never hide and the app stayed stuck on the native splash screen.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {
+        /* noop — already hidden */
+      });
+    }, 50);
+    return () => clearTimeout(t);
   }, []);
 
   if (!CLERK_PUBLISHABLE_KEY) {
@@ -41,7 +54,7 @@ function RootLayout() {
     <ErrorBoundary>
       <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
         <ClerkLoaded>
-          <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutReady}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
               <Stack initialRouteName="index" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000' } }}>
                 <Stack.Screen name="index" />

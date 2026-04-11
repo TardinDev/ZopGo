@@ -52,7 +52,7 @@ describe('sendMessage', () => {
     let send: ReturnType<typeof loadGemini>;
 
     beforeEach(() => {
-      send = loadGemini('test-key');
+      send = loadGemini('AIzaTestKey0000000000000000000000000000');
     });
 
     it('returns text from Gemini API', async () => {
@@ -138,7 +138,7 @@ describe('sendMessage', () => {
     let send: ReturnType<typeof loadGemini>;
 
     beforeEach(() => {
-      send = loadGemini('test-key');
+      send = loadGemini('AIzaTestKey0000000000000000000000000000');
     });
 
     it('includes system prompt for chauffeur role', async () => {
@@ -206,7 +206,7 @@ describe('sendMessage', () => {
 
   describe('rate limiting', () => {
     it('throws when rate limit exceeded', async () => {
-      const send = loadGemini('test-key');
+      const send = loadGemini('AIzaTestKey0000000000000000000000000000');
 
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,

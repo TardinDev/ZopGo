@@ -1,10 +1,24 @@
 import { UserRole } from '../types';
 import Constants from 'expo-constants';
 
-// En dev: utilise process.env, en prod: utilise Constants.expoConfig.extra
-const GEMINI_API_KEY =
-  process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
-  Constants.expoConfig?.extra?.geminiApiKey;
+// En dev: utilise process.env, en prod: utilise Constants.expoConfig.extra.
+// On rejette aussi la chaîne non résolue "${EXPO_PUBLIC_GEMINI_API_KEY}"
+// qui peut venir de app.json si l'env var est absente au build.
+function resolveApiKey(): string | undefined {
+  const raw =
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
+    Constants.expoConfig?.extra?.geminiApiKey;
+  if (!raw) return undefined;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return undefined;
+  // Template non résolu de app.json
+  if (trimmed.startsWith('${') && trimmed.endsWith('}')) return undefined;
+  // Les vraies clés Gemini commencent par "AIza"
+  if (!trimmed.startsWith('AIza')) return undefined;
+  return trimmed;
+}
+
+const GEMINI_API_KEY = resolveApiKey();
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash';
 
 // Rate limiter: max 14 req/min (marge sur la limite gratuite de 15)
@@ -103,6 +117,11 @@ async function streamGenerate(
 
   if (!response.ok) {
     const errorText = await response.text();
+    if (response.status === 400 && /API_KEY_INVALID|API key not valid/i.test(errorText)) {
+      throw new Error(
+        "Clé API Gemini refusée par Google. Vérifiez EXPO_PUBLIC_GEMINI_API_KEY dans .env (obtenir une clé sur aistudio.google.com/apikey), puis redémarrez l'application avec `npm start -- --clear`."
+      );
+    }
     throw new Error(`Gemini API error ${response.status}: ${errorText}`);
   }
 
@@ -164,6 +183,11 @@ async function generateFallback(
 
   if (!response.ok) {
     const errorText = await response.text();
+    if (response.status === 400 && /API_KEY_INVALID|API key not valid/i.test(errorText)) {
+      throw new Error(
+        "Clé API Gemini refusée par Google. Vérifiez EXPO_PUBLIC_GEMINI_API_KEY dans .env (obtenir une clé sur aistudio.google.com/apikey), puis redémarrez l'application avec `npm start -- --clear`."
+      );
+    }
     throw new Error(`Gemini API error ${response.status}: ${errorText}`);
   }
 
