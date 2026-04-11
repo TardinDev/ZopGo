@@ -1,5 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import Animated, { FadeInUp, LinearTransition } from 'react-native-reanimated';
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface Activity {
   id: number;
@@ -28,8 +31,13 @@ export function ActivityList({ activities }: ActivityListProps) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 10 }}>
-        {activities.map((activity) => (
-          <TouchableOpacity key={activity.id} activeOpacity={0.8} style={styles.card}>
+        {activities.map((activity, i) => (
+          <AnimatedTouchable
+            key={activity.id}
+            entering={FadeInUp.delay(i * 60).duration(400).springify().damping(18)}
+            layout={LinearTransition.springify()}
+            activeOpacity={0.8}
+            style={styles.card}>
             <View style={styles.cardContent}>
               <View
                 style={[
@@ -67,7 +75,7 @@ export function ActivityList({ activities }: ActivityListProps) {
                 </View>
               </View>
             </View>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         ))}
         {/* Padding pour le bas de page */}
         <View style={{ height: 100 }} />
@@ -105,11 +113,9 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.10)',
     overflow: 'hidden',
   },
   cardContent: {

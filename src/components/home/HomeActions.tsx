@@ -11,7 +11,10 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useAuthStore } from '../../stores/authStore';
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface ActionCard {
   title: [string, string];
@@ -141,8 +144,9 @@ export function HomeActions() {
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}>
       {cards.map((card, index) => (
-        <TouchableOpacity
+        <AnimatedTouchable
           key={index}
+          entering={FadeInUp.delay(index * 90).duration(500).springify().damping(18)}
           onPress={card.onPress}
           activeOpacity={0.9}
           style={styles.card}
@@ -168,7 +172,7 @@ export function HomeActions() {
               </View>
             </LinearGradient>
           </ImageBackground>
-        </TouchableOpacity>
+        </AnimatedTouchable>
       ))}
     </ScrollView>
   );
@@ -187,10 +191,8 @@ const styles = StyleSheet.create({
   card: {
     overflow: 'hidden',
     borderRadius: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
+    borderCurve: 'continuous',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.20)',
     height: 160,
   },
   bgImage: {

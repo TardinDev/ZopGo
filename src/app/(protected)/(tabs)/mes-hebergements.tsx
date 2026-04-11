@@ -103,12 +103,9 @@ export default function MesHebergementsTab() {
             <View style={{
               backgroundColor: 'white',
               borderRadius: 20,
+              borderCurve: 'continuous',
               padding: 20,
-              shadowColor: '#000',
-              shadowOpacity: 0.1,
-              shadowRadius: 10,
-              shadowOffset: { width: 0, height: 4 },
-              elevation: 4,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.10)',
             }}>
               <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 16 }}>
                 Nouveau logement
@@ -416,13 +413,10 @@ export default function MesHebergementsTab() {
                     style={{
                       backgroundColor: 'white',
                       borderRadius: 16,
+                      borderCurve: 'continuous',
                       padding: 16,
                       marginBottom: 12,
-                      shadowColor: '#000',
-                      shadowOpacity: 0.08,
-                      shadowRadius: 8,
-                      shadowOffset: { width: 0, height: 2 },
-                      elevation: 3,
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -51,11 +51,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 4,
     // Ombre légère
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
   },
   text: {
     fontSize: 15,

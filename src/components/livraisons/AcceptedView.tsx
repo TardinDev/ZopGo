@@ -102,11 +102,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     borderRadius: 24,
+    borderCurve: 'continuous',
     padding: 32,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.10)',
     alignItems: 'center',
   },
   iconWrapper: {
@@ -222,10 +220,8 @@ const styles = StyleSheet.create({
   callButton: {
     overflow: 'hidden',
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
+    borderCurve: 'continuous',
+    boxShadow: '0 4px 5px rgba(0, 0, 0, 0.20)',
   },
   gradient: {
     paddingVertical: 16,

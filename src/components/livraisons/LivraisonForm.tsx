@@ -108,11 +108,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     borderRadius: 24,
+    borderCurve: 'continuous',
     padding: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.10)',
     marginBottom: 24,
   },
   title: {
@@ -169,10 +167,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 50,
     padding: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.10)',
     borderWidth: 2,
     borderColor: '#FED7AA',
   },
@@ -195,10 +190,8 @@ const styles = StyleSheet.create({
   button: {
     overflow: 'hidden',
     borderRadius: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderCurve: 'continuous',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.20)',
   },
   buttonDisabled: {
     opacity: 0.5,

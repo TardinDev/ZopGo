@@ -1,15 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import Animated, {
+  FadeInUp,
+  LinearTransition,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  withDelay,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, LAYOUT } from '../../constants';
-import { SPRING_CONFIG, TIMING_CONFIG } from '../../constants/animations';
+import { SPRING_CONFIG } from '../../constants/animations';
 import { hapticLight } from '../../utils/haptics';
 import type { Hebergement } from '../../types';
 
@@ -22,26 +22,18 @@ interface HebergementCardProps {
 export function HebergementCard({ hebergement, onPress, index = 0 }: HebergementCardProps) {
   const ratingDisplay = hebergement.rating > 0 ? hebergement.rating.toFixed(1) : 'N/A';
 
-  // Press animation
+  // Press feedback
   const scale = useSharedValue(1);
-
-  // Stagger entrance animation
-  const translateY = useSharedValue(20);
-  const cardOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    const delay = Math.min(index, 10) * 80;
-    translateY.value = withDelay(delay, withSpring(0, SPRING_CONFIG.default));
-    cardOpacity.value = withDelay(delay, withTiming(1, TIMING_CONFIG.normal));
-  }, [index, translateY, cardOpacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { translateY: translateY.value }],
-    opacity: cardOpacity.value,
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
   }));
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View
+      entering={FadeInUp.delay(Math.min(index, 10) * 60).springify().damping(18).stiffness(180)}
+      layout={LinearTransition.springify().damping(20).stiffness(200)}
+      style={pressStyle}
+    >
       <Pressable
         onPress={onPress}
         onPressIn={() => { scale.value = withSpring(0.97, SPRING_CONFIG.fast); hapticLight(); }}
@@ -102,8 +94,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: 'white',
     borderRadius: LAYOUT.borderRadius.large,
+    borderCurve: 'continuous',
     padding: 20,
-    ...LAYOUT.shadows.medium,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
   },
   content: {
     flexDirection: 'row',

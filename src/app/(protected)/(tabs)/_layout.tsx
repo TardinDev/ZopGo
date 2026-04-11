@@ -42,21 +42,11 @@ export default function TabLayout() {
           right: 16,
           height: 72,
           borderRadius: 28,
+          borderCurve: 'continuous',
           backgroundColor: 'transparent', // important pour voir le blur
           borderTopWidth: 0,
           overflow: 'hidden', // masque le contenu au rayon
-          // Ombre douce
-          ...Platform.select({
-            ios: {
-              shadowColor: '#000',
-              shadowOpacity: 0.15,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 8 },
-            },
-            android: {
-              elevation: 16,
-            },
-          }),
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
         },
 
         // --- Fond "Liquid Glass" ---

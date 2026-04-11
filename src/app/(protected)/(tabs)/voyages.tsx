@@ -1,9 +1,10 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, ScrollView, RefreshControl, AppState } from 'react-native';
-import { useMemo, useCallback, useEffect, useState, useRef } from 'react';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import type { Voyage } from '../../../types';
 import { COLORS } from '../../../constants';
 import { useVoyagesStore } from '../../../stores';
@@ -104,17 +105,23 @@ export default function VoyagesTab() {
       <LinearGradient colors={COLORS.gradients.cyan} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
-          <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
+          <Animated.View
+            entering={FadeInDown.duration(400).springify().damping(18)}
+            style={{ paddingHorizontal: 24, paddingVertical: 16 }}
+          >
             <Text style={{ fontSize: 28, fontWeight: 'bold', color: 'white' }}>
               Trouvez votre voyage
             </Text>
             <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
               Motos, voitures, camionnettes
             </Text>
-          </View>
+          </Animated.View>
 
           {/* Barre de recherche */}
-          <View style={{ paddingHorizontal: 24, paddingBottom: 8 }}>
+          <Animated.View
+            entering={FadeInDown.delay(80).duration(400).springify().damping(18)}
+            style={{ paddingHorizontal: 24, paddingBottom: 8 }}
+          >
             <TransportSearchBar
               fromCity={fromCity}
               toCity={toCity}
@@ -122,7 +129,7 @@ export default function VoyagesTab() {
               onToChange={setToCity}
               onSwap={swapCities}
             />
-          </View>
+          </Animated.View>
 
           {/* Filtres par type */}
           <TypeFilter
@@ -150,12 +157,14 @@ export default function VoyagesTab() {
                 />
               ))
             ) : (
-              <EmptyResults
-                message="Aucun voyage trouvé"
-                subMessage="Essayez une autre recherche ou un autre filtre"
-                actionLabel="Voir tous les voyages"
-                onAction={resetFilters}
-              />
+              <Animated.View entering={FadeIn.duration(300)}>
+                <EmptyResults
+                  message="Aucun voyage trouvé"
+                  subMessage="Essayez une autre recherche ou un autre filtre"
+                  actionLabel="Voir tous les voyages"
+                  onAction={resetFilters}
+                />
+              </Animated.View>
             )}
           </ScrollView>
         </SafeAreaView>

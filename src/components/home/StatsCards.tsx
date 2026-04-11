@@ -2,7 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, {
+  FadeInRight,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { COLORS } from '../../constants';
 import { Stat, UserRole } from '../../types';
@@ -13,7 +18,7 @@ const INITIAL_OFFSET = 0; // Position initiale
 const MAX_OFFSET = 96; // Maximum de déplacement vers le bas
 
 // Composant pour la carte avec le rideau flou
-function RevenueCard({ stat }: { stat: Stat }) {
+function RevenueCard({ stat, index }: { stat: Stat; index: number }) {
   const offset = useSharedValue(INITIAL_OFFSET);
   const startOffset = useSharedValue(0);
 
@@ -40,7 +45,10 @@ function RevenueCard({ stat }: { stat: Stat }) {
   }));
 
   return (
-    <View style={[styles.card, styles.revenueCard]}>
+    <Animated.View
+      entering={FadeInRight.delay(index * 80).duration(400).springify().damping(18)}
+      style={[styles.card, styles.revenueCard]}
+    >
       {/* Contenu de la carte */}
       <View style={[styles.iconContainer, { backgroundColor: getBgColor(stat.color) }]}>
         <Ionicons name={stat.icon as any} size={20} color={getColor(stat.color)} />
@@ -64,7 +72,7 @@ function RevenueCard({ stat }: { stat: Stat }) {
           </BlurView>
         </Animated.View>
       </GestureDetector>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -116,17 +124,21 @@ export function StatsCards({ totalTrips, rating, totalDeliveries, role }: StatsC
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        {stats.map((stat) =>
+        {stats.map((stat, i) =>
           stat.id === 1 ? (
-            <RevenueCard key={stat.id} stat={stat} />
+            <RevenueCard key={stat.id} stat={stat} index={i} />
           ) : (
-            <View key={stat.id} style={styles.card}>
+            <Animated.View
+              key={stat.id}
+              entering={FadeInRight.delay(i * 80).duration(400).springify().damping(18)}
+              style={styles.card}
+            >
               <View style={[styles.iconContainer, { backgroundColor: getBgColor(stat.color) }]}>
                 <Ionicons name={stat.icon as any} size={20} color={getColor(stat.color)} />
               </View>
               <Text style={styles.value}>{stat.value}</Text>
               <Text style={styles.subtitle}>{stat.subtitle}</Text>
-            </View>
+            </Animated.View>
           )
         )}
       </ScrollView>
@@ -172,12 +184,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
     width: 150,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.10)',
   },
   iconContainer: {
     marginBottom: 8,

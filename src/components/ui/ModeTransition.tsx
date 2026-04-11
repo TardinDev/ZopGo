@@ -159,12 +159,9 @@ const styles = StyleSheet.create({
   container: {
     width: width * 0.85,
     borderRadius: 32,
+    borderCurve: 'continuous',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.4,
-    shadowRadius: 30,
-    elevation: 20,
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.40)',
   },
   gradient: {
     paddingVertical: 48,
@@ -197,11 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.20)',
   },
   title: {
     fontSize: 28,

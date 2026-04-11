@@ -72,12 +72,10 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     borderRadius: 24,
+    borderCurve: 'continuous',
     backgroundColor: 'white',
     padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    boxShadow: '0 3px 8px rgba(0, 0, 0, 0.10)',
   },
   selectedCard: {
     borderWidth: 4,

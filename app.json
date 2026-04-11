@@ -41,12 +41,12 @@
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    "icon": "./assets/ZOPGO_new_design_assets/zopgo_app_icon_1024.png",
+    "icon": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0E1218"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -64,7 +64,7 @@
         "ACCESS_WIFI_STATE"
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_adaptive_foreground_432.png",
+        "foregroundImage": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
         "backgroundColor": "#FFFFFF"
       }
     },

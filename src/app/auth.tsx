@@ -1247,13 +1247,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: 24,
+    borderCurve: 'continuous',
     padding: 20,
     paddingTop: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 30,
-    elevation: 12,
+    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.20)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
@@ -1294,11 +1291,7 @@ const styles = StyleSheet.create({
   rolePillActive: {
     borderColor: ACCENT,
     backgroundColor: 'rgba(11, 132, 87, 0.15)',
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
+    boxShadow: `0 2px 6px ${ACCENT}26`,
   },
   rolePillInactive: {
     borderColor: 'rgba(255, 255, 255, 0.5)',
@@ -1314,11 +1307,7 @@ const styles = StyleSheet.create({
   rolePillActiveChauffeur: {
     borderColor: GOLD,
     backgroundColor: 'rgba(232, 168, 50, 0.15)',
-    shadowColor: GOLD,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
+    boxShadow: `0 2px 6px ${GOLD}26`,
   },
   rolePillTextActiveChauffeur: {
     color: GOLD,
@@ -1326,11 +1315,7 @@ const styles = StyleSheet.create({
   rolePillActiveHebergeur: {
     borderColor: VIOLET,
     backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    shadowColor: VIOLET,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
+    boxShadow: `0 2px 6px ${VIOLET}26`,
   },
   rolePillTextActiveHebergeur: {
     color: VIOLET,
@@ -1399,11 +1384,7 @@ const styles = StyleSheet.create({
   inputFocused: {
     borderColor: ACCENT,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 2,
+    boxShadow: `0 0 8px ${ACCENT}26`,
   },
   input: {
     flex: 1,
@@ -1416,14 +1397,11 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
+    boxShadow: `0 6px 14px ${ACCENT}66`,
   },
   submitText: {
     color: COLORS.white,

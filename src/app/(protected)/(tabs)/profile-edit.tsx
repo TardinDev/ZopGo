@@ -186,11 +186,7 @@ export default function ProfileEditScreen() {
                   backgroundColor: '#2563EB',
                   borderRadius: 50,
                   padding: 10,
-                  elevation: 4,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 4,
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)',
                 }}
                 activeOpacity={0.7}>
                 <Ionicons name="camera" size={20} color="white" />

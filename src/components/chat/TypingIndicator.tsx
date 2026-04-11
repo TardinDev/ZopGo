@@ -74,11 +74,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
   },
   dotsBubble: {
     flexDirection: 'row',

@@ -56,13 +56,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     borderRadius: 16,
+    borderCurve: 'continuous',
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
   },
   header: {
     flexDirection: 'row',
