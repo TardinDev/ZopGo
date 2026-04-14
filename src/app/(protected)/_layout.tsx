@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Stack, Redirect, useRouter } from 'expo-router';
 import { AppState, AppStateStatus, View } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
@@ -17,9 +17,11 @@ export default function ProtectedLayout() {
   const { user: localUser, setupProfile, logout } = useAuthStore();
   const router = useRouter();
   const backgroundTimestamp = useRef<number | null>(null);
+  const [supabaseReady, setSupabaseReady] = useState(false);
 
-  // Register push notifications when signed in
-  usePushNotifications(isSignedIn ? clerkUser?.id ?? null : null);
+  // Register push notifications ONLY after Supabase JWT is injected.
+  // Without the JWT, updatePushToken fails silently due to RLS.
+  usePushNotifications(isSignedIn && supabaseReady ? clerkUser?.id ?? null : null);
 
   // Auto-logout after 15 min of inactivity (app in background)
   const handleAppStateChange = useCallback(
@@ -52,14 +54,21 @@ export default function ProtectedLayout() {
     return () => subscription.remove();
   }, [handleAppStateChange]);
 
-  // Fournir le token Clerk à Supabase pour le RLS
+  // Fournir le token Clerk à Supabase pour le RLS.
+  // supabaseReady gates push-notification registration so the token
+  // update hits Supabase with a valid JWT (avoids silent RLS failure).
   useEffect(() => {
     if (isSignedIn) {
       setClerkTokenProvider(() => getToken({ template: 'supabase' }));
+      setSupabaseReady(true);
     } else {
       setClerkTokenProvider(null);
+      setSupabaseReady(false);
     }
-    return () => setClerkTokenProvider(null);
+    return () => {
+      setClerkTokenProvider(null);
+      setSupabaseReady(false);
+    };
   }, [isSignedIn, getToken]);
 
   // Synchroniser le profil Clerk -> Zustand si connecté mais pas de profil local

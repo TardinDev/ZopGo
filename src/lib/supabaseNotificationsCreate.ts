@@ -1,5 +1,10 @@
 import { supabase } from './supabase';
 
+/** Check whether a token is an Expo Push Token vs a native FCM/APNs token. */
+export function isExpoPushToken(token: string): boolean {
+  return token.startsWith('ExponentPushToken[');
+}
+
 export interface CreateNotificationParams {
   recipient_id: string;
   type: string;
@@ -56,6 +61,15 @@ export async function getProfilePushToken(profileId: string): Promise<string | n
   return data.push_token as string;
 }
 
+/**
+ * Send a push notification to a single device.
+ *
+ * - **Expo tokens** (`ExponentPushToken[...]`): sent via Expo Push API with
+ *   full response-body parsing so ticket-level errors are detected.
+ * - **FCM device tokens** (raw strings): routed through the `send-push`
+ *   Supabase Edge Function which calls FCM v1 API directly. This avoids
+ *   needing FCM V1 credentials uploaded to EAS.
+ */
 export async function sendPushNotification(
   pushToken: string,
   title: string,
@@ -63,31 +77,72 @@ export async function sendPushNotification(
   data?: Record<string, string>
 ): Promise<boolean> {
   try {
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: pushToken,
+    if (isExpoPushToken(pushToken)) {
+      // --- Expo Push API (iOS / legacy tokens) ---
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: pushToken,
+          title,
+          body,
+          data: data || {},
+          sound: 'default',
+          priority: 'high',
+          channelId: 'default',
+        }),
+      });
+
+      if (!response.ok) {
+        if (__DEV__) console.error('[Push] Expo HTTP error:', response.status);
+        return false;
+      }
+
+      // Parse response body — Expo returns 200 OK even when individual
+      // tickets have errors (e.g. InvalidCredentials, DeviceNotRegistered).
+      try {
+        const result = await response.json();
+        const ticket = Array.isArray(result?.data) ? result.data[0] : result?.data;
+        if (ticket?.status === 'error') {
+          if (__DEV__) {
+            console.error(
+              '[Push] Expo ticket error:',
+              ticket.message,
+              ticket.details?.error
+            );
+          }
+          return false;
+        }
+      } catch {
+        // If we can't parse the body, trust the HTTP 200
+      }
+
+      return true;
+    }
+
+    // --- FCM device token → send via Edge Function (FCM v1 API) ---
+    const { error } = await supabase.functions.invoke('send-push', {
+      body: {
+        directTokens: [pushToken],
         title,
-        body,
+        message: body,
         data: data || {},
-        sound: 'default',
-        priority: 'high',
-        channelId: 'default',
-      }),
+        category: (data?.category as string) || 'messages',
+        skipInAppRecord: true,
+      },
     });
 
-    if (!response.ok) {
-      if (__DEV__) console.error('Push notification failed:', response.status);
+    if (error) {
+      if (__DEV__) console.error('[Push] Edge Function error:', error.message);
       return false;
     }
     return true;
   } catch (err) {
-    if (__DEV__) console.error('Push notification error:', err);
+    if (__DEV__) console.error('[Push] sendPushNotification error:', err);
     return false;
   }
 }

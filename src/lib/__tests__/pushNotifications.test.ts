@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 describe('sendPushIfAllowed', () => {
-  it('happy path: creates in-app record AND sends push', async () => {
+  it('happy path: creates in-app record AND sends push (Expo token)', async () => {
     mockProfileFetch({
       push_token: 'ExponentPushToken[abc]',
       notification_preferences: {
@@ -57,6 +57,39 @@ describe('sendPushIfAllowed', () => {
     expect(result.inAppCreated).toBe(true);
     expect(result.pushSent).toBe(true);
     expect(result.skippedReason).toBeUndefined();
+  });
+
+  it('happy path: creates in-app record AND sends push (FCM token)', async () => {
+    mockProfileFetch({
+      push_token: 'dGVzdA:APA91bFakeToken123',
+      notification_preferences: {
+        courses: true,
+        trajets: true,
+        hebergements: true,
+        promotions: true,
+        messages: true,
+      },
+    });
+    (createNotification as jest.Mock).mockResolvedValue(true);
+    (sendPushNotification as jest.Mock).mockResolvedValue(true);
+
+    const result = await sendPushIfAllowed({
+      recipientProfileId: 'profile-uuid-2',
+      category: 'messages',
+      type: 'direct_message',
+      title: 'Alice',
+      body: 'Bonjour!',
+    });
+
+    expect(createNotification).toHaveBeenCalledTimes(1);
+    expect(sendPushNotification).toHaveBeenCalledWith(
+      'dGVzdA:APA91bFakeToken123',
+      'Alice',
+      'Bonjour!',
+      expect.objectContaining({ category: 'messages' })
+    );
+    expect(result.inAppCreated).toBe(true);
+    expect(result.pushSent).toBe(true);
   });
 
   it('pref disabled: creates in-app record but does NOT send push', async () => {

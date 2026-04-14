@@ -44,10 +44,13 @@ async function registerForPushNotifications(): Promise<string | null> {
   // Create Android notification channel
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
+      name: 'ZopGo',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#2162FE',
+      sound: 'default',
+      enableVibrate: true,
+      showBadge: true,
     });
   }
 
@@ -65,17 +68,37 @@ async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
 
-  // Get Expo push token
+  // On Android, get the native FCM device token directly.
+  // This bypasses Expo Push Service and sends via Firebase Cloud Messaging,
+  // eliminating the need for FCM V1 credentials on EAS.
+  if (Platform.OS === 'android') {
+    try {
+      const { data: token } = await Notifications.getDevicePushTokenAsync();
+      if (__DEV__) console.log('[Push] FCM device token:', String(token).substring(0, 30) + '...');
+      return String(token);
+    } catch (err) {
+      if (__DEV__) console.error('[Push] getDevicePushTokenAsync error:', err);
+      return null;
+    }
+  }
+
+  // iOS: use Expo Push Token (APNs routing via Expo)
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
   if (!projectId) {
-    if (__DEV__) console.log('Missing EAS projectId — run `eas init` first');
+    if (__DEV__) console.log('[Push] Missing EAS projectId — run `eas init` first');
     return null;
   }
 
-  const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-  return token;
+  try {
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+    if (__DEV__) console.log('[Push] Expo push token:', token);
+    return token;
+  } catch (err) {
+    if (__DEV__) console.error('[Push] getExpoPushTokenAsync error:', err);
+    return null;
+  }
 }
 
 /**

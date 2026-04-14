@@ -45,9 +45,12 @@ jest.mock('expo-notifications', () => ({
   getPermissionsAsync: jest.fn(),
   requestPermissionsAsync: jest.fn(),
   getExpoPushTokenAsync: jest.fn(),
+  getDevicePushTokenAsync: jest.fn(),
+  setNotificationChannelAsync: jest.fn(),
   setNotificationHandler: jest.fn(),
   addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
   addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  AndroidImportance: { MAX: 5, HIGH: 4, DEFAULT: 3, LOW: 2, MIN: 1 },
 }));
 
 // Mock expo-device
