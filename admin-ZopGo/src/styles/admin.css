@@ -134,17 +134,37 @@ footer a:hover {
     }
 }
 
-/* Hide trip card mockup on smaller viewports (overflows the page) */
-@media (max-width: 1100px) {
-    .zopgo-trip-card-wrap {
+/* Map card hidden < 900px (tilted 3D + iframe don't translate well to mobile) */
+@media (max-width: 900px) {
+    .zopgo-map-card {
         display: none !important;
     }
 }
 
-/* Hide map card on tablet/mobile (ne sert pas l'UX si l'écran est petit) */
-@media (max-width: 900px) {
-    .zopgo-map-card {
-        display: none !important;
+/* Mobile (< 720px) : repositionner les cartes pour qu'elles restent visibles
+   dans le viewport. Les positions desktop (left: -110, etc.) les mettent
+   off-screen sur petit écran. On les rapproche du phone et on les scale.
+   Les cartes inner (article/div enfant) sont scalées via transform — pas
+   le wrap motion.div qui est piloté par framer-motion. */
+@media (max-width: 720px) {
+    .zopgo-stack-driver {
+        left: -8px !important;
+    }
+    .zopgo-stack-trip {
+        left: -16px !important;
+        bottom: -4px !important;
+    }
+    .zopgo-stack-heberg {
+        right: -16px !important;
+    }
+    .zopgo-stack-driver > div,
+    .zopgo-stack-trip > article,
+    .zopgo-stack-heberg > article {
+        transform: scale(0.72);
+        transform-origin: top left;
+    }
+    .zopgo-stack-heberg > article {
+        transform-origin: top right;
     }
 }
 

@@ -471,7 +471,7 @@ export function LoginPage() {
                                 return (
                                     <motion.div
                                         key={driver.initials}
-                                        className="zopgo-trip-card-wrap"
+                                        className="zopgo-trip-card-wrap zopgo-stack-driver"
                                         style={{ ...driversAvailableWrapStyle, zIndex: pos.zIndex }}
                                         initial={{ opacity: 0, y: -50, scale: 0.85, rotate: -10 }}
                                         animate={{
@@ -503,7 +503,7 @@ export function LoginPage() {
                         {TRIP_CARD_STACK.map((s, i) => (
                             <motion.div
                                 key={i}
-                                className="zopgo-trip-card-wrap"
+                                className="zopgo-trip-card-wrap zopgo-stack-trip"
                                 style={{ ...tripCardWrapStyle, zIndex: s.zIndex }}
                                 initial={{ opacity: 0, y: 60, rotate: -18, scale: 0.88 }}
                                 animate={{
@@ -522,7 +522,7 @@ export function LoginPage() {
                         {HEBERGEMENT_CARD_STACK.map((s, i) => (
                             <motion.div
                                 key={`heberg-${i}`}
-                                className="zopgo-trip-card-wrap"
+                                className="zopgo-trip-card-wrap zopgo-stack-heberg"
                                 style={{ ...hebergementCardWrapStyle, zIndex: s.zIndex }}
                                 initial={{ opacity: 0, x: 90, rotate: 18, scale: 0.88 }}
                                 animate={{
@@ -1086,6 +1086,7 @@ const pageStyle: React.CSSProperties = {
     minHeight: "100vh",
     width: "100%",
     position: "relative",
+    overflowX: "clip",
     background: `radial-gradient(circle at 20% 0%, #1A2447 0%, ${BRAND_DARK} 45%, ${BRAND_DARKER} 100%)`,
     color: "#fff",
     display: "flex",
