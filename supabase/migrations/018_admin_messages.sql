@@ -18,8 +18,10 @@
 -- ============================================
 -- 1. Table admin_messages
 -- ============================================
+create extension if not exists pgcrypto;
+
 create table if not exists public.admin_messages (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   sender_clerk_id text not null,
   sender_name text not null,
   target_type text not null check (target_type in ('user', 'role', 'all')),
@@ -47,9 +49,6 @@ create index if not exists idx_admin_messages_target_role
   where target_role is not null;
 create index if not exists idx_admin_messages_created
   on public.admin_messages(created_at desc);
-create index if not exists idx_admin_messages_active
-  on public.admin_messages(created_at desc)
-  where expires_at is null or expires_at > now();
 
 -- ============================================
 -- 2. Table admin_message_reads
