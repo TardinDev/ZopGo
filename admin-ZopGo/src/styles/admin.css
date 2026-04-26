@@ -43,17 +43,117 @@ body {
     background: #FFDD5C;
 }
 
-/* ─── Login page — responsive split layout ─── */
-.zopgo-mobile-only-logo {
-    display: none !important;
+/* ─── Login page — responsive ─── */
+/* Stack pitch + phone on tablet/mobile */
+@media (max-width: 900px) {
+    .zopgo-login-main {
+        grid-template-columns: 1fr !important;
+        padding: 24px !important;
+        gap: 32px !important;
+    }
+    .zopgo-login-phone-section {
+        order: -1;
+    }
+    .zopgo-login-phone-section [data-phone-frame] {
+        width: 220px !important;
+    }
+    .zopgo-login-topbar {
+        padding: 16px 24px !important;
+    }
 }
 
-@media (max-width: 960px) {
-    .zopgo-brand-panel {
+/* Sign-in dropdown panel becomes near-full-width on small screens */
+@media (max-width: 480px) {
+    .zopgo-signin-panel {
+        position: fixed !important;
+        top: 76px !important;
+        left: 16px !important;
+        right: 16px !important;
+        width: auto !important;
+    }
+}
+
+/* Hover state for store badges */
+.zopgo-store-badge:hover {
+    background: #1a1a1a !important;
+    transform: translateY(-1px);
+}
+
+/* Hover state for sign-in button */
+.zopgo-signin-trigger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(33, 98, 254, 0.45) !important;
+}
+
+/* ─── Smooth anchor scroll + offset for sticky header ─── */
+html {
+    scroll-behavior: smooth;
+}
+
+#about,
+#services,
+#partners {
+    scroll-margin-top: 80px;
+}
+
+/* Nav links hover */
+.zopgo-nav-link:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Service card hover */
+.zopgo-services-grid > article:hover {
+    transform: translateY(-3px);
+    border-color: rgba(33, 98, 254, 0.3) !important;
+    background: rgba(33, 98, 254, 0.06) !important;
+}
+
+/* CTA primary hover */
+.zopgo-cta-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(33, 98, 254, 0.45) !important;
+}
+
+/* Footer links hover */
+footer a:hover {
+    color: #fff !important;
+}
+
+/* Hide nav on tablet */
+@media (max-width: 860px) {
+    .zopgo-login-nav {
         display: none !important;
     }
-    .zopgo-mobile-only-logo {
-        display: flex !important;
+}
+
+/* Stack About + Services + Partners grids on smaller viewports */
+@media (max-width: 900px) {
+    .zopgo-services-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 720px) {
+    .zopgo-services-grid {
+        grid-template-columns: 1fr !important;
+    }
+    section#about > div > div[style*="grid-template-columns"],
+    section#partners > div > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+    }
+    section#about,
+    section#services,
+    section#partners {
+        padding: 64px 24px !important;
+    }
+    footer {
+        padding: 24px !important;
+    }
+    footer > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
     }
 }
 
