@@ -374,6 +374,27 @@ export function LoginPage() {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                 >
+                    <motion.div
+                        className="zopgo-map-card"
+                        style={mapCardStyle}
+                        initial={{ opacity: 0, scale: 0.9, rotateX: 60 }}
+                        animate={{ opacity: 1, scale: 1, rotateX: 50 }}
+                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+                        aria-hidden
+                    >
+                        <iframe
+                            src="https://maps.google.com/maps?q=Centre-ville%20Libreville%20Gabon&t=m&z=14&output=embed"
+                            style={mapIframeStyle}
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Libreville centre-ville"
+                        />
+                        <div style={mapOverlayStyle} />
+                    </motion.div>
+
+                    {/* Soft shadow ellipse projected by the phone onto the map */}
+                    <div className="zopgo-map-card" style={phoneShadowStyle} aria-hidden />
+
                     <div style={phoneClusterStyle}>
                         <motion.div
                             style={{ position: "relative", zIndex: 1 }}
@@ -1176,9 +1197,58 @@ const metricsRowStyle: React.CSSProperties = {
 };
 
 const phoneSectionStyle: React.CSSProperties = {
+    position: "relative",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    minHeight: 720,
+    perspective: 1400,
+};
+
+const mapCardStyle: React.CSSProperties = {
+    position: "absolute",
+    bottom: "6%",
+    left: "-4%",
+    right: "-4%",
+    height: "62%",
+    borderRadius: 24,
+    overflow: "hidden",
+    zIndex: 0,
+    background: "#1A2447",
+    transformOrigin: "center bottom",
+    boxShadow:
+        "0 60px 100px -10px rgba(0, 0, 0, 0.7), 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06)",
+    pointerEvents: "auto",
+};
+
+const mapIframeStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    border: "none",
+    display: "block",
+    filter: "saturate(0.85) brightness(0.92)",
+};
+
+const mapOverlayStyle: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    background:
+        "linear-gradient(180deg, rgba(11, 18, 36, 0.25) 0%, rgba(11, 18, 36, 0) 35%, rgba(11, 18, 36, 0) 60%, rgba(11, 18, 36, 0.55) 100%)",
+};
+
+const phoneShadowStyle: React.CSSProperties = {
+    position: "absolute",
+    bottom: "8%",
+    left: "50%",
+    width: 280,
+    height: 50,
+    transform: "translateX(-50%)",
+    background:
+        "radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0) 70%)",
+    filter: "blur(8px)",
+    zIndex: 1,
+    pointerEvents: "none",
 };
 
 const phoneFrameStyle: React.CSSProperties = {
@@ -1189,7 +1259,7 @@ const phoneFrameStyle: React.CSSProperties = {
     borderRadius: 42,
     padding: 9,
     boxShadow:
-        "0 60px 100px -20px rgba(0, 0, 0, 0.7), 0 0 0 2px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+        "0 80px 120px -10px rgba(0, 0, 0, 0.85), 0 30px 60px -10px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
     overflow: "hidden",
 };
 
@@ -1217,6 +1287,8 @@ const phoneScreenStyle: React.CSSProperties = {
 const phoneClusterStyle: React.CSSProperties = {
     position: "relative",
     display: "inline-block",
+    zIndex: 2,
+    marginTop: -80,
 };
 
 const tripCardWrapStyle: React.CSSProperties = {

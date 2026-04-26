@@ -141,6 +141,13 @@ footer a:hover {
     }
 }
 
+/* Hide map card on tablet/mobile (ne sert pas l'UX si l'écran est petit) */
+@media (max-width: 900px) {
+    .zopgo-map-card {
+        display: none !important;
+    }
+}
+
 @media (max-width: 720px) {
     .zopgo-services-grid {
         grid-template-columns: 1fr !important;
