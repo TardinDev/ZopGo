@@ -43,6 +43,20 @@ body {
     background: #FFDD5C;
 }
 
+/* ─── Login page — responsive split layout ─── */
+.zopgo-mobile-only-logo {
+    display: none !important;
+}
+
+@media (max-width: 960px) {
+    .zopgo-brand-panel {
+        display: none !important;
+    }
+    .zopgo-mobile-only-logo {
+        display: flex !important;
+    }
+}
+
 /* ─── Sidebar menu — dark theme ─── */
 .admin-sider .ant-menu {
     background: transparent !important;
