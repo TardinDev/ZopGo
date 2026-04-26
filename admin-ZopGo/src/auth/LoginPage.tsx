@@ -6,7 +6,7 @@
  * formulaire Clerk. Logo ZopGo en watermark dans un coin du background.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SignIn, useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { Spin } from "antd";
@@ -53,23 +53,34 @@ const TRIP_CARD_STACK = [
 
 // Driver mini-card stack — top-left of phone, fanning upward
 interface DriverData {
-    initials: string;
+    initials: string; // fallback alt text
     name: string;
+    image: string;
 }
 
-const DRIVER_CARD_STACK: ReadonlyArray<{
-    zIndex: number;
-    x: number;
-    y: number;
-    rotate: number;
-    scale: number;
-    delay: number;
-    data: DriverData;
-}> = [
-    { zIndex: 1, x: -10, y: -14, rotate: -5, scale: 0.9, delay: 1.4, data: { initials: "AT", name: "Aboubakar T." } },
-    { zIndex: 2, x: -5, y: -7, rotate: -3, scale: 0.95, delay: 1.3, data: { initials: "MS", name: "Maria S." } },
-    { zIndex: 3, x: 0, y: 0, rotate: 0, scale: 1, delay: 1.2, data: { initials: "JK", name: "Jean K." } },
+const DRIVERS: ReadonlyArray<DriverData> = [
+    { initials: "JK", name: "Jean K.", image: "/avatars/driver-1.jpg" },
+    { initials: "MS", name: "Maria S.", image: "/avatars/driver-2.jpg" },
+    { initials: "AT", name: "Aboubakar T.", image: "/avatars/driver-3.jpg" },
+    { initials: "PB", name: "Pierre B.", image: "/avatars/driver-4.jpg" },
+    { initials: "FE", name: "Fatou E.", image: "/avatars/driver-5.jpg" },
+    { initials: "OM", name: "Olivier M.", image: "/avatars/driver-6.jpg" },
+    { initials: "SD", name: "Sandrine D.", image: "/avatars/driver-7.jpg" },
+    { initials: "RB", name: "Rachid B.", image: "/avatars/driver-8.jpg" },
+    { initials: "EK", name: "Emmanuel K.", image: "/avatars/driver-9.jpg" },
+    { initials: "CN", name: "Claude N.", image: "/avatars/driver-10.jpg" },
+    { initials: "LB", name: "Léa B.", image: "/avatars/driver-11.jpg" },
 ];
+
+// Stack positions: index 0 = front, 1 = middle, 2 = back
+const DRIVER_STACK_POSITIONS = [
+    { x: 0, y: 0, rotate: 0, scale: 1, zIndex: 3 },
+    { x: -5, y: -7, rotate: -3, scale: 0.95, zIndex: 2 },
+    { x: -10, y: -14, rotate: -5, scale: 0.9, zIndex: 1 },
+];
+
+const DRIVER_ROTATION_INTERVAL_MS = 4000;
+const DRIVER_ENTRANCE_DURATION_MS = 2200;
 
 // Hebergement card stack — back cards offset to the right with different listings
 interface HebergementData {
@@ -140,6 +151,34 @@ export function LoginPage() {
 
     const adminRole = user?.publicMetadata?.role as string | undefined;
     const isAdmin = adminRole === "admin";
+
+    // Driver mini-card stack rotation : the front driver changes every 4s.
+    // Only 3 of the 11 drivers are visible at a time (front/middle/back),
+    // and each cycle the front card exits while a new back card enters.
+    const [driverFront, setDriverFront] = useState(0);
+    const [driversEntered, setDriversEntered] = useState(false);
+
+    useEffect(() => {
+        const t = setTimeout(() => setDriversEntered(true), DRIVER_ENTRANCE_DURATION_MS);
+        return () => clearTimeout(t);
+    }, []);
+
+    useEffect(() => {
+        if (!driversEntered) return;
+        const id = setInterval(() => {
+            setDriverFront((prev) => (prev + 1) % DRIVERS.length);
+        }, DRIVER_ROTATION_INTERVAL_MS);
+        return () => clearInterval(id);
+    }, [driversEntered]);
+
+    const visibleDrivers = useMemo(
+        () =>
+            DRIVER_STACK_POSITIONS.map((_, slot) => ({
+                driver: DRIVERS[(driverFront + slot) % DRIVERS.length],
+                slot,
+            })),
+        [driverFront],
+    );
 
     useEffect(() => {
         if (authLoaded && userLoaded && isSignedIn && isAdmin) {
@@ -387,12 +426,9 @@ export function LoginPage() {
                     </motion.div>
                 </motion.section>
 
-                <motion.section
+                <section
                     className="zopgo-login-phone-section"
                     style={phoneSectionStyle}
-                    initial={{ opacity: 0, scale: 0.94, y: 24 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                 >
                     <motion.div
                         className="zopgo-map-card"
@@ -418,36 +454,58 @@ export function LoginPage() {
                     <div style={phoneClusterStyle}>
                         <motion.div
                             style={{ position: "relative", zIndex: 1 }}
-                            animate={{ y: [0, -10, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                            initial={{ opacity: 0, x: 120 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
                         >
-                            <PhoneMockup />
-                        </motion.div>
-                        {DRIVER_CARD_STACK.map((s, i) => (
                             <motion.div
-                                key={`driver-${i}`}
-                                className="zopgo-trip-card-wrap"
-                                style={{ ...driversAvailableWrapStyle, zIndex: s.zIndex }}
-                                initial={{ opacity: 0, y: -8, scale: 0.85, rotate: -8 }}
-                                animate={{
-                                    opacity: 1,
-                                    x: s.x,
-                                    y: s.y,
-                                    rotate: s.rotate,
-                                    scale: s.scale,
-                                }}
-                                transition={{ delay: s.delay, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                                animate={{ y: [0, -10, 0] }}
+                                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                             >
-                                <DriverCardMockup data={s.data} />
+                                <PhoneMockup />
                             </motion.div>
-                        ))}
+                        </motion.div>
+                        <AnimatePresence>
+                            {visibleDrivers.map(({ driver, slot }) => {
+                                const pos = DRIVER_STACK_POSITIONS[slot];
+                                return (
+                                    <motion.div
+                                        key={driver.initials}
+                                        className="zopgo-trip-card-wrap"
+                                        style={{ ...driversAvailableWrapStyle, zIndex: pos.zIndex }}
+                                        initial={{ opacity: 0, y: -50, scale: 0.85, rotate: -10 }}
+                                        animate={{
+                                            opacity: 1,
+                                            x: pos.x,
+                                            y: pos.y,
+                                            rotate: pos.rotate,
+                                            scale: pos.scale,
+                                        }}
+                                        exit={{
+                                            opacity: 0,
+                                            y: -40,
+                                            scale: 0.85,
+                                            rotate: -10,
+                                            transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+                                        }}
+                                        transition={{
+                                            duration: 0.55,
+                                            ease: [0.16, 1, 0.3, 1],
+                                            delay: driversEntered ? 0 : 1.2 + slot * 0.1,
+                                        }}
+                                    >
+                                        <DriverCardMockup data={driver} />
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
 
                         {TRIP_CARD_STACK.map((s, i) => (
                             <motion.div
                                 key={i}
                                 className="zopgo-trip-card-wrap"
                                 style={{ ...tripCardWrapStyle, zIndex: s.zIndex }}
-                                initial={{ opacity: 0, x: -24, y: 24, rotate: -18, scale: 0.88 }}
+                                initial={{ opacity: 0, y: 60, rotate: -18, scale: 0.88 }}
                                 animate={{
                                     opacity: s.opacity,
                                     x: s.x,
@@ -466,7 +524,7 @@ export function LoginPage() {
                                 key={`heberg-${i}`}
                                 className="zopgo-trip-card-wrap"
                                 style={{ ...hebergementCardWrapStyle, zIndex: s.zIndex }}
-                                initial={{ opacity: 0, x: 28, y: 24, rotate: 18, scale: 0.88 }}
+                                initial={{ opacity: 0, x: 90, rotate: 18, scale: 0.88 }}
                                 animate={{
                                     opacity: s.opacity,
                                     x: s.x,
@@ -474,13 +532,13 @@ export function LoginPage() {
                                     rotate: s.rotate,
                                     scale: s.scale,
                                 }}
-                                transition={{ delay: s.delay, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                                transition={{ delay: s.delay, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
                             >
                                 <HebergementCardMockup data={s.data} />
                             </motion.div>
                         ))}
                     </div>
-                </motion.section>
+                </section>
             </main>
 
             <AboutSection />
@@ -596,7 +654,12 @@ function TripCardMockup() {
 function DriverCardMockup({ data }: { data: DriverData }) {
     return (
         <div style={driversAvailableCardStyle}>
-            <span style={driverAvatarSmallStyle}>{data.initials}</span>
+            <img
+                src={data.image}
+                alt={data.initials}
+                style={driverAvatarPhotoStyle}
+                draggable={false}
+            />
             <span style={driverNameSmallStyle}>{data.name}</span>
             <span style={driversAvailableDotStyle} />
             <span style={driversAvailableLabelStyle}>Disponible</span>
@@ -1485,7 +1548,7 @@ const tripCardPlacesStyle: React.CSSProperties = {
 
 const driversAvailableWrapStyle: React.CSSProperties = {
     position: "absolute",
-    top: -14,
+    top: 30,
     left: -70,
     zIndex: 4,
     pointerEvents: "none",
@@ -1504,19 +1567,16 @@ const driversAvailableCardStyle: React.CSSProperties = {
     whiteSpace: "nowrap",
 };
 
-const driverAvatarSmallStyle: React.CSSProperties = {
-    width: 22,
-    height: 22,
+const driverAvatarPhotoStyle: React.CSSProperties = {
+    width: 24,
+    height: 24,
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #2162FE 0%, #4F8DFF 100%)",
-    color: "#fff",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 700,
-    fontSize: 9,
-    letterSpacing: "0.02em",
+    objectFit: "cover",
+    objectPosition: "center",
     flexShrink: 0,
+    border: "1.5px solid #fff",
+    boxShadow: "0 0 0 1.5px rgba(33, 98, 254, 0.5)",
+    background: "#E5E7EB",
 };
 
 const driverNameSmallStyle: React.CSSProperties = {
