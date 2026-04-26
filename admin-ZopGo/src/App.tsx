@@ -16,12 +16,15 @@ import { ConfigProvider, App as AntdApp, Layout, theme, Spin } from "antd";
 import frFR from "antd/locale/fr_FR";
 import {
     TeamOutlined,
-    CarOutlined,
     ShoppingOutlined,
     GlobalOutlined,
     BellOutlined,
     AuditOutlined,
     DashboardOutlined,
+    HomeOutlined,
+    CalendarOutlined,
+    MessageOutlined,
+    NotificationOutlined,
 } from "@ant-design/icons";
 import { useAuth, useUser } from "@clerk/clerk-react";
 
@@ -44,6 +47,9 @@ import { DashboardPage } from "@/pages/dashboard";
 import { UserList } from "@/pages/users/list";
 import { UserShow } from "@/pages/users/show";
 import { UserEdit } from "@/pages/users/edit";
+import { AdminMessageList } from "@/pages/admin-messages/list";
+import { AdminMessageCreate } from "@/pages/admin-messages/create";
+import { AdminMessageShow } from "@/pages/admin-messages/show";
 
 // Styles
 import "@refinedev/antd/dist/reset.css";
@@ -112,30 +118,59 @@ function AppContent() {
                     },
                 },
                 {
-                    name: "trips",
-                    list: "/trips",
-                    show: "/trips/show/:id",
+                    name: "trajets",
+                    list: "/trajets",
+                    show: "/trajets/show/:id",
                     meta: {
-                        label: "Courses",
-                        icon: <CarOutlined />,
+                        label: "Trajets",
+                        icon: <GlobalOutlined />,
                     },
                 },
                 {
-                    name: "deliveries",
-                    list: "/deliveries",
-                    show: "/deliveries/show/:id",
+                    name: "livraisons",
+                    list: "/livraisons",
+                    show: "/livraisons/show/:id",
                     meta: {
                         label: "Livraisons",
                         icon: <ShoppingOutlined />,
                     },
                 },
                 {
-                    name: "trajets",
-                    list: "/trajets",
-                    show: "/trajets/show/:id",
+                    name: "hebergements",
+                    list: "/hebergements",
+                    show: "/hebergements/show/:id",
+                    edit: "/hebergements/edit/:id",
                     meta: {
-                        label: "Voyages",
-                        icon: <GlobalOutlined />,
+                        label: "Hébergements",
+                        icon: <HomeOutlined />,
+                    },
+                },
+                {
+                    name: "reservations",
+                    list: "/reservations",
+                    show: "/reservations/show/:id",
+                    meta: {
+                        label: "Réservations",
+                        icon: <CalendarOutlined />,
+                    },
+                },
+                {
+                    name: "direct_messages",
+                    list: "/direct-messages",
+                    show: "/direct-messages/show/:id",
+                    meta: {
+                        label: "Messages users",
+                        icon: <MessageOutlined />,
+                    },
+                },
+                {
+                    name: "admin_messages",
+                    list: "/admin-messages",
+                    create: "/admin-messages/create",
+                    show: "/admin-messages/show/:id",
+                    meta: {
+                        label: "Annonces (broadcast)",
+                        icon: <NotificationOutlined />,
                     },
                 },
                 {
@@ -211,11 +246,23 @@ function AppContent() {
                         <Route path="edit/:id" element={<UserEdit />} />
                     </Route>
 
-                    {/* Placeholder routes for Phase 2 resources */}
-                    <Route path="/trips" element={<PlaceholderPage title="Courses — ZopRide" />} />
-                    <Route path="/deliveries" element={<PlaceholderPage title="Livraisons — ZopDelivery" />} />
-                    <Route path="/trajets" element={<PlaceholderPage title="Voyages — ZopTravel" />} />
-                    <Route path="/vehicles" element={<PlaceholderPage title="Véhicules" />} />
+                    {/* Placeholder routes — implémentés en Phase 1+ */}
+                    <Route path="/trajets" element={<PlaceholderPage title="Trajets" />} />
+                    <Route path="/trajets/show/:id" element={<PlaceholderPage title="Détail trajet" />} />
+                    <Route path="/livraisons" element={<PlaceholderPage title="Livraisons" />} />
+                    <Route path="/livraisons/show/:id" element={<PlaceholderPage title="Détail livraison" />} />
+                    <Route path="/hebergements" element={<PlaceholderPage title="Hébergements" />} />
+                    <Route path="/hebergements/show/:id" element={<PlaceholderPage title="Détail hébergement" />} />
+                    <Route path="/hebergements/edit/:id" element={<PlaceholderPage title="Édition hébergement" />} />
+                    <Route path="/reservations" element={<PlaceholderPage title="Réservations" />} />
+                    <Route path="/reservations/show/:id" element={<PlaceholderPage title="Détail réservation" />} />
+                    <Route path="/direct-messages" element={<PlaceholderPage title="Messages entre utilisateurs" />} />
+                    <Route path="/direct-messages/show/:id" element={<PlaceholderPage title="Détail message" />} />
+                    <Route path="/admin-messages">
+                        <Route index element={<AdminMessageList />} />
+                        <Route path="create" element={<AdminMessageCreate />} />
+                        <Route path="show/:id" element={<AdminMessageShow />} />
+                    </Route>
                     <Route path="/notifications" element={<PlaceholderPage title="Notifications" />} />
                     <Route path="/audit" element={<PlaceholderPage title="Journal d'audit" />} />
                     <Route path="/settings" element={<PlaceholderPage title="Paramètres" />} />

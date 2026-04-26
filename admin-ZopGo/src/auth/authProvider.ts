@@ -57,9 +57,8 @@ export function createAuthProvider(
 
             // Signed in — check admin role from publicMetadata
             const adminRole = user.user?.publicMetadata?.role as string | undefined;
-            const isAdmin = adminRole === "admin" || adminRole === "super_admin";
 
-            if (isAdmin) {
+            if (adminRole === "admin") {
                 return { authenticated: true };
             }
 
@@ -77,7 +76,7 @@ export function createAuthProvider(
 
         getPermissions: async () => {
             const adminRole = user.user?.publicMetadata?.role as string | undefined;
-            return adminRole ?? null;
+            return adminRole === "admin" ? "admin" : null;
         },
 
         getIdentity: async () => {
@@ -88,7 +87,7 @@ export function createAuthProvider(
                 name: user.user.fullName ?? user.user.firstName ?? "Admin",
                 avatar: user.user.imageUrl,
                 email: user.user.primaryEmailAddress?.emailAddress,
-                role: adminRole,
+                role: adminRole === "admin" ? "admin" : null,
             };
         },
 

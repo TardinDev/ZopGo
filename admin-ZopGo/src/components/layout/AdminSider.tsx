@@ -7,7 +7,6 @@ import { Layout, Menu, type MenuProps, Tooltip } from "antd";
 import {
     DashboardOutlined,
     TeamOutlined,
-    CarOutlined,
     ShoppingOutlined,
     GlobalOutlined,
     BellOutlined,
@@ -15,6 +14,10 @@ import {
     SettingOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
+    HomeOutlined,
+    CalendarOutlined,
+    MessageOutlined,
+    NotificationOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SIDEBAR, DARK } from "@/config/constants";
@@ -55,19 +58,50 @@ const buildMenuItems = (collapsed: boolean): MenuItem[] => [
         ),
         children: [
             {
-                key: "/trips",
-                icon: <CarOutlined />,
-                label: "Courses — ZopRide",
-            },
-            {
-                key: "/deliveries",
-                icon: <ShoppingOutlined />,
-                label: "Livraisons — ZopDelivery",
-            },
-            {
                 key: "/trajets",
                 icon: <GlobalOutlined />,
-                label: "Voyages — ZopTravel",
+                label: "Trajets",
+            },
+            {
+                key: "/livraisons",
+                icon: <ShoppingOutlined />,
+                label: "Livraisons",
+            },
+            {
+                key: "/hebergements",
+                icon: <HomeOutlined />,
+                label: "Hébergements",
+            },
+            {
+                key: "/reservations",
+                icon: <CalendarOutlined />,
+                label: "Réservations",
+            },
+        ],
+    },
+    {
+        key: "section-communication",
+        type: "group",
+        label: collapsed ? null : (
+            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: DARK.textMuted }}>
+                Communication
+            </span>
+        ),
+        children: [
+            {
+                key: "/admin-messages",
+                icon: <NotificationOutlined />,
+                label: "Annonces",
+            },
+            {
+                key: "/direct-messages",
+                icon: <MessageOutlined />,
+                label: "Messages users",
+            },
+            {
+                key: "/notifications",
+                icon: <BellOutlined />,
+                label: "Notifications",
             },
         ],
     },
@@ -80,11 +114,6 @@ const buildMenuItems = (collapsed: boolean): MenuItem[] => [
             </span>
         ),
         children: [
-            {
-                key: "/notifications",
-                icon: <BellOutlined />,
-                label: "Notifications",
-            },
             {
                 key: "/audit",
                 icon: <AuditOutlined />,

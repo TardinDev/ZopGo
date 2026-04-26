@@ -119,11 +119,49 @@ export const DELIVERY_STATUS_LABELS: Record<string, string> = {
 export const TRAJET_STATUS_LABELS: Record<string, string> = {
     en_attente: "En attente",
     effectue: "Effectué",
+    complet: "Complet",
+};
+
+export const LIVRAISON_STATUS_LABELS: Record<string, string> = {
+    en_attente: "En attente",
+    acceptee: "Acceptée",
+    refusee: "Refusée",
+    en_cours: "En cours",
+    livree: "Livrée",
+    annulee: "Annulée",
+    expiree: "Expirée",
+};
+
+export const RESERVATION_STATUS_LABELS: Record<string, string> = {
+    en_attente: "En attente",
+    acceptee: "Acceptée",
+    refusee: "Refusée",
+    annulee: "Annulée",
+};
+
+export const HEBERGEMENT_TYPE_LABELS: Record<string, string> = {
+    hotel: "Hôtel",
+    auberge: "Auberge",
+    appartement: "Appartement",
+    maison: "Maison",
+    chambre: "Chambre",
+};
+
+export const HEBERGEMENT_STATUS_LABELS: Record<string, string> = {
+    actif: "Actif",
+    inactif: "Inactif",
 };
 
 export const USER_ROLE_LABELS: Record<string, string> = {
     client: "Client",
     chauffeur: "Chauffeur",
+    hebergeur: "Hébergeur",
+};
+
+export const ADMIN_MESSAGE_TARGET_LABELS: Record<string, string> = {
+    user: "Utilisateur précis",
+    role: "Tous les utilisateurs d'un rôle",
+    all: "Tous les utilisateurs",
 };
 
 export const VEHICLE_TYPE_LABELS: Record<string, string> = {
@@ -151,4 +189,13 @@ export const STATUS_COLORS: Record<string, string> = {
     delivered: "green",
     en_attente: "orange",
     effectue: "green",
+    complet: "purple",
+    acceptee: "blue",
+    refusee: "red",
+    en_cours: "processing",
+    livree: "green",
+    annulee: "red",
+    expiree: "default",
+    actif: "green",
+    inactif: "default",
 };

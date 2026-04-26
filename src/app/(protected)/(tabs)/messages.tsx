@@ -6,13 +6,23 @@ import { useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../../constants';
-import { useMessagesStore, useAuthStore, useReservationsStore } from '../../../stores';
+import {
+  useMessagesStore,
+  useAuthStore,
+  useReservationsStore,
+  useAdminMessagesStore,
+} from '../../../stores';
 import { AnimatedTabScreen } from '../../../components/ui';
 import { TabSelector } from '../../../components/voyages';
-import { NotificationCard, MessageCard } from '../../../components/messages';
+import {
+  NotificationCard,
+  MessageCard,
+  AdminMessageCard,
+} from '../../../components/messages';
 
 // Définition des onglets
 const TABS = [
+  { key: 'annonces', label: 'Annonces' },
   { key: 'notifications', label: 'Notifications' },
   { key: 'messages', label: 'Messages' },
 ];
@@ -39,7 +49,10 @@ export default function MessagesTab() {
     refuseHebergementReservation,
   } = useReservationsStore();
 
-  // Charger notifications et conversations au focus + polling 15s tant que l'écran est actif
+  const { adminMessages, loadAdminMessages, markAsRead: markAdminMessageAsRead } =
+    useAdminMessagesStore();
+
+  // Charger notifications, conversations et annonces admin au focus + polling 15s
   useFocusEffect(
     useCallback(() => {
       if (!supabaseProfileId || !user) return;
@@ -47,20 +60,35 @@ export default function MessagesTab() {
       const refresh = () => {
         loadNotifications(supabaseProfileId, user.role);
         loadConversations(supabaseProfileId);
+        loadAdminMessages(supabaseProfileId);
       };
 
       refresh();
       const interval = setInterval(refresh, 15000);
       return () => clearInterval(interval);
-    }, [supabaseProfileId, user, loadNotifications, loadConversations])
+    }, [
+      supabaseProfileId,
+      user,
+      loadNotifications,
+      loadConversations,
+      loadAdminMessages,
+    ])
   );
 
   // Handlers
   const handleTabChange = useCallback(
     (tab: string) => {
-      setSelectedTab(tab as 'notifications' | 'messages');
+      setSelectedTab(tab as 'annonces' | 'notifications' | 'messages');
     },
     [setSelectedTab]
+  );
+
+  const handleAdminMessagePress = useCallback(
+    (messageId: string) => {
+      if (!supabaseProfileId) return;
+      markAdminMessageAsRead(messageId, supabaseProfileId);
+    },
+    [supabaseProfileId, markAdminMessageAsRead]
   );
 
   const handleNotificationPress = useCallback(
@@ -322,7 +350,28 @@ export default function MessagesTab() {
           </View>
 
           {/* Content */}
-          {selectedTab === 'notifications' ? (
+          {selectedTab === 'annonces' && (
+            <FlatList
+              data={adminMessages}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              ListEmptyComponent={
+                <View style={{ alignItems: 'center', marginTop: 60 }}>
+                  <Text style={{ color: 'white', fontSize: 14, opacity: 0.8 }}>
+                    Aucune annonce pour le moment.
+                  </Text>
+                </View>
+              }
+              renderItem={({ item }) => (
+                <AdminMessageCard
+                  message={item}
+                  onPress={() => handleAdminMessagePress(item.id)}
+                />
+              )}
+            />
+          )}
+          {selectedTab === 'notifications' && (
             <FlatList
               data={notifications}
               keyExtractor={(item) => item.id}
@@ -340,7 +389,8 @@ export default function MessagesTab() {
                 );
               }}
             />
-          ) : (
+          )}
+          {selectedTab === 'messages' && (
             <FlatList
               data={messages}
               keyExtractor={(item) => item.id}

@@ -6,7 +6,7 @@ import { fetchReservationContexts } from '../lib/supabaseReservations';
 import { fetchHebergementReservationContexts } from '../lib/supabaseHebergementReservations';
 import { markNotificationAsReadInDb } from '../lib/supabaseNotificationsCreate';
 
-type MessageTab = 'notifications' | 'messages';
+type MessageTab = 'annonces' | 'notifications' | 'messages';
 
 export interface Notification {
   id: string;

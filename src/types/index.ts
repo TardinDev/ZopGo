@@ -293,6 +293,23 @@ export interface Livraison {
   livreurAvatar?: string;
 }
 
+// Annonces broadcast envoyées depuis l'admin web (table admin_messages)
+export type AdminMessageTargetType = 'user' | 'role' | 'all';
+
+export interface AdminMessage {
+  id: string;
+  senderName: string;
+  targetType: AdminMessageTargetType;
+  targetUserId?: string | null;
+  targetRole?: UserRole | null;
+  title: string;
+  body: string;
+  expiresAt?: string | null;
+  createdAt: string;
+  isRead: boolean;
+  readAt?: string | null;
+}
+
 // Utilisateur authentifié (peut être client, chauffeur ou hébergeur)
 export interface AuthUser {
   id: string;

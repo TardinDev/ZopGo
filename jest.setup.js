@@ -163,6 +163,13 @@ jest.mock('./src/lib/supabaseDirectMessages', () => ({
   markMessagesAsRead: jest.fn(() => Promise.resolve(true)),
 }));
 
+// Mock supabaseAdminMessages
+jest.mock('./src/lib/supabaseAdminMessages', () => ({
+  fetchAdminMessages: jest.fn(() => Promise.resolve([])),
+  markAdminMessageAsRead: jest.fn(() => Promise.resolve(true)),
+  countUnreadAdminMessages: jest.fn(() => Promise.resolve(0)),
+}));
+
 // Mock supabaseNotificationsCreate
 jest.mock('./src/lib/supabaseNotificationsCreate', () => ({
   createNotification: jest.fn(() => Promise.resolve(true)),
