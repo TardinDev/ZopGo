@@ -1,267 +1,417 @@
 /**
- * ZopGo Admin — Dark Dashboard with KPI cards, chart placeholders
+ * ZopGo Admin — Dashboard
+ *
+ * Vue temps réel : KPIs (users / chauffeurs en ligne / hébergements actifs /
+ * trajets en attente), table des chauffeurs disponibles, derniers inscrits,
+ * activité récente (trajets et livraisons).
  */
 
-import { Card, Col, Row, Typography, Space, Button } from "antd";
+import { Card, Col, Row, Typography, Space, Tag, Table, Avatar, Empty } from "antd";
 import {
     TeamOutlined,
     CarOutlined,
-    ShoppingOutlined,
+    HomeOutlined,
     GlobalOutlined,
     ArrowUpOutlined,
-    ArrowDownOutlined,
-    BarChartOutlined,
-    PieChartOutlined,
-    MoreOutlined,
 } from "@ant-design/icons";
 import { useList } from "@refinedev/core";
-import { DARK, COLORS } from "@/config/constants";
+import { Link } from "react-router-dom";
+import dayjs from "dayjs";
+import { DARK, COLORS, USER_ROLE_LABELS, formatPrice } from "@/config/constants";
+import { UserAvatar } from "@/components/common/UserAvatar";
+import { StatusTag } from "@/components/common/StatusTag";
+import type { DbProfile, DbTrajet, DbLivraison, DbHebergement } from "@/types";
 
 const { Text } = Typography;
 
-export function DashboardPage() {
-    const { data: usersData } = useList({ resource: "profiles", pagination: { pageSize: 1 } });
-    const { data: tripsData } = useList({ resource: "trips", pagination: { pageSize: 1 } });
-    const { data: deliveriesData } = useList({ resource: "deliveries", pagination: { pageSize: 1 } });
-    const { data: trajetsData } = useList({ resource: "trajets", pagination: { pageSize: 1 } });
+const REFRESH_INTERVAL_MS = 30_000;
 
-    const stats = [
+export function DashboardPage() {
+    // ── Counts (KPI) ────────────────────────────────────────
+    const { data: usersData } = useList<DbProfile>({
+        resource: "profiles",
+        pagination: { pageSize: 1 },
+        liveMode: "off",
+    });
+    const { data: chauffeurDispoData } = useList<DbProfile>({
+        resource: "profiles",
+        pagination: { pageSize: 1 },
+        filters: [
+            { field: "role", operator: "eq", value: "chauffeur" },
+            { field: "disponible", operator: "eq", value: true },
+        ],
+    });
+    const { data: hebergementsActifsData } = useList<DbHebergement>({
+        resource: "hebergements",
+        pagination: { pageSize: 1 },
+        filters: [{ field: "status", operator: "eq", value: "actif" }],
+    });
+    const { data: trajetsAttenteData } = useList<DbTrajet>({
+        resource: "trajets",
+        pagination: { pageSize: 1 },
+        filters: [{ field: "status", operator: "eq", value: "en_attente" }],
+    });
+
+    // ── Chauffeurs en ligne (disponible=true) ────────────────
+    const { data: onlineDriversData } = useList<DbProfile>({
+        resource: "profiles",
+        pagination: { pageSize: 8 },
+        filters: [
+            { field: "role", operator: "eq", value: "chauffeur" },
+            { field: "disponible", operator: "eq", value: true },
+        ],
+        sorters: [{ field: "updated_at", order: "desc" }],
+        queryOptions: { refetchInterval: REFRESH_INTERVAL_MS },
+    });
+
+    // ── Derniers inscrits ───────────────────────────────────
+    const { data: latestUsersData } = useList<DbProfile>({
+        resource: "profiles",
+        pagination: { pageSize: 6 },
+        sorters: [{ field: "created_at", order: "desc" }],
+    });
+
+    // ── Activité récente : trajets ──────────────────────────
+    const { data: latestTrajetsData } = useList<DbTrajet>({
+        resource: "trajets",
+        pagination: { pageSize: 6 },
+        sorters: [{ field: "created_at", order: "desc" }],
+        meta: { select: "*, chauffeur:chauffeur_id(name, avatar)" },
+    });
+
+    // ── Activité récente : livraisons ───────────────────────
+    const { data: latestLivraisonsData } = useList<DbLivraison>({
+        resource: "livraisons",
+        pagination: { pageSize: 6 },
+        sorters: [{ field: "created_at", order: "desc" }],
+        meta: { select: "*, client:client_id(name), livreur:livreur_id(name)" },
+    });
+
+    const kpis = [
         {
-            title: "Utilisateurs",
+            label: "Utilisateurs",
             value: usersData?.total ?? 0,
-            icon: <TeamOutlined style={{ fontSize: 22, color: DARK.accent }} />,
-            trend: "+12%",
-            trendUp: true,
-            trendLabel: "du dernier trimestre",
+            icon: <TeamOutlined style={{ fontSize: 22, color: COLORS.primary }} />,
+            iconBg: "rgba(33, 98, 254, 0.12)",
+            link: "/users",
         },
         {
-            title: "Courses",
-            value: tripsData?.total ?? 0,
+            label: "Chauffeurs en ligne",
+            value: chauffeurDispoData?.total ?? 0,
             icon: <CarOutlined style={{ fontSize: 22, color: COLORS.success }} />,
-            trend: "+8%",
-            trendUp: true,
-            trendLabel: "du dernier trimestre",
+            iconBg: "rgba(16, 185, 129, 0.12)",
+            link: "/users",
+            highlight: "● live",
         },
         {
-            title: "Livraisons",
-            value: deliveriesData?.total ?? 0,
-            icon: <ShoppingOutlined style={{ fontSize: 22, color: COLORS.orange }} />,
-            trend: "-3%",
-            trendUp: false,
-            trendLabel: "du dernier trimestre",
+            label: "Hébergements actifs",
+            value: hebergementsActifsData?.total ?? 0,
+            icon: <HomeOutlined style={{ fontSize: 22, color: "#8B5CF6" }} />,
+            iconBg: "rgba(139, 92, 246, 0.12)",
+            link: "/hebergements",
         },
         {
-            title: "Voyages",
-            value: trajetsData?.total ?? 0,
-            icon: <GlobalOutlined style={{ fontSize: 22, color: DARK.accent }} />,
-            trend: "+5%",
-            trendUp: true,
-            trendLabel: "du dernier trimestre",
+            label: "Trajets en attente",
+            value: trajetsAttenteData?.total ?? 0,
+            icon: <GlobalOutlined style={{ fontSize: 22, color: COLORS.orange }} />,
+            iconBg: "rgba(245, 158, 11, 0.12)",
+            link: "/trajets",
         },
     ];
 
     return (
         <div className="admin-content-area">
-            <Space direction="vertical" size={24} style={{ width: "100%" }}>
+            <Space direction="vertical" size={20} style={{ width: "100%" }}>
                 {/* KPI Cards */}
                 <Row gutter={[16, 16]}>
-                    {stats.map((stat) => (
-                        <Col xs={24} sm={12} lg={6} key={stat.title}>
-                            <Card
-                                bordered={false}
-                                className="admin-card-hover kpi-card"
-                                style={{ borderRadius: 16, background: DARK.cardBg }}
-                                styles={{ body: { padding: "24px" } }}
-                            >
-                                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                                    <div style={{ flex: 1 }}>
-                                        <Text style={{ color: DARK.textSecondary, fontSize: 13, fontWeight: 500 }}>
-                                            {stat.title}
-                                        </Text>
+                    {kpis.map((k) => (
+                        <Col xs={24} sm={12} lg={6} key={k.label}>
+                            <Link to={k.link} style={{ display: "block" }}>
+                                <Card
+                                    bordered={false}
+                                    className="kpi-card admin-card-hover"
+                                    style={{ borderRadius: 14, background: DARK.cardBg }}
+                                    styles={{ body: { padding: 20 } }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                                         <div style={{
-                                            fontSize: 38,
-                                            fontWeight: 700,
-                                            color: DARK.textPrimary,
-                                            lineHeight: 1.2,
-                                            marginTop: 8,
+                                            width: 44, height: 44, borderRadius: 12,
+                                            background: k.iconBg,
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            flexShrink: 0,
                                         }}>
-                                            {stat.value.toLocaleString("fr-FR")}
+                                            {k.icon}
                                         </div>
-                                        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                                            {stat.trendUp ? (
-                                                <ArrowUpOutlined style={{ fontSize: 12, color: DARK.success }} />
-                                            ) : (
-                                                <ArrowDownOutlined style={{ fontSize: 12, color: DARK.error }} />
-                                            )}
-                                            <Text style={{
-                                                fontSize: 13,
-                                                color: stat.trendUp ? DARK.success : DARK.error,
-                                                fontWeight: 600,
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <Text style={{ color: DARK.textSecondary, fontSize: 13, fontWeight: 500 }}>
+                                                {k.label}
+                                            </Text>
+                                            <div style={{
+                                                fontSize: 28, fontWeight: 700,
+                                                color: DARK.textPrimary, lineHeight: 1.1, marginTop: 6,
                                             }}>
-                                                {stat.trend}
-                                            </Text>
-                                            <Text style={{ fontSize: 12, color: DARK.textSecondary }}>
-                                                {stat.trendLabel}
-                                            </Text>
+                                                {k.value.toLocaleString("fr-FR")}
+                                            </div>
+                                            {k.highlight && (
+                                                <div style={{
+                                                    marginTop: 8, fontSize: 11, fontWeight: 600,
+                                                    color: COLORS.success, letterSpacing: "0.04em",
+                                                }}>
+                                                    {k.highlight}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <MoreOutlined
-                                        style={{
-                                            fontSize: 18,
-                                            color: DARK.textMuted,
-                                            cursor: "pointer",
-                                            padding: 4,
-                                        }}
-                                    />
-                                </div>
-                            </Card>
+                                </Card>
+                            </Link>
                         </Col>
                     ))}
                 </Row>
 
-                {/* Chart Cards */}
+                {/* 2-col : online drivers + recent users */}
                 <Row gutter={[16, 16]}>
-                    {/* Performance Chart */}
-                    <Col xs={24} md={12}>
-                        <Card
-                            bordered={false}
-                            style={{
-                                borderRadius: 16,
-                                background: DARK.cardBg,
-                                border: `1px solid ${DARK.border}`,
-                            }}
-                            styles={{ body: { padding: "24px" } }}
+                    <Col xs={24} lg={14}>
+                        <DashboardCard
+                            title="Chauffeurs disponibles maintenant"
+                            subtitle={`${onlineDriversData?.total ?? 0} en ligne · refresh auto 30s`}
+                            link="/users"
+                            linkLabel="Voir tous les utilisateurs"
                         >
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                                <div>
-                                    <Text style={{ fontSize: 17, fontWeight: 600, color: DARK.textPrimary }}>
-                                        Performance
-                                    </Text>
-                                    <div style={{ fontSize: 13, color: DARK.textSecondary, marginTop: 2 }}>
-                                        Activité par service
-                                    </div>
-                                </div>
-                                <MoreOutlined style={{ fontSize: 18, color: DARK.textMuted, cursor: "pointer" }} />
-                            </div>
-
-                            {/* Placeholder bar chart */}
-                            <div style={{
-                                display: "flex",
-                                alignItems: "flex-end",
-                                justifyContent: "space-around",
-                                height: 180,
-                                padding: "0 16px",
-                                gap: 12,
-                            }}>
-                                {[65, 45, 80, 55, 70, 40, 90].map((h, i) => (
-                                    <div
-                                        key={i}
-                                        style={{
-                                            width: "100%",
-                                            maxWidth: 32,
-                                            height: `${h}%`,
-                                            borderRadius: 6,
-                                            background: i === 6
-                                                ? DARK.accent
-                                                : `rgba(255, 221, 92, ${0.12 + (i * 0.08)})`,
-                                            transition: "height 0.3s ease",
-                                        }}
-                                    />
-                                ))}
-                            </div>
-
-                            <div style={{ textAlign: "center", marginTop: 20 }}>
-                                <Button
-                                    type="link"
-                                    style={{ color: DARK.accent, fontWeight: 500, padding: 0 }}
-                                >
-                                    Voir tous les détails
-                                </Button>
-                            </div>
-                        </Card>
-                    </Col>
-
-                    {/* Attendance / Activity Chart */}
-                    <Col xs={24} md={12}>
-                        <Card
-                            bordered={false}
-                            style={{
-                                borderRadius: 16,
-                                background: DARK.cardBg,
-                                border: `1px solid ${DARK.border}`,
-                            }}
-                            styles={{ body: { padding: "24px" } }}
-                        >
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                                <div>
-                                    <Text style={{ fontSize: 17, fontWeight: 600, color: DARK.textPrimary }}>
-                                        Répartition
-                                    </Text>
-                                    <div style={{ fontSize: 13, color: DARK.textSecondary, marginTop: 2 }}>
-                                        Statut des chauffeurs
-                                    </div>
-                                </div>
-                                <MoreOutlined style={{ fontSize: 18, color: DARK.textMuted, cursor: "pointer" }} />
-                            </div>
-
-                            {/* Placeholder donut chart */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-                                <div style={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
-                                    <svg viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)" }}>
-                                        <circle cx="70" cy="70" r="56" fill="none" stroke={DARK.cardBgHover} strokeWidth="20" />
-                                        <circle cx="70" cy="70" r="56" fill="none" stroke={DARK.accent} strokeWidth="20"
-                                            strokeDasharray="220 352" strokeLinecap="round" />
-                                        <circle cx="70" cy="70" r="56" fill="none" stroke={COLORS.success} strokeWidth="20"
-                                            strokeDasharray="88 352" strokeDashoffset="-220" strokeLinecap="round" />
-                                        <circle cx="70" cy="70" r="56" fill="none" stroke={COLORS.orange} strokeWidth="20"
-                                            strokeDasharray="44 352" strokeDashoffset="-308" strokeLinecap="round" />
-                                    </svg>
-                                    <div style={{
-                                        position: "absolute", inset: 0,
-                                        display: "flex", flexDirection: "column",
-                                        alignItems: "center", justifyContent: "center",
-                                    }}>
-                                        <div style={{ fontSize: 22, fontWeight: 700, color: DARK.textPrimary }}>
-                                            {usersData?.total ?? 0}
-                                        </div>
-                                        <div style={{ fontSize: 11, color: DARK.textSecondary }}>Total</div>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                                    {[
-                                        { label: "Actifs", color: DARK.accent, pct: "62%" },
-                                        { label: "Disponibles", color: COLORS.success, pct: "25%" },
-                                        { label: "Hors ligne", color: COLORS.orange, pct: "13%" },
-                                    ].map((item) => (
-                                        <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                            <div style={{
-                                                width: 10, height: 10, borderRadius: "50%",
-                                                background: item.color, flexShrink: 0,
-                                            }} />
+                            <Table<DbProfile>
+                                dataSource={onlineDriversData?.data ?? []}
+                                rowKey="id"
+                                size="small"
+                                pagination={false}
+                                locale={{ emptyText: <Empty description="Aucun chauffeur en ligne" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                            >
+                                <Table.Column<DbProfile>
+                                    title="Chauffeur"
+                                    dataIndex="name"
+                                    render={(name, r) => (
+                                        <Space>
+                                            <UserAvatar src={r.avatar} name={name} size={32} />
                                             <div>
-                                                <div style={{ fontSize: 13, color: DARK.textSecondary }}>{item.label}</div>
-                                                <div style={{ fontSize: 15, fontWeight: 600, color: DARK.textPrimary }}>
-                                                    {item.pct}
+                                                <div style={{ fontWeight: 600, fontSize: 13 }}>{name}</div>
+                                                <div style={{ fontSize: 11, color: DARK.textSecondary }}>
+                                                    {r.phone || "—"}
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                                        </Space>
+                                    )}
+                                />
+                                <Table.Column<DbProfile>
+                                    title="Statut"
+                                    width={100}
+                                    align="center"
+                                    render={() => (
+                                        <Tag color="success" style={{ borderRadius: 6, margin: 0 }}>
+                                            ● Disponible
+                                        </Tag>
+                                    )}
+                                />
+                                <Table.Column<DbProfile>
+                                    title="Trajets"
+                                    dataIndex="total_trips"
+                                    width={80}
+                                    align="center"
+                                    render={(v) => <Text style={{ fontWeight: 600 }}>{v ?? 0}</Text>}
+                                />
+                                <Table.Column<DbProfile>
+                                    title="Note"
+                                    dataIndex="rating"
+                                    width={80}
+                                    align="center"
+                                    render={(v) => (
+                                        <Text style={{ color: COLORS.warning, fontWeight: 600 }}>★ {v?.toFixed(1) ?? "—"}</Text>
+                                    )}
+                                />
+                            </Table>
+                        </DashboardCard>
+                    </Col>
 
-                            <div style={{ textAlign: "center", marginTop: 20 }}>
-                                <Button
-                                    type="link"
-                                    style={{ color: DARK.accent, fontWeight: 500, padding: 0 }}
-                                >
-                                    Voir tous les détails
-                                </Button>
-                            </div>
-                        </Card>
+                    <Col xs={24} lg={10}>
+                        <DashboardCard
+                            title="Inscriptions récentes"
+                            subtitle="Derniers comptes créés"
+                            link="/users"
+                            linkLabel="Tout voir"
+                        >
+                            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                                {(latestUsersData?.data ?? []).map((u) => (
+                                    <div key={u.id} style={{
+                                        display: "flex", alignItems: "center", gap: 12,
+                                        padding: "8px 4px",
+                                    }}>
+                                        <UserAvatar src={u.avatar} name={u.name} size={36} />
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontWeight: 600, fontSize: 13, color: DARK.textPrimary }}>
+                                                {u.name}
+                                            </div>
+                                            <div style={{ fontSize: 11, color: DARK.textSecondary }}>
+                                                {dayjs(u.created_at).format("DD/MM · HH:mm")}
+                                            </div>
+                                        </div>
+                                        <Tag color={u.role === "chauffeur" ? "blue" : u.role === "hebergeur" ? "purple" : "default"} style={{ margin: 0, fontSize: 11 }}>
+                                            {USER_ROLE_LABELS[u.role] ?? u.role}
+                                        </Tag>
+                                    </div>
+                                ))}
+                                {!latestUsersData?.data?.length && (
+                                    <Empty description="Pas encore d'inscriptions" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                )}
+                            </Space>
+                        </DashboardCard>
+                    </Col>
+                </Row>
+
+                {/* 2-col : trajets + livraisons */}
+                <Row gutter={[16, 16]}>
+                    <Col xs={24} lg={12}>
+                        <DashboardCard
+                            title="Trajets récents"
+                            subtitle="Derniers voyages publiés par les chauffeurs"
+                            link="/trajets"
+                            linkLabel="Tout voir"
+                        >
+                            <Table<DbTrajet>
+                                dataSource={latestTrajetsData?.data ?? []}
+                                rowKey="id"
+                                size="small"
+                                pagination={false}
+                                locale={{ emptyText: <Empty description="Aucun trajet" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                            >
+                                <Table.Column<DbTrajet>
+                                    title="Itinéraire"
+                                    render={(_, r) => (
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>
+                                                {r.ville_depart} → {r.ville_arrivee}
+                                            </div>
+                                            <div style={{ fontSize: 11, color: DARK.textSecondary }}>
+                                                {r.chauffeur?.name ?? "—"} · {dayjs(r.created_at).format("DD/MM HH:mm")}
+                                            </div>
+                                        </div>
+                                    )}
+                                />
+                                <Table.Column<DbTrajet>
+                                    title="Prix"
+                                    dataIndex="prix"
+                                    width={100}
+                                    align="right"
+                                    render={(v) => <Text style={{ fontWeight: 600 }}>{formatPrice(v)}</Text>}
+                                />
+                                <Table.Column<DbTrajet>
+                                    title="Statut"
+                                    dataIndex="status"
+                                    width={110}
+                                    render={(s) => <StatusTag status={s} type="trajet" />}
+                                />
+                            </Table>
+                        </DashboardCard>
+                    </Col>
+
+                    <Col xs={24} lg={12}>
+                        <DashboardCard
+                            title="Livraisons récentes"
+                            subtitle="Dernières demandes de livraison"
+                            link="/livraisons"
+                            linkLabel="Tout voir"
+                        >
+                            <Table<DbLivraison>
+                                dataSource={latestLivraisonsData?.data ?? []}
+                                rowKey="id"
+                                size="small"
+                                pagination={false}
+                                locale={{ emptyText: <Empty description="Aucune livraison" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                            >
+                                <Table.Column<DbLivraison>
+                                    title="Course"
+                                    render={(_, r) => (
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>
+                                                {r.pickup_location} → {r.dropoff_location}
+                                            </div>
+                                            <div style={{ fontSize: 11, color: DARK.textSecondary }}>
+                                                {r.client?.name ?? "Client"} · {dayjs(r.created_at).format("DD/MM HH:mm")}
+                                            </div>
+                                        </div>
+                                    )}
+                                />
+                                <Table.Column<DbLivraison>
+                                    title="Prix"
+                                    dataIndex="prix_estime"
+                                    width={100}
+                                    align="right"
+                                    render={(v) => <Text style={{ fontWeight: 600 }}>{formatPrice(v)}</Text>}
+                                />
+                                <Table.Column<DbLivraison>
+                                    title="Statut"
+                                    dataIndex="status"
+                                    width={110}
+                                    render={(s: string) => {
+                                        const colorMap: Record<string, string> = {
+                                            en_attente: "orange",
+                                            acceptee: "blue",
+                                            en_cours: "processing",
+                                            livree: "green",
+                                            refusee: "red",
+                                            annulee: "red",
+                                            expiree: "default",
+                                        };
+                                        return <Tag color={colorMap[s] ?? "default"}>{s}</Tag>;
+                                    }}
+                                />
+                            </Table>
+                        </DashboardCard>
                     </Col>
                 </Row>
             </Space>
         </div>
+    );
+}
+
+// ─── Local card wrapper ──────────────────────────────────────
+function DashboardCard({
+    title,
+    subtitle,
+    link,
+    linkLabel,
+    children,
+}: {
+    title: string;
+    subtitle?: string;
+    link?: string;
+    linkLabel?: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <Card
+            bordered={false}
+            style={{
+                borderRadius: 14,
+                background: DARK.cardBg,
+                border: `1px solid ${DARK.border}`,
+            }}
+            styles={{ body: { padding: 20 } }}
+        >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div>
+                    <Text style={{ fontSize: 15, fontWeight: 600, color: DARK.textPrimary }}>
+                        {title}
+                    </Text>
+                    {subtitle && (
+                        <div style={{ fontSize: 12, color: DARK.textSecondary, marginTop: 2 }}>
+                            {subtitle}
+                        </div>
+                    )}
+                </div>
+                {link && (
+                    <Link to={link} style={{ color: COLORS.primary, fontSize: 12, fontWeight: 500 }}>
+                        {linkLabel ?? "Voir tout"} →
+                    </Link>
+                )}
+            </div>
+            {children}
+        </Card>
     );
 }

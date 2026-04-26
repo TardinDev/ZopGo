@@ -27,14 +27,17 @@ interface Identity {
 
 /** Map route segments to page titles + subtitles */
 const routeTitles: Record<string, { title: string; subtitle: string }> = {
-    "/": { title: "Dashboard", subtitle: "Voici le rapport d'aujourd'hui et les statistiques" },
-    "/users": { title: "Utilisateurs", subtitle: "Gérez les utilisateurs de la plateforme" },
-    "/trips": { title: "Courses", subtitle: "Suivi des courses ZopRide" },
-    "/deliveries": { title: "Livraisons", subtitle: "Suivi des livraisons ZopDelivery" },
-    "/trajets": { title: "Voyages", subtitle: "Suivi des voyages ZopTravel" },
-    "/notifications": { title: "Notifications", subtitle: "Gérez les notifications push" },
-    "/audit": { title: "Journal d'audit", subtitle: "Historique des actions administratives" },
-    "/settings": { title: "Paramètres", subtitle: "Configuration de la plateforme" },
+    "/": { title: "Dashboard", subtitle: "Vue temps réel de l'activité ZopGo" },
+    "/users": { title: "Utilisateurs", subtitle: "Gérez les comptes clients, chauffeurs et hébergeurs" },
+    "/trajets": { title: "Trajets", subtitle: "Voyages inter-villes publiés par les chauffeurs" },
+    "/livraisons": { title: "Livraisons", subtitle: "Suivi des demandes de livraison" },
+    "/hebergements": { title: "Hébergements", subtitle: "Modération des annonces de logement" },
+    "/reservations": { title: "Réservations", subtitle: "Réservations de trajets effectuées par les clients" },
+    "/direct-messages": { title: "Messages utilisateurs", subtitle: "Modération des messages directs entre utilisateurs" },
+    "/admin-messages": { title: "Annonces (broadcast)", subtitle: "Messages envoyés depuis l'admin vers l'app mobile" },
+    "/notifications": { title: "Notifications", subtitle: "Historique des notifications push" },
+    "/audit": { title: "Journal d'audit", subtitle: "Trace immuable des actions sensibles" },
+    "/settings": { title: "Paramètres", subtitle: "Compte admin, JWT, état du système" },
 };
 
 function getPageInfo(pathname: string) {

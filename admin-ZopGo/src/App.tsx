@@ -50,6 +50,14 @@ import { UserEdit } from "@/pages/users/edit";
 import { AdminMessageList } from "@/pages/admin-messages/list";
 import { AdminMessageCreate } from "@/pages/admin-messages/create";
 import { AdminMessageShow } from "@/pages/admin-messages/show";
+import { TrajetList } from "@/pages/trajets/list";
+import { LivraisonList } from "@/pages/livraisons/list";
+import { HebergementList } from "@/pages/hebergements/list";
+import { ReservationList } from "@/pages/reservations/list";
+import { DirectMessageList } from "@/pages/direct-messages/list";
+import { NotificationList } from "@/pages/notifications/list";
+import { AuditLogList } from "@/pages/audit/list";
+import { SettingsPage } from "@/pages/settings";
 
 // Styles
 import "@refinedev/antd/dist/reset.css";
@@ -246,26 +254,48 @@ function AppContent() {
                         <Route path="edit/:id" element={<UserEdit />} />
                     </Route>
 
-                    {/* Placeholder routes — implémentés en Phase 1+ */}
-                    <Route path="/trajets" element={<PlaceholderPage title="Trajets" />} />
-                    <Route path="/trajets/show/:id" element={<PlaceholderPage title="Détail trajet" />} />
-                    <Route path="/livraisons" element={<PlaceholderPage title="Livraisons" />} />
-                    <Route path="/livraisons/show/:id" element={<PlaceholderPage title="Détail livraison" />} />
-                    <Route path="/hebergements" element={<PlaceholderPage title="Hébergements" />} />
-                    <Route path="/hebergements/show/:id" element={<PlaceholderPage title="Détail hébergement" />} />
-                    <Route path="/hebergements/edit/:id" element={<PlaceholderPage title="Édition hébergement" />} />
-                    <Route path="/reservations" element={<PlaceholderPage title="Réservations" />} />
-                    <Route path="/reservations/show/:id" element={<PlaceholderPage title="Détail réservation" />} />
-                    <Route path="/direct-messages" element={<PlaceholderPage title="Messages entre utilisateurs" />} />
-                    <Route path="/direct-messages/show/:id" element={<PlaceholderPage title="Détail message" />} />
+                    {/* Trajets */}
+                    <Route path="/trajets">
+                        <Route index element={<TrajetList />} />
+                        <Route path="show/:id" element={<PlaceholderPage title="Détail trajet" />} />
+                    </Route>
+
+                    {/* Livraisons */}
+                    <Route path="/livraisons">
+                        <Route index element={<LivraisonList />} />
+                        <Route path="show/:id" element={<PlaceholderPage title="Détail livraison" />} />
+                    </Route>
+
+                    {/* Hébergements */}
+                    <Route path="/hebergements">
+                        <Route index element={<HebergementList />} />
+                        <Route path="show/:id" element={<PlaceholderPage title="Détail hébergement" />} />
+                        <Route path="edit/:id" element={<PlaceholderPage title="Édition hébergement" />} />
+                    </Route>
+
+                    {/* Réservations */}
+                    <Route path="/reservations">
+                        <Route index element={<ReservationList />} />
+                        <Route path="show/:id" element={<PlaceholderPage title="Détail réservation" />} />
+                    </Route>
+
+                    {/* Direct messages (modération) */}
+                    <Route path="/direct-messages">
+                        <Route index element={<DirectMessageList />} />
+                        <Route path="show/:id" element={<PlaceholderPage title="Détail message" />} />
+                    </Route>
+
+                    {/* Admin messages (broadcast) */}
                     <Route path="/admin-messages">
                         <Route index element={<AdminMessageList />} />
                         <Route path="create" element={<AdminMessageCreate />} />
                         <Route path="show/:id" element={<AdminMessageShow />} />
                     </Route>
-                    <Route path="/notifications" element={<PlaceholderPage title="Notifications" />} />
-                    <Route path="/audit" element={<PlaceholderPage title="Journal d'audit" />} />
-                    <Route path="/settings" element={<PlaceholderPage title="Paramètres" />} />
+
+                    {/* Système */}
+                    <Route path="/notifications" element={<NotificationList />} />
+                    <Route path="/audit" element={<AuditLogList />} />
+                    <Route path="/settings" element={<SettingsPage />} />
 
                     {/* Catch-all */}
                     <Route path="*" element={<ErrorComponent />} />
