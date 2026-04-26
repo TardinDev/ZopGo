@@ -51,6 +51,26 @@ const TRIP_CARD_STACK = [
     { zIndex: 3, opacity: 1, x: 0, y: 0, rotate: -5, scale: 1, delay: 0.72 },
 ] as const;
 
+// Driver mini-card stack — top-left of phone, fanning upward
+interface DriverData {
+    initials: string;
+    name: string;
+}
+
+const DRIVER_CARD_STACK: ReadonlyArray<{
+    zIndex: number;
+    x: number;
+    y: number;
+    rotate: number;
+    scale: number;
+    delay: number;
+    data: DriverData;
+}> = [
+    { zIndex: 1, x: -10, y: -14, rotate: -5, scale: 0.9, delay: 1.4, data: { initials: "AT", name: "Aboubakar T." } },
+    { zIndex: 2, x: -5, y: -7, rotate: -3, scale: 0.95, delay: 1.3, data: { initials: "MS", name: "Maria S." } },
+    { zIndex: 3, x: 0, y: 0, rotate: 0, scale: 1, delay: 1.2, data: { initials: "JK", name: "Jean K." } },
+];
+
 // Hebergement card stack — back cards offset to the right with different listings
 interface HebergementData {
     image: string;
@@ -403,6 +423,25 @@ export function LoginPage() {
                         >
                             <PhoneMockup />
                         </motion.div>
+                        {DRIVER_CARD_STACK.map((s, i) => (
+                            <motion.div
+                                key={`driver-${i}`}
+                                className="zopgo-trip-card-wrap"
+                                style={{ ...driversAvailableWrapStyle, zIndex: s.zIndex }}
+                                initial={{ opacity: 0, y: -8, scale: 0.85, rotate: -8 }}
+                                animate={{
+                                    opacity: 1,
+                                    x: s.x,
+                                    y: s.y,
+                                    rotate: s.rotate,
+                                    scale: s.scale,
+                                }}
+                                transition={{ delay: s.delay, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                <DriverCardMockup data={s.data} />
+                            </motion.div>
+                        ))}
+
                         {TRIP_CARD_STACK.map((s, i) => (
                             <motion.div
                                 key={i}
@@ -551,6 +590,17 @@ function TripCardMockup() {
                 </div>
             </div>
         </article>
+    );
+}
+
+function DriverCardMockup({ data }: { data: DriverData }) {
+    return (
+        <div style={driversAvailableCardStyle}>
+            <span style={driverAvatarSmallStyle}>{data.initials}</span>
+            <span style={driverNameSmallStyle}>{data.name}</span>
+            <span style={driversAvailableDotStyle} />
+            <span style={driversAvailableLabelStyle}>Disponible</span>
+        </div>
     );
 }
 
@@ -1429,6 +1479,67 @@ const tripCardPlacesStyle: React.CSSProperties = {
     fontSize: 10,
     color: "#6B7280",
     marginTop: 3,
+};
+
+// ─── Drivers available pill (top-left of phone) ──────────────
+
+const driversAvailableWrapStyle: React.CSSProperties = {
+    position: "absolute",
+    top: -14,
+    left: -70,
+    zIndex: 4,
+    pointerEvents: "none",
+};
+
+const driversAvailableCardStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    background: "#FFFFFF",
+    borderRadius: 999,
+    padding: "5px 12px 5px 5px",
+    boxShadow:
+        "0 16px 32px -6px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.18)",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    whiteSpace: "nowrap",
+};
+
+const driverAvatarSmallStyle: React.CSSProperties = {
+    width: 22,
+    height: 22,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #2162FE 0%, #4F8DFF 100%)",
+    color: "#fff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    fontSize: 9,
+    letterSpacing: "0.02em",
+    flexShrink: 0,
+};
+
+const driverNameSmallStyle: React.CSSProperties = {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#0B1224",
+    letterSpacing: "-0.01em",
+};
+
+const driversAvailableDotStyle: React.CSSProperties = {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#10B981",
+    boxShadow: "0 0 0 3px rgba(16, 185, 129, 0.18), 0 0 6px rgba(16, 185, 129, 0.6)",
+    flexShrink: 0,
+    marginLeft: 2,
+};
+
+const driversAvailableLabelStyle: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 500,
+    color: "#10B981",
 };
 
 // ─── Hebergement card (right side of phone) ──────────────────
