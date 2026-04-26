@@ -51,6 +51,61 @@ const TRIP_CARD_STACK = [
     { zIndex: 3, opacity: 1, x: 0, y: 0, rotate: -5, scale: 1, delay: 0.72 },
 ] as const;
 
+// Hebergement card stack — back cards offset to the right with different listings
+interface HebergementData {
+    image: string;
+    type: string;
+    rating: string;
+    name: string;
+    location: string;
+    price: string;
+}
+
+const HEBERGEMENT_CARD_STACK: ReadonlyArray<{
+    zIndex: number;
+    opacity: number;
+    x: number;
+    y: number;
+    rotate: number;
+    scale: number;
+    delay: number;
+    data: HebergementData;
+}> = [
+    {
+        zIndex: 1, opacity: 1, x: 14, y: -18, rotate: 14, scale: 0.92, delay: 1.05,
+        data: {
+            image: "/lodging-sample-3.jpg",
+            type: "Suite",
+            rating: "4.7",
+            name: "Suite Executive",
+            location: "Libreville · Centre-ville",
+            price: "45 000",
+        },
+    },
+    {
+        zIndex: 2, opacity: 1, x: 7, y: -9, rotate: 10, scale: 0.96, delay: 0.95,
+        data: {
+            image: "/lodging-sample-2.jpg",
+            type: "Villa",
+            rating: "4.8",
+            name: "Villa avec piscine",
+            location: "Libreville · Akanda",
+            price: "95 000",
+        },
+    },
+    {
+        zIndex: 3, opacity: 1, x: 0, y: 0, rotate: 6, scale: 1, delay: 0.85,
+        data: {
+            image: "/lodging-sample.jpg",
+            type: "Appartement",
+            rating: "4.9",
+            name: "Studio Premium vue sur Mer",
+            location: "Libreville · Bord de mer",
+            price: "65 000",
+        },
+    },
+];
+
 const BRAND_PRIMARY = "#2162FE";
 const BRAND_DARK = "#0B1224";
 const BRAND_DARKER = "#070C1A";
@@ -346,15 +401,24 @@ export function LoginPage() {
                             </motion.div>
                         ))}
 
-                        <motion.div
-                            className="zopgo-trip-card-wrap"
-                            style={hebergementCardWrapStyle}
-                            initial={{ opacity: 0, x: 28, y: 16, rotate: 12, scale: 0.9 }}
-                            animate={{ opacity: 1, x: 0, y: 0, rotate: 6, scale: 1 }}
-                            transition={{ delay: 0.85, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                        >
-                            <HebergementCardMockup />
-                        </motion.div>
+                        {HEBERGEMENT_CARD_STACK.map((s, i) => (
+                            <motion.div
+                                key={`heberg-${i}`}
+                                className="zopgo-trip-card-wrap"
+                                style={{ ...hebergementCardWrapStyle, zIndex: s.zIndex }}
+                                initial={{ opacity: 0, x: 28, y: 24, rotate: 18, scale: 0.88 }}
+                                animate={{
+                                    opacity: s.opacity,
+                                    x: s.x,
+                                    y: s.y,
+                                    rotate: s.rotate,
+                                    scale: s.scale,
+                                }}
+                                transition={{ delay: s.delay, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                <HebergementCardMockup data={s.data} />
+                            </motion.div>
+                        ))}
                     </div>
                 </motion.section>
             </main>
@@ -469,25 +533,21 @@ function TripCardMockup() {
     );
 }
 
-function HebergementCardMockup() {
+function HebergementCardMockup({ data }: { data: HebergementData }) {
     return (
         <article style={hebergementCardStyle} aria-label="Aperçu d'un hébergement publié">
             <div style={hebergementPhotoStyle}>
-                <img
-                    src="/lodging-sample.jpg"
-                    alt=""
-                    style={hebergementImgStyle}
-                />
-                <span style={hebergementTypePillStyle}>Appartement</span>
+                <img src={data.image} alt="" style={hebergementImgStyle} />
+                <span style={hebergementTypePillStyle}>{data.type}</span>
                 <span style={hebergementRatingPillStyle}>
-                    <StarIcon /> 4.9
+                    <StarIcon /> {data.rating}
                 </span>
             </div>
             <div style={hebergementInfoStyle}>
-                <div style={hebergementNameStyle}>Studio Premium vue sur Mer</div>
-                <div style={hebergementLocStyle}>Libreville · Bord de mer</div>
+                <div style={hebergementNameStyle}>{data.name}</div>
+                <div style={hebergementLocStyle}>{data.location}</div>
                 <div style={hebergementPriceRowStyle}>
-                    <span style={hebergementPriceStyle}>65&nbsp;000</span>
+                    <span style={hebergementPriceStyle}>{data.price}</span>
                     <span style={hebergementPriceUnitStyle}>FCFA / nuit</span>
                 </div>
             </div>
