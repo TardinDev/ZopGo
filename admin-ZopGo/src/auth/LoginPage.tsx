@@ -14,7 +14,7 @@ import { motion, AnimatePresence, type Variants } from "framer-motion";
 import zopgoLogo from "@/assets/zopgo-logo.png";
 
 // Phone screen image — served from public/ (no bundle hash needed)
-const PHONE_IMAGE = "/zopgopro.jpeg";
+const PHONE_IMAGE = "/zopgo_wallpaper_android_20x9_1080x2400.jpg";
 
 // ─── Animation variants (réutilisés) ──────────────────────────
 const heroContainer: Variants = {
@@ -1038,6 +1038,7 @@ const phoneScreenStyle: React.CSSProperties = {
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    objectPosition: "center",
     borderRadius: 33,
     display: "block",
 };
