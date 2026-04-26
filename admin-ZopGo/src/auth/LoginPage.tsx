@@ -10,8 +10,39 @@ import { useEffect, useRef, useState } from "react";
 import { SignIn, useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { Spin } from "antd";
-import splashMobile from "@/assets/splash-mobile.png";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import zopgoLogo from "@/assets/zopgo-logo.png";
+
+// Phone screen image — served from public/ (no bundle hash needed)
+const PHONE_IMAGE = "/zopgopro.jpeg";
+
+// ─── Animation variants (réutilisés) ──────────────────────────
+const heroContainer: Variants = {
+    hidden: {},
+    show: {
+        transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+    },
+};
+
+const heroItem: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+    },
+};
+
+const fadeInUp: Variants = {
+    hidden: { opacity: 0, y: 24 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+    },
+};
+
+const sectionViewport = { once: true, margin: "-80px" } as const;
 
 const BRAND_PRIMARY = "#2162FE";
 const BRAND_DARK = "#0B1224";
@@ -84,13 +115,12 @@ export function LoginPage() {
 
             {/* Top bar : logo + nav + se connecter trigger */}
             <header className="zopgo-login-topbar" style={topBarStyle}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <LogoMark size={36} />
+                <a href="#hero" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+                    <LogoImage size={36} />
                     <span style={{ fontSize: 20, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
                         ZopGo
                     </span>
-                    <span style={adminBadgeStyle}>Admin</span>
-                </div>
+                </a>
 
                 <nav className="zopgo-login-nav" style={navStyle}>
                     <NavLink href="#about">À propos</NavLink>
@@ -116,139 +146,179 @@ export function LoginPage() {
                         <ChevronIcon open={signInOpen} />
                     </button>
 
-                    <div
-                        ref={panelRef}
-                        id="signin-panel"
-                        role="dialog"
-                        aria-label="Formulaire de connexion administrateur"
-                        className="zopgo-signin-panel"
-                        style={{
-                            ...signInPanelStyle,
-                            opacity: signInOpen ? 1 : 0,
-                            transform: signInOpen ? "translateY(0)" : "translateY(-12px)",
-                            pointerEvents: signInOpen ? "auto" : "none",
-                            visibility: signInOpen ? "visible" : "hidden",
-                        }}
-                    >
-                        <div style={{ padding: 24 }}>
-                            <h2 style={panelTitleStyle}>Bienvenue</h2>
-                            <p style={panelSubtitleStyle}>
-                                Connectez-vous à votre compte administrateur ZopGo.
-                            </p>
+                    <AnimatePresence>
+                        {signInOpen && (
+                            <motion.div
+                                ref={panelRef}
+                                id="signin-panel"
+                                role="dialog"
+                                aria-label="Formulaire de connexion administrateur"
+                                className="zopgo-signin-panel"
+                                style={signInPanelStyle}
+                                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                <div style={panelHeaderStyle}>
+                                    <h2 style={panelTitleStyle}>Bienvenue</h2>
+                                    <p style={panelSubtitleStyle}>
+                                        Connectez-vous à votre compte administrateur ZopGo.
+                                    </p>
+                                </div>
 
-                            <SignIn
-                                appearance={{
-                                    variables: {
-                                        colorPrimary: BRAND_PRIMARY,
-                                        colorText: BRAND_DARK,
-                                        colorTextSecondary: "#6B7280",
-                                        colorInputBackground: "#fff",
-                                        colorInputText: BRAND_DARK,
-                                        colorBackground: "transparent",
-                                        borderRadius: "10px",
-                                        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-                                    },
-                                    elements: {
-                                        rootBox: { width: "100%" },
-                                        card: {
-                                            boxShadow: "none",
-                                            background: "transparent",
-                                            padding: 0,
-                                            border: "none",
-                                            margin: 0,
-                                            width: "100%",
-                                        },
-                                        header: { display: "none" },
-                                        headerTitle: { display: "none" },
-                                        headerSubtitle: { display: "none" },
-                                        footer: { display: "none" },
-                                        socialButtonsBlockButton: {
-                                            borderRadius: 10,
-                                            border: "1px solid #E5E7EB",
-                                            height: 42,
-                                            fontSize: 14,
-                                            fontWeight: 500,
-                                        },
-                                        socialButtonsBlockButtonText: { fontSize: 14, fontWeight: 500 },
-                                        dividerLine: { background: "#E5E7EB" },
-                                        dividerText: { color: "#9CA3AF", fontSize: 12, fontWeight: 500 },
-                                        formFieldRow: { marginBottom: 12 },
-                                        formFieldLabel: {
-                                            fontWeight: 500,
-                                            fontSize: 13,
-                                            color: BRAND_DARK,
-                                            marginBottom: 6,
-                                        },
-                                        formFieldInput: {
-                                            borderRadius: 10,
-                                            border: "1px solid #E5E7EB",
-                                            height: 42,
-                                            fontSize: 14,
-                                            padding: "0 14px",
-                                        },
-                                        formFieldAction: { fontSize: 12, fontWeight: 500 },
-                                        formButtonPrimary: {
-                                            background: BRAND_PRIMARY,
-                                            borderRadius: 10,
-                                            fontWeight: 600,
-                                            height: 42,
-                                            fontSize: 14,
-                                            textTransform: "none",
-                                            boxShadow: "0 4px 12px rgba(33, 98, 254, 0.25)",
-                                            marginTop: 4,
-                                        },
-                                        identityPreviewText: { fontSize: 14 },
-                                        identityPreviewEditButton: { fontSize: 13 },
-                                    },
-                                }}
-                                routing="path"
-                                path="/login"
-                                forceRedirectUrl="/"
-                            />
-                        </div>
-                    </div>
+                                <div style={panelSignInWrapStyle}>
+                                    <SignIn
+                                        appearance={{
+                                            layout: {
+                                                logoPlacement: "none",
+                                                socialButtonsPlacement: "top",
+                                                socialButtonsVariant: "blockButton",
+                                            },
+                                            variables: {
+                                                colorPrimary: BRAND_PRIMARY,
+                                                colorText: BRAND_DARK,
+                                                colorTextSecondary: "#6B7280",
+                                                colorInputBackground: "#fff",
+                                                colorInputText: BRAND_DARK,
+                                                colorBackground: "#fff",
+                                                borderRadius: "10px",
+                                                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                                                spacingUnit: "0.875rem",
+                                            },
+                                            elements: {
+                                                rootBox: { width: "100%" },
+                                                cardBox: {
+                                                    boxShadow: "none",
+                                                    border: "none",
+                                                    width: "100%",
+                                                },
+                                                card: {
+                                                    boxShadow: "none",
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    margin: 0,
+                                                    padding: 0,
+                                                    width: "100%",
+                                                },
+                                                header: { display: "none" },
+                                                headerTitle: { display: "none" },
+                                                headerSubtitle: { display: "none" },
+                                                main: { gap: 14 },
+                                                footer: { display: "none" },
+                                                footerAction: { display: "none" },
+                                                socialButtonsBlockButton: {
+                                                    height: 42,
+                                                    border: "1px solid #E5E7EB",
+                                                    borderRadius: 10,
+                                                    fontSize: 14,
+                                                    fontWeight: 500,
+                                                },
+                                                socialButtonsBlockButtonText: { fontSize: 14, fontWeight: 500 },
+                                                dividerRow: { margin: "4px 0" },
+                                                dividerLine: { background: "#E5E7EB" },
+                                                dividerText: { color: "#9CA3AF", fontSize: 12, fontWeight: 500 },
+                                                formFieldRow: { gap: 6 },
+                                                formFieldLabel: {
+                                                    fontWeight: 500,
+                                                    fontSize: 13,
+                                                    color: BRAND_DARK,
+                                                },
+                                                formFieldInput: {
+                                                    height: 42,
+                                                    borderRadius: 10,
+                                                    border: "1px solid #E5E7EB",
+                                                    fontSize: 14,
+                                                    padding: "0 14px",
+                                                    width: "100%",
+                                                },
+                                                formFieldInputShowPasswordButton: { right: 12 },
+                                                formFieldAction: { fontSize: 12, fontWeight: 500 },
+                                                formButtonPrimary: {
+                                                    background: BRAND_PRIMARY,
+                                                    borderRadius: 10,
+                                                    fontWeight: 600,
+                                                    height: 42,
+                                                    fontSize: 14,
+                                                    textTransform: "none",
+                                                    boxShadow: "0 4px 12px rgba(33, 98, 254, 0.25)",
+                                                    width: "100%",
+                                                },
+                                                identityPreview: {
+                                                    border: "1px solid #E5E7EB",
+                                                    borderRadius: 10,
+                                                },
+                                                identityPreviewText: { fontSize: 14 },
+                                                identityPreviewEditButton: { fontSize: 13 },
+                                                alert: { borderRadius: 10 },
+                                            },
+                                        }}
+                                        routing="path"
+                                        path="/login"
+                                        forceRedirectUrl="/"
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </header>
 
             {/* Main content : pitch left, phone right */}
-            <main className="zopgo-login-main" style={mainStyle}>
-                <section style={pitchSectionStyle}>
-                    <div style={tagBadgeStyle}>
+            <main id="hero" className="zopgo-login-main" style={mainStyle}>
+                <motion.section
+                    style={pitchSectionStyle}
+                    variants={heroContainer}
+                    initial="hidden"
+                    animate="show"
+                >
+                    <motion.div variants={heroItem} style={tagBadgeStyle}>
                         <span style={tagDotStyle} />
                         Disponible au Gabon · 2026
-                    </div>
+                    </motion.div>
 
-                    <h1 style={heroTitleStyle}>
+                    <motion.h1 variants={heroItem} style={heroTitleStyle}>
                         Le quotidien du Gabon,<br />
                         <span style={{ color: BRAND_PRIMARY }}>en un seul geste.</span>
-                    </h1>
+                    </motion.h1>
 
-                    <p style={heroLeadStyle}>
+                    <motion.p variants={heroItem} style={heroLeadStyle}>
                         ZopGo connecte voyageurs, chauffeurs, livreurs et hôteliers à travers
                         tout le pays. Trouvez un trajet inter-villes, faites livrer un colis,
                         réservez une chambre — la même app, sans friction.
-                    </p>
+                    </motion.p>
 
-                    <p style={heroPitchStyle}>
+                    <motion.p variants={heroItem} style={heroPitchStyle}>
                         Pensé pour bouger, payer et héberger plus simplement.<br />
                         Téléchargez l'app et essayez en moins d'une minute.
-                    </p>
+                    </motion.p>
 
-                    <div style={storeBadgeRowStyle}>
+                    <motion.div variants={heroItem} style={storeBadgeRowStyle}>
                         <AppStoreBadge />
                         <GooglePlayBadge />
-                    </div>
+                    </motion.div>
 
-                    <div style={metricsRowStyle}>
+                    <motion.div variants={heroItem} style={metricsRowStyle}>
                         <Metric value="4" label="services" />
                         <Metric value="15+" label="villes du Gabon" />
                         <Metric value="24/7" label="support" />
-                    </div>
-                </section>
+                    </motion.div>
+                </motion.section>
 
-                <section className="zopgo-login-phone-section" style={phoneSectionStyle}>
-                    <PhoneMockup />
-                </section>
+                <motion.section
+                    className="zopgo-login-phone-section"
+                    style={phoneSectionStyle}
+                    initial={{ opacity: 0, scale: 0.94, y: 24 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                >
+                    <motion.div
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                        <PhoneMockup />
+                    </motion.div>
+                </motion.section>
             </main>
 
             <AboutSection />
@@ -261,27 +331,22 @@ export function LoginPage() {
 
 // ─── Components ──────────────────────────────────────────────
 
-function LogoMark({ size = 32 }: { size?: number }) {
+function LogoImage({ size = 32 }: { size?: number }) {
     return (
-        <div
+        <img
+            src={zopgoLogo}
+            alt="ZopGo"
+            width={size}
+            height={size}
             style={{
                 width: size,
                 height: size,
-                borderRadius: size * 0.25,
-                background: BRAND_PRIMARY,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: size * 0.5,
-                letterSpacing: "-0.05em",
-                boxShadow: "0 6px 20px rgba(33, 98, 254, 0.45)",
+                borderRadius: size * 0.22,
+                objectFit: "cover",
                 flexShrink: 0,
+                boxShadow: "0 6px 20px rgba(33, 98, 254, 0.25)",
             }}
-        >
-            Z
-        </div>
+        />
     );
 }
 
@@ -319,7 +384,7 @@ function PhoneMockup() {
         <div data-phone-frame style={phoneFrameStyle}>
             <div style={phoneNotchStyle} />
             <img
-                src={splashMobile}
+                src={PHONE_IMAGE}
                 alt="Aperçu de l'app ZopGo"
                 style={phoneScreenStyle}
             />
@@ -397,7 +462,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function AboutSection() {
     return (
-        <section id="about" style={sectionStyle}>
+        <motion.section
+            id="about"
+            style={sectionStyle}
+            initial="hidden"
+            whileInView="show"
+            viewport={sectionViewport}
+            variants={fadeInUp}
+        >
             <div style={sectionInnerStyle}>
                 <SectionLabel>À propos</SectionLabel>
                 <h2 style={sectionTitleStyle}>
@@ -430,7 +502,7 @@ function AboutSection() {
                     </div>
                 </div>
             </div>
-        </section>
+        </motion.section>
     );
 }
 
@@ -472,7 +544,14 @@ function ServicesSection() {
     ];
 
     return (
-        <section id="services" style={{ ...sectionStyle, background: "rgba(255,255,255,0.02)" }}>
+        <motion.section
+            id="services"
+            style={{ ...sectionStyle, background: "rgba(255,255,255,0.02)" }}
+            initial="hidden"
+            whileInView="show"
+            viewport={sectionViewport}
+            variants={fadeInUp}
+        >
             <div style={sectionInnerStyle}>
                 <SectionLabel>Nos services</SectionLabel>
                 <h2 style={sectionTitleStyle}>
@@ -484,16 +563,23 @@ function ServicesSection() {
                 </p>
 
                 <div className="zopgo-services-grid" style={servicesGridStyle}>
-                    {services.map((s) => (
-                        <article key={s.title} style={serviceCardStyle}>
+                    {services.map((s, i) => (
+                        <motion.article
+                            key={s.title}
+                            style={serviceCardStyle}
+                            initial={{ opacity: 0, y: 24 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-60px" }}
+                            transition={{ duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                        >
                             <div style={serviceIconWrapStyle}>{s.icon}</div>
                             <h3 style={serviceTitleStyle}>{s.title}</h3>
                             <p style={serviceDescStyle}>{s.desc}</p>
-                        </article>
+                        </motion.article>
                     ))}
                 </div>
             </div>
-        </section>
+        </motion.section>
     );
 }
 
@@ -507,7 +593,14 @@ function PartnersSection() {
     ];
 
     return (
-        <section id="partners" style={sectionStyle}>
+        <motion.section
+            id="partners"
+            style={sectionStyle}
+            initial="hidden"
+            whileInView="show"
+            viewport={sectionViewport}
+            variants={fadeInUp}
+        >
             <div style={sectionInnerStyle}>
                 <div style={partnersGridStyle}>
                     <div>
@@ -535,18 +628,25 @@ function PartnersSection() {
                     </div>
 
                     <ul style={benefitsListStyle}>
-                        {benefits.map((b) => (
-                            <li key={b} style={benefitItemStyle}>
+                        {benefits.map((b, i) => (
+                            <motion.li
+                                key={b}
+                                style={benefitItemStyle}
+                                initial={{ opacity: 0, x: 16 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true, margin: "-40px" }}
+                                transition={{ duration: 0.45, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                            >
                                 <span style={benefitCheckStyle}>
                                     <CheckIcon />
                                 </span>
                                 <span>{b}</span>
-                            </li>
+                            </motion.li>
                         ))}
                     </ul>
                 </div>
             </div>
-        </section>
+        </motion.section>
     );
 }
 
@@ -555,7 +655,7 @@ function SiteFooter() {
         <footer style={siteFooterStyle}>
             <div style={{ ...sectionInnerStyle, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <LogoMark size={26} />
+                    <LogoImage size={26} />
                     <span style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>ZopGo</span>
                     <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>
                         © {new Date().getFullYear()} · Libreville, Gabon
@@ -732,19 +832,6 @@ const navLinkStyle: React.CSSProperties = {
     transition: "color 0.18s ease, background 0.18s ease",
 };
 
-const adminBadgeStyle: React.CSSProperties = {
-    fontSize: 11,
-    fontWeight: 600,
-    color: "rgba(255,255,255,0.7)",
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    padding: "3px 10px",
-    borderRadius: 999,
-    letterSpacing: "0.06em",
-    textTransform: "uppercase",
-    marginLeft: 4,
-};
-
 const signInTriggerStyle: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -765,13 +852,23 @@ const signInPanelStyle: React.CSSProperties = {
     position: "absolute",
     top: "calc(100% + 12px)",
     right: 0,
-    width: 380,
+    width: 420,
     background: "#fff",
     color: BRAND_DARK,
-    borderRadius: 14,
+    borderRadius: 16,
     boxShadow: "0 24px 60px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.18)",
-    transition: "opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease",
     zIndex: 20,
+    overflow: "hidden",
+    transformOrigin: "top right",
+};
+
+const panelHeaderStyle: React.CSSProperties = {
+    padding: "24px 28px 18px",
+    borderBottom: "1px solid #F3F4F6",
+};
+
+const panelSignInWrapStyle: React.CSSProperties = {
+    padding: "20px 28px 24px",
 };
 
 const panelTitleStyle: React.CSSProperties = {
@@ -786,7 +883,7 @@ const panelSubtitleStyle: React.CSSProperties = {
     fontSize: 13,
     color: "#6B7280",
     marginTop: 6,
-    marginBottom: 18,
+    marginBottom: 0,
     lineHeight: 1.5,
 };
 
