@@ -134,6 +134,13 @@ footer a:hover {
     }
 }
 
+/* Hide trip card mockup on smaller viewports (overflows the page) */
+@media (max-width: 1100px) {
+    .zopgo-trip-card-wrap {
+        display: none !important;
+    }
+}
+
 @media (max-width: 720px) {
     .zopgo-services-grid {
         grid-template-columns: 1fr !important;

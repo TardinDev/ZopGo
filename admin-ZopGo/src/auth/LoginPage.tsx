@@ -44,6 +44,13 @@ const fadeInUp: Variants = {
 
 const sectionViewport = { once: true, margin: "-80px" } as const;
 
+// Trip card stack — back to front (back cards offset and rotated, fully opaque)
+const TRIP_CARD_STACK = [
+    { zIndex: 1, opacity: 1, x: 16, y: -18, rotate: -14, scale: 0.92, delay: 0.92 },
+    { zIndex: 2, opacity: 1, x: 8, y: -9, rotate: -9, scale: 0.96, delay: 0.82 },
+    { zIndex: 3, opacity: 1, x: 0, y: 0, rotate: -5, scale: 1, delay: 0.72 },
+] as const;
+
 const BRAND_PRIMARY = "#2162FE";
 const BRAND_DARK = "#0B1224";
 const BRAND_DARKER = "#070C1A";
@@ -312,12 +319,43 @@ export function LoginPage() {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                 >
-                    <motion.div
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                        <PhoneMockup />
-                    </motion.div>
+                    <div style={phoneClusterStyle}>
+                        <motion.div
+                            style={{ position: "relative", zIndex: 1 }}
+                            animate={{ y: [0, -10, 0] }}
+                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                            <PhoneMockup />
+                        </motion.div>
+                        {TRIP_CARD_STACK.map((s, i) => (
+                            <motion.div
+                                key={i}
+                                className="zopgo-trip-card-wrap"
+                                style={{ ...tripCardWrapStyle, zIndex: s.zIndex }}
+                                initial={{ opacity: 0, x: -24, y: 24, rotate: -18, scale: 0.88 }}
+                                animate={{
+                                    opacity: s.opacity,
+                                    x: s.x,
+                                    y: s.y,
+                                    rotate: s.rotate,
+                                    scale: s.scale,
+                                }}
+                                transition={{ delay: s.delay, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                <TripCardMockup />
+                            </motion.div>
+                        ))}
+
+                        <motion.div
+                            className="zopgo-trip-card-wrap"
+                            style={hebergementCardWrapStyle}
+                            initial={{ opacity: 0, x: 28, y: 16, rotate: 12, scale: 0.9 }}
+                            animate={{ opacity: 1, x: 0, y: 0, rotate: 6, scale: 1 }}
+                            transition={{ delay: 0.85, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                            <HebergementCardMockup />
+                        </motion.div>
+                    </div>
                 </motion.section>
             </main>
 
@@ -389,6 +427,79 @@ function PhoneMockup() {
                 style={phoneScreenStyle}
             />
         </div>
+    );
+}
+
+function TripCardMockup() {
+    return (
+        <article style={tripCardStyle} aria-label="Aperçu d'un trajet publié">
+            <div style={tripCardRouteInlineStyle}>
+                <span style={tripCardOriginDotStyle} />
+                <span style={tripCardCityStyle}>Libreville</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                </svg>
+                <span style={tripCardCityStyle}>Port-Gentil</span>
+            </div>
+
+            <div style={tripCardMetaRowStyle}>
+                <span style={tripCardStatusDotStyle} />
+                Aujourd'hui · 08h00 → 13h30
+            </div>
+
+            <div style={tripCardBottomRowStyle}>
+                <div style={tripCardDriverInlineStyle}>
+                    <div style={tripCardAvatarStyle}>JK</div>
+                    <div style={{ minWidth: 0 }}>
+                        <div style={tripCardDriverNameStyle}>Jean K.</div>
+                        <div style={tripCardDriverMetaStyle}>
+                            <StarIcon /> 4.8 · Toyota
+                        </div>
+                    </div>
+                </div>
+                <div style={tripCardPriceBlockStyle}>
+                    <div style={tripCardPriceStyle}>
+                        25&nbsp;000<span style={tripCardCurrencyStyle}>FCFA</span>
+                    </div>
+                    <div style={tripCardPlacesStyle}>3 places</div>
+                </div>
+            </div>
+        </article>
+    );
+}
+
+function HebergementCardMockup() {
+    return (
+        <article style={hebergementCardStyle} aria-label="Aperçu d'un hébergement publié">
+            <div style={hebergementPhotoStyle}>
+                <img
+                    src="/lodging-sample.jpg"
+                    alt=""
+                    style={hebergementImgStyle}
+                />
+                <span style={hebergementTypePillStyle}>Appartement</span>
+                <span style={hebergementRatingPillStyle}>
+                    <StarIcon /> 4.9
+                </span>
+            </div>
+            <div style={hebergementInfoStyle}>
+                <div style={hebergementNameStyle}>Studio Premium vue sur Mer</div>
+                <div style={hebergementLocStyle}>Libreville · Bord de mer</div>
+                <div style={hebergementPriceRowStyle}>
+                    <span style={hebergementPriceStyle}>65&nbsp;000</span>
+                    <span style={hebergementPriceUnitStyle}>FCFA / nuit</span>
+                </div>
+            </div>
+        </article>
+    );
+}
+
+function StarIcon() {
+    return (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="#F59E0B" stroke="none" style={{ flexShrink: 0 }}>
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
     );
 }
 
@@ -1041,6 +1152,261 @@ const phoneScreenStyle: React.CSSProperties = {
     objectPosition: "center",
     borderRadius: 33,
     display: "block",
+};
+
+const phoneClusterStyle: React.CSSProperties = {
+    position: "relative",
+    display: "inline-block",
+};
+
+const tripCardWrapStyle: React.CSSProperties = {
+    position: "absolute",
+    left: -110,
+    bottom: -10,
+    zIndex: 3,
+    pointerEvents: "none",
+};
+
+const tripCardStyle: React.CSSProperties = {
+    width: 250,
+    background: "#FFFFFF",
+    color: "#0B1224",
+    borderRadius: 14,
+    padding: 12,
+    boxShadow:
+        "0 24px 48px -8px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.18)",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+};
+
+const tripCardRouteInlineStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+};
+
+const tripCardOriginDotStyle: React.CSSProperties = {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    border: "2px solid #2162FE",
+    background: "#fff",
+    flexShrink: 0,
+};
+
+const tripCardCityStyle: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#0B1224",
+    letterSpacing: "-0.01em",
+    lineHeight: 1.2,
+    whiteSpace: "nowrap",
+};
+
+const tripCardMetaRowStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 11,
+    fontWeight: 500,
+    color: "#475569",
+    paddingBottom: 8,
+    borderBottom: "1px solid #F1F5F9",
+};
+
+const tripCardStatusDotStyle: React.CSSProperties = {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#10B981",
+    boxShadow: "0 0 6px rgba(16, 185, 129, 0.55)",
+    flexShrink: 0,
+};
+
+const tripCardBottomRowStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+};
+
+const tripCardDriverInlineStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    minWidth: 0,
+    flex: 1,
+};
+
+const tripCardAvatarStyle: React.CSSProperties = {
+    width: 28,
+    height: 28,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #2162FE 0%, #4F8DFF 100%)",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    fontSize: 11,
+    letterSpacing: "0.03em",
+    flexShrink: 0,
+};
+
+const tripCardDriverNameStyle: React.CSSProperties = {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#0B1224",
+    lineHeight: 1.2,
+};
+
+const tripCardDriverMetaStyle: React.CSSProperties = {
+    fontSize: 10,
+    color: "#6B7280",
+    marginTop: 1,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 3,
+    lineHeight: 1.3,
+};
+
+const tripCardPriceBlockStyle: React.CSSProperties = {
+    textAlign: "right",
+    flexShrink: 0,
+};
+
+const tripCardPriceStyle: React.CSSProperties = {
+    fontSize: 15,
+    fontWeight: 700,
+    color: "#0B1224",
+    letterSpacing: "-0.02em",
+    lineHeight: 1,
+};
+
+const tripCardCurrencyStyle: React.CSSProperties = {
+    fontSize: 9,
+    fontWeight: 600,
+    color: "#6B7280",
+    marginLeft: 3,
+    letterSpacing: "0.02em",
+};
+
+const tripCardPlacesStyle: React.CSSProperties = {
+    fontSize: 10,
+    color: "#6B7280",
+    marginTop: 3,
+};
+
+// ─── Hebergement card (right side of phone) ──────────────────
+
+const hebergementCardWrapStyle: React.CSSProperties = {
+    position: "absolute",
+    right: -140,
+    top: "50%",
+    marginTop: -100,
+    zIndex: 3,
+    pointerEvents: "none",
+};
+
+const hebergementCardStyle: React.CSSProperties = {
+    width: 180,
+    background: "#FFFFFF",
+    color: "#0B1224",
+    borderRadius: 14,
+    overflow: "hidden",
+    boxShadow:
+        "0 24px 48px -8px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.18)",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    display: "flex",
+    flexDirection: "column",
+};
+
+const hebergementPhotoStyle: React.CSSProperties = {
+    position: "relative",
+    width: "100%",
+    height: 120,
+    overflow: "hidden",
+    background: "#0B1224",
+};
+
+const hebergementImgStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    display: "block",
+};
+
+const hebergementTypePillStyle: React.CSSProperties = {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    fontSize: 10,
+    fontWeight: 600,
+    color: "#0B1224",
+    background: "rgba(255, 255, 255, 0.92)",
+    padding: "3px 8px",
+    borderRadius: 6,
+    backdropFilter: "blur(6px)",
+};
+
+const hebergementRatingPillStyle: React.CSSProperties = {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 3,
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#0B1224",
+    background: "rgba(255, 255, 255, 0.92)",
+    padding: "3px 7px",
+    borderRadius: 6,
+    backdropFilter: "blur(6px)",
+};
+
+const hebergementInfoStyle: React.CSSProperties = {
+    padding: 12,
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+};
+
+const hebergementNameStyle: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#0B1224",
+    letterSpacing: "-0.01em",
+    lineHeight: 1.2,
+};
+
+const hebergementLocStyle: React.CSSProperties = {
+    fontSize: 11,
+    color: "#6B7280",
+    lineHeight: 1.3,
+};
+
+const hebergementPriceRowStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 4,
+    marginTop: 4,
+};
+
+const hebergementPriceStyle: React.CSSProperties = {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#0B1224",
+    letterSpacing: "-0.02em",
+};
+
+const hebergementPriceUnitStyle: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 500,
+    color: "#6B7280",
 };
 
 // ─── Sections styles ─────────────────────────────────────────
