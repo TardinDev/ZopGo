@@ -990,7 +990,7 @@ export default function AuthScreen() {
                       ]}>
                       <Ionicons
                         name="person"
-                        size={18}
+                        size={16}
                         color={selectedRole === 'client' ? ACCENT : COLORS.gray[400]}
                       />
                       <Text
@@ -1010,7 +1010,7 @@ export default function AuthScreen() {
                       ]}>
                       <Ionicons
                         name="car"
-                        size={18}
+                        size={16}
                         color={selectedRole === 'chauffeur' ? GOLD : COLORS.gray[400]}
                       />
                       <Text
@@ -1030,7 +1030,7 @@ export default function AuthScreen() {
                       ]}>
                       <Ionicons
                         name="bed"
-                        size={18}
+                        size={16}
                         color={selectedRole === 'hebergeur' ? VIOLET : COLORS.gray[400]}
                       />
                       <Text
@@ -1115,7 +1115,7 @@ export default function AuthScreen() {
                         styles.inputContainer,
                         focusedField === 'name' && styles.inputFocused,
                       ]}>
-                      <Ionicons name="person-outline" size={20} color={COLORS.gray[400]} />
+                      <Ionicons name="person-outline" size={18} color={COLORS.gray[400]} />
                       <TextInput
                         ref={nameRef}
                         placeholder="Nom complet"
@@ -1144,7 +1144,7 @@ export default function AuthScreen() {
                       styles.inputContainer,
                       focusedField === 'email' && styles.inputFocused,
                     ]}>
-                    <Ionicons name="mail-outline" size={20} color={COLORS.gray[400]} />
+                    <Ionicons name="mail-outline" size={18} color={COLORS.gray[400]} />
                     <TextInput
                       ref={emailRef}
                       placeholder="votre.email@example.com"
@@ -1174,7 +1174,7 @@ export default function AuthScreen() {
                       styles.inputContainer,
                       focusedField === 'password' && styles.inputFocused,
                     ]}>
-                    <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
+                    <Ionicons name="lock-closed-outline" size={18} color={COLORS.gray[400]} />
                     <TextInput
                       ref={passwordRef}
                       placeholder="Mot de passe"
@@ -1247,7 +1247,7 @@ export default function AuthScreen() {
                         styles.inputContainer,
                         focusedField === 'confirmPassword' && styles.inputFocused,
                       ]}>
-                      <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[400]} />
+                      <Ionicons name="lock-closed-outline" size={18} color={COLORS.gray[400]} />
                       <TextInput
                         ref={confirmPasswordRef}
                         placeholder="Confirmer le mot de passe"
@@ -1360,7 +1360,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'flex-end',
-    paddingBottom: 24,
+    paddingBottom: 12,
   },
   verificationScrollContent: {
     flexGrow: 1,
@@ -1370,21 +1370,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   header: {
-    paddingBottom: 16,
+    paddingBottom: 8,
     alignItems: 'center',
   },
   logo: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '800',
     color: COLORS.white,
-    marginBottom: 8,
+    marginBottom: 2,
     letterSpacing: 1,
     textShadowColor: 'rgba(0, 0, 0, 0.4)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.white,
     fontWeight: '600',
     textShadowColor: 'rgba(0, 0, 0, 0.4)',
@@ -1392,14 +1392,14 @@ const styles = StyleSheet.create({
     textShadowRadius: 6,
   },
   cardContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderRadius: 24,
+    borderRadius: 20,
     borderCurve: 'continuous',
-    padding: 20,
-    paddingTop: 24,
+    padding: 14,
+    paddingTop: 16,
     boxShadow: '0 12px 30px rgba(0, 0, 0, 0.20)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
@@ -1415,27 +1415,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sectionLabel: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
     color: COLORS.gray[700],
-    marginBottom: 12,
+    marginBottom: 6,
   },
   roleSection: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   roleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   rolePill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 14,
     borderWidth: 2,
   },
   rolePillActive: {
@@ -1448,7 +1448,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   rolePillText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   rolePillTextActive: {
@@ -1474,20 +1474,20 @@ const styles = StyleSheet.create({
     color: COLORS.gray[500],
   },
   vehicleSection: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   vehicleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   vehicleChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
     borderWidth: 1.5,
   },
   vehicleChipActive: {
@@ -1499,10 +1499,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   vehicleIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   vehicleLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
   },
   vehicleLabelActive: {
@@ -1519,15 +1519,15 @@ const styles = StyleSheet.create({
     color: VIOLET,
   },
   fieldGroup: {
-    marginBottom: 10,
+    marginBottom: 7,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
@@ -1538,17 +1538,17 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: COLORS.gray[900],
-    marginLeft: 12,
+    marginLeft: 10,
   },
   submitTouchable: {
-    marginTop: 6,
+    marginTop: 4,
   },
   submitButton: {
-    borderRadius: 16,
+    borderRadius: 14,
     borderCurve: 'continuous',
-    paddingVertical: 15,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: `0 6px 14px ${ACCENT}66`,
@@ -1560,7 +1560,7 @@ const styles = StyleSheet.create({
   },
   submitText: {
     color: COLORS.white,
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
@@ -1590,7 +1590,7 @@ const styles = StyleSheet.create({
   separator: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: 8,
   },
   separatorLine: {
     flex: 1,
@@ -1608,7 +1608,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toggleText: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.gray[600],
   },
   toggleTextBold: {
@@ -1698,11 +1698,11 @@ const styles = StyleSheet.create({
   },
   forgotPasswordButton: {
     alignSelf: 'flex-end',
-    marginBottom: 6,
-    paddingVertical: 4,
+    marginBottom: 4,
+    paddingVertical: 2,
   },
   forgotPasswordText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: ACCENT,
   },
