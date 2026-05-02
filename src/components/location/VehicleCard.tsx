@@ -9,6 +9,7 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -164,7 +165,13 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           </View>
           <TouchableOpacity
             style={[styles.bookButton, !vehicle.isAvailable && styles.bookButtonDisabled]}
-            disabled={!vehicle.isAvailable}>
+            disabled={!vehicle.isAvailable}
+            onPress={() =>
+              Alert.alert(
+                'Bientôt disponible',
+                'Cette fonctionnalité sera bientôt disponible.'
+              )
+            }>
             <Text style={[styles.bookText, !vehicle.isAvailable && styles.bookTextDisabled]}>
               {vehicle.isAvailable ? 'Réserver' : 'Indisponible'}
             </Text>

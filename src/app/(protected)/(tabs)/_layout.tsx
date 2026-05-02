@@ -186,9 +186,9 @@ export default function TabLayout() {
         options={{
           title: 'Location',
           href: (isChauffeur || isHebergeur) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
-              name={focused ? 'key-variant' : 'key-outline'}
+              name="car-key"
               size={26}
               color={color}
             />

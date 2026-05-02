@@ -23,6 +23,10 @@ interface LivraisonsState {
   accepted: boolean;
   noResponse: boolean;
 
+  // ── Package details (added by client before search) ────────────
+  packagePhoto: string | null;
+  packageDescription: string;
+
   // ── Backend state ──────────────────────────────────────────────
   currentLivraison: Livraison | null;
   clientLivraisons: Livraison[];
@@ -37,6 +41,8 @@ interface LivraisonsState {
   setWaitingForAcceptance: (waiting: boolean) => void;
   setAccepted: (accepted: boolean) => void;
   setNoResponse: (noResponse: boolean) => void;
+  setPackagePhoto: (uri: string | null) => void;
+  setPackageDescription: (description: string) => void;
   resetSearch: () => void;
   resetAll: () => void;
 
@@ -93,6 +99,10 @@ export const useLivraisonsStore = create<LivraisonsState>((set, get) => ({
   accepted: false,
   noResponse: false,
 
+  // Package details
+  packagePhoto: null,
+  packageDescription: '',
+
   // Backend state
   currentLivraison: null,
   clientLivraisons: [],
@@ -107,6 +117,8 @@ export const useLivraisonsStore = create<LivraisonsState>((set, get) => ({
   setWaitingForAcceptance: (waiting) => set({ waitingForAcceptance: waiting }),
   setAccepted: (accepted) => set({ accepted }),
   setNoResponse: (noResponse) => set({ noResponse }),
+  setPackagePhoto: (uri) => set({ packagePhoto: uri }),
+  setPackageDescription: (description) => set({ packageDescription: description }),
 
   resetSearch: () =>
     set({
@@ -123,6 +135,8 @@ export const useLivraisonsStore = create<LivraisonsState>((set, get) => ({
       waitingForAcceptance: false,
       accepted: false,
       noResponse: false,
+      packagePhoto: null,
+      packageDescription: '',
       currentLivraison: null,
     }),
 
