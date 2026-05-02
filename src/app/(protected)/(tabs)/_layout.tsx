@@ -32,7 +32,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.gray[500],
+        tabBarInactiveTintColor: Platform.OS === 'android' ? COLORS.gray[400] : COLORS.gray[500],
 
         // --- Capsule flottante ---
         tabBarStyle: {
@@ -49,39 +49,53 @@ export default function TabLayout() {
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
         },
 
-        // --- Fond "Liquid Glass" ---
-        tabBarBackground: () => (
-          <View style={StyleSheet.absoluteFill}>
-            <BlurView
-              // iOS/Android: le blur natif rend le verre liquide
-              intensity={70}
-              tint="light"
-              style={StyleSheet.absoluteFill}
-            />
-            {/* Liseré + reflet subtil pour l’effet verre */}
-            <View
-              pointerEvents="none"
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  borderRadius: 28,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: 'rgba(255,255,255,0.35)',
-                },
-              ]}
-            />
-            <LinearGradient
-              pointerEvents="none"
-              colors={[
-                'rgba(255,255,255,0.35)',
-                'rgba(255,255,255,0.10)',
-                'rgba(255,255,255,0.00)',
-              ]}
-              locations={[0, 0.35, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-        ),
+        // --- Fond: noir solide sur Android, "Liquid Glass" sur iOS ---
+        tabBarBackground: () =>
+          Platform.OS === 'android' ? (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: COLORS.black }]}>
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    borderRadius: 28,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: 'rgba(255,255,255,0.12)',
+                  },
+                ]}
+              />
+            </View>
+          ) : (
+            <View style={StyleSheet.absoluteFill}>
+              <BlurView
+                intensity={70}
+                tint="light"
+                style={StyleSheet.absoluteFill}
+              />
+              {/* Liseré + reflet subtil pour l’effet verre */}
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    borderRadius: 28,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: 'rgba(255,255,255,0.35)',
+                  },
+                ]}
+              />
+              <LinearGradient
+                pointerEvents="none"
+                colors={[
+                  'rgba(255,255,255,0.35)',
+                  'rgba(255,255,255,0.10)',
+                  'rgba(255,255,255,0.00)',
+                ]}
+                locations={[0, 0.35, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
+          ),
 
         // — Alignement propre des labels sous icônes —
         tabBarItemStyle: {

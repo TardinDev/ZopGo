@@ -36,7 +36,7 @@ interface ClerkError {
 import { ModeTransition } from '../components/ui';
 import { COLORS } from '../constants/colors';
 
-const SPLASH_IMAGE = require('../../assets/splashScreen.jpg');
+const SPLASH_IMAGE = require('../../assets/zopgo_wallpaper_android_20x9_1080x2400.jpg');
 
 // Couleurs harmonisées avec l'illustration ZopGo
 const ACCENT = '#0B8457';       // vert profond (voiture/logo)
