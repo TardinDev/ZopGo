@@ -23,9 +23,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
-          "imageWidth": 260,
+          "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#14181E"
         }
       ],
       [
@@ -50,7 +50,7 @@
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    "icon": "./assets/ZOPGO_new_design_assets/zopgo_icon2.png",
+    "icon": "./assets/ZOPGO_new_design_assets/zopgo_ic_launcher.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"
