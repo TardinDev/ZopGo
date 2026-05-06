@@ -59,7 +59,7 @@ export default function ProtectedLayout() {
   // update hits Supabase with a valid JWT (avoids silent RLS failure).
   useEffect(() => {
     if (isSignedIn) {
-      setClerkTokenProvider(() => getToken({ template: 'supabase' }));
+      setClerkTokenProvider(() => getToken());
       setSupabaseReady(true);
     } else {
       setClerkTokenProvider(null);

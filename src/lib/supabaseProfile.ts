@@ -64,7 +64,7 @@ export async function upsertProfile(
 
   if (error) {
     if (__DEV__) console.error('Supabase upsertProfile error:', error.message);
-    return null;
+    throw new Error(error.message);
   }
   return data as SupabaseProfile;
 }

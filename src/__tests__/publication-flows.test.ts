@@ -426,7 +426,7 @@ describe('Flow 2 — Hebergeur publishes hebergement → Client discovery list',
     jest.spyOn(console, 'error').mockImplementation(() => {});
     (insertHebergement as jest.Mock).mockRejectedValueOnce(new Error('DB down'));
 
-    await publishHebergementAsHebergeur();
+    await expect(publishHebergementAsHebergeur()).rejects.toThrow('DB down');
     await useHebergementsDiscoveryStore.getState().loadHebergements();
 
     expect(useHebergementsDiscoveryStore.getState().listings).toHaveLength(0);
@@ -615,9 +615,11 @@ describe('Flow 3 — Push notifications on publication', () => {
       },
     });
 
-    await useHebergementsStore
-      .getState()
-      .addListing('hebergeur_clerk_1', 'supa_hebergeur_1', []);
+    await expect(
+      useHebergementsStore
+        .getState()
+        .addListing('hebergeur_clerk_1', 'supa_hebergeur_1', [])
+    ).rejects.toThrow('boom');
 
     expect(sendPushBroadcast).not.toHaveBeenCalled();
   });

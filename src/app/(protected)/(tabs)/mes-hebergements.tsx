@@ -53,9 +53,16 @@ export default function MesHebergementsTab() {
       return;
     }
     if (!user) return;
+    if (!supabaseProfileId) {
+      Alert.alert(
+        'Profil non synchronisé',
+        'Votre profil n\'est pas encore connecté à la base. Reconnectez-vous puis réessayez.'
+      );
+      return;
+    }
 
     let imageUrls: string[] = [];
-    if (formData.images.length > 0 && supabaseProfileId) {
+    if (formData.images.length > 0) {
       setIsUploading(true);
       try {
         const tempId = Date.now().toString();
@@ -70,8 +77,13 @@ export default function MesHebergementsTab() {
       }
     }
 
-    addListing(user.id, supabaseProfileId || undefined, imageUrls);
-    Alert.alert('Logement ajouté', 'Votre logement a été publié avec succès !');
+    try {
+      await addListing(user.id, supabaseProfileId, imageUrls);
+      Alert.alert('Logement ajouté', 'Votre logement a été publié avec succès !');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur inconnue.';
+      Alert.alert('Publication échouée', message);
+    }
   };
 
   const handleRemove = (id: string) => {
@@ -379,9 +391,9 @@ export default function MesHebergementsTab() {
               {/* Bouton Publier */}
               <TouchableOpacity
                 onPress={handlePublish}
-                disabled={isUploading}
+                disabled={isUploading || !supabaseProfileId}
                 style={{
-                  backgroundColor: isUploading ? '#C4B5FD' : '#8B5CF6',
+                  backgroundColor: isUploading || !supabaseProfileId ? '#C4B5FD' : '#8B5CF6',
                   borderRadius: 14,
                   paddingVertical: 14,
                   alignItems: 'center',
@@ -390,13 +402,17 @@ export default function MesHebergementsTab() {
                   gap: 8,
                 }}
               >
-                {isUploading ? (
+                {isUploading || !supabaseProfileId ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
                   <MaterialCommunityIcons name="plus-circle" size={20} color="white" />
                 )}
                 <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>
-                  {isUploading ? 'Upload en cours...' : 'Ajouter le logement'}
+                  {isUploading
+                    ? 'Upload en cours...'
+                    : !supabaseProfileId
+                    ? 'Synchronisation du profil...'
+                    : 'Ajouter le logement'}
                 </Text>
               </TouchableOpacity>
             </View>

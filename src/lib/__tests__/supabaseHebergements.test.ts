@@ -88,25 +88,26 @@ describe('supabaseHebergements', () => {
       expect(result).toEqual({ id: 'new_h1' });
     });
 
-    it('returns null on Supabase error', async () => {
+    it('throws on Supabase error so callers surface the failure', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockChain = createMockChain({
         data: null,
         error: { message: 'Insert error' },
       });
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
-      const result = await insertHebergement({
-        hebergeur_id: 'heb1',
-        nom: 'Hotel',
-        type: 'hotel',
-        ville: 'Libreville',
-        adresse: 'rue',
-        prix_par_nuit: 10000,
-        capacite: 2,
-        description: 'desc',
-      });
-
-      expect(result).toBeNull();
+      await expect(
+        insertHebergement({
+          hebergeur_id: 'heb1',
+          nom: 'Hotel',
+          type: 'hotel',
+          ville: 'Libreville',
+          adresse: 'rue',
+          prix_par_nuit: 10000,
+          capacite: 2,
+          description: 'desc',
+        })
+      ).rejects.toThrow('Insert error');
     });
   });
 

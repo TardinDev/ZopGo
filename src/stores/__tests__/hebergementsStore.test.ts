@@ -69,6 +69,7 @@ describe('hebergementsStore', () => {
 
   describe('addListing', () => {
     it('adds listing locally with optimistic update', async () => {
+      (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_x' });
       useHebergementsStore.setState({
         formData: {
           nom: 'Hotel Test',
@@ -84,7 +85,7 @@ describe('hebergementsStore', () => {
         },
       });
 
-      await useHebergementsStore.getState().addListing('heb_1');
+      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1');
       const listings = useHebergementsStore.getState().listings;
       expect(listings).toHaveLength(1);
       expect(listings[0].nom).toBe('Hotel Test');
@@ -94,6 +95,7 @@ describe('hebergementsStore', () => {
     });
 
     it('resets form after adding', async () => {
+      (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_x' });
       useHebergementsStore.setState({
         formData: {
           nom: 'Hotel',
@@ -109,7 +111,7 @@ describe('hebergementsStore', () => {
         },
       });
 
-      await useHebergementsStore.getState().addListing('heb_1');
+      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1');
       expect(useHebergementsStore.getState().formData.nom).toBe('');
     });
 
@@ -143,7 +145,7 @@ describe('hebergementsStore', () => {
       expect(listings[0].id).toBe('supa_heb_1');
     });
 
-    it('removes local listing on Supabase error', async () => {
+    it('removes local listing and rethrows on Supabase error', async () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       (insertHebergement as jest.Mock).mockRejectedValue(new Error('DB error'));
       useHebergementsStore.setState({
@@ -161,11 +163,13 @@ describe('hebergementsStore', () => {
         },
       });
 
-      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1');
+      await expect(
+        useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1')
+      ).rejects.toThrow('DB error');
       expect(useHebergementsStore.getState().listings).toHaveLength(0);
     });
 
-    it('does not call Supabase without supabaseProfileId', async () => {
+    it('throws and skips Supabase when supabaseProfileId missing', async () => {
       useHebergementsStore.setState({
         formData: {
           nom: 'Hotel',
@@ -181,11 +185,14 @@ describe('hebergementsStore', () => {
         },
       });
 
-      await useHebergementsStore.getState().addListing('heb_1');
+      await expect(
+        useHebergementsStore.getState().addListing('heb_1')
+      ).rejects.toThrow('Profil non synchronisé');
       expect(insertHebergement).not.toHaveBeenCalled();
     });
 
     it('handles invalid price as 0', async () => {
+      (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_x' });
       useHebergementsStore.setState({
         formData: {
           nom: 'H',
@@ -201,13 +208,14 @@ describe('hebergementsStore', () => {
         },
       });
 
-      await useHebergementsStore.getState().addListing('heb_1');
+      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1');
       const listing = useHebergementsStore.getState().listings[0];
       expect(listing.prixParNuit).toBe(0);
       expect(listing.capacite).toBe(1);
     });
 
     it('sets status inactif when disponible is false', async () => {
+      (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_x' });
       useHebergementsStore.setState({
         formData: {
           nom: 'Hotel Fermé',
@@ -223,7 +231,7 @@ describe('hebergementsStore', () => {
         },
       });
 
-      await useHebergementsStore.getState().addListing('heb_1');
+      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1');
       const listing = useHebergementsStore.getState().listings[0];
       expect(listing.status).toBe('inactif');
     });

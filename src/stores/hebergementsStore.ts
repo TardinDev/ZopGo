@@ -57,6 +57,10 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
   addListing: async (hebergeurId, supabaseProfileId, imageUrls) => {
     const { formData, listings } = get();
 
+    if (!supabaseProfileId) {
+      throw new Error('Profil non synchronisé. Reconnectez-vous puis réessayez.');
+    }
+
     const status = formData.disponible ? 'actif' : 'inactif';
     const disponibilite = parseInt(formData.disponibilite) || 1;
     const images = imageUrls || [];
@@ -76,54 +80,49 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       images,
       createdAt: new Date().toISOString(),
     };
-    set({ listings: [localListing, ...listings], formData: { ...initialFormData } });
+    set({ listings: [localListing, ...listings] });
 
-    if (supabaseProfileId) {
-      try {
-        const result = await insertHebergement({
-          hebergeur_id: supabaseProfileId,
-          nom: formData.nom,
-          type: formData.type,
-          ville: formData.ville,
-          adresse: formData.adresse,
-          prix_par_nuit: parseInt(formData.prixParNuit) || 0,
-          capacite: parseInt(formData.capacite) || 1,
-          description: formData.description,
-          status,
-          disponibilite,
-          images,
-        });
+    try {
+      const result = await insertHebergement({
+        hebergeur_id: supabaseProfileId,
+        nom: formData.nom,
+        type: formData.type,
+        ville: formData.ville,
+        adresse: formData.adresse,
+        prix_par_nuit: parseInt(formData.prixParNuit) || 0,
+        capacite: parseInt(formData.capacite) || 1,
+        description: formData.description,
+        status,
+        disponibilite,
+        images,
+      });
 
-        if (result) {
-          set((state) => ({
-            listings: state.listings.map((l) =>
-              l.id === localListing.id ? { ...l, id: result.id } : l
-            ),
-          }));
+      if (result) {
+        set((state) => ({
+          listings: state.listings.map((l) =>
+            l.id === localListing.id ? { ...l, id: result.id } : l
+          ),
+          formData: { ...initialFormData },
+        }));
 
-          // Broadcast to all clients (respects notification_preferences on
-          // the Edge Function side). Only notifies if the listing is
-          // actually discoverable (actif + at least one unit available).
-          // Fire-and-forget.
-          if (status === 'actif' && disponibilite > 0) {
-            void sendPushBroadcast({
-              category: 'hebergements',
-              recipientRole: 'client',
-              title: 'Nouvel hébergement disponible',
-              message: `${formData.nom} — ${formData.ville} — ${parseInt(formData.prixParNuit) || 0} FCFA/nuit`,
-              data: {
-                hebergementId: result.id,
-                type: 'new_hebergement',
-                ville: formData.ville,
-                nom: formData.nom,
-              },
-            });
-          }
+        if (status === 'actif' && disponibilite > 0) {
+          void sendPushBroadcast({
+            category: 'hebergements',
+            recipientRole: 'client',
+            title: 'Nouvel hébergement disponible',
+            message: `${formData.nom} — ${formData.ville} — ${parseInt(formData.prixParNuit) || 0} FCFA/nuit`,
+            data: {
+              hebergementId: result.id,
+              type: 'new_hebergement',
+              ville: formData.ville,
+              nom: formData.nom,
+            },
+          });
         }
-      } catch (err) {
-        set((state) => ({ listings: state.listings.filter((l) => l.id !== localListing.id) }));
-        if (__DEV__) console.error('addListing error:', err);
       }
+    } catch (err) {
+      set((state) => ({ listings: state.listings.filter((l) => l.id !== localListing.id) }));
+      throw err;
     }
   },
 

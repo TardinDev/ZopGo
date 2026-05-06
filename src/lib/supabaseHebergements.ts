@@ -62,7 +62,7 @@ export async function insertHebergement(hebergement: {
 
   if (error) {
     if (__DEV__) console.error('Error inserting hebergement:', error.message);
-    return null;
+    throw new Error(error.message);
   }
   return data as SupabaseHebergement;
 }
