@@ -12,7 +12,7 @@ import {
   useReservationsStore,
   useAdminMessagesStore,
 } from '../../../stores';
-import { AnimatedTabScreen } from '../../../components/ui';
+import { AnimatedTabScreen, EmptyState } from '../../../components/ui';
 import { TabSelector } from '../../../components/voyages';
 import {
   NotificationCard,
@@ -357,11 +357,12 @@ export default function MessagesTab() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
               ListEmptyComponent={
-                <View style={{ alignItems: 'center', marginTop: 60 }}>
-                  <Text style={{ color: 'white', fontSize: 14, opacity: 0.8 }}>
-                    Aucune annonce pour le moment.
-                  </Text>
-                </View>
+                <EmptyState
+                  icon="megaphone-outline"
+                  title="Pas d'annonce pour le moment"
+                  description="Reviens plus tard, l'équipe ZopGo prépare des choses..."
+                  iconSize={56}
+                />
               }
               renderItem={({ item }) => (
                 <AdminMessageCard
@@ -377,6 +378,14 @@ export default function MessagesTab() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              ListEmptyComponent={
+                <EmptyState
+                  icon="notifications-outline"
+                  title="Aucune notification"
+                  description="On t'enverra un signal dès qu'il se passe quelque chose."
+                  iconSize={56}
+                />
+              }
               renderItem={({ item }) => {
                 const action = getNotificationAction(item);
                 return (
@@ -396,6 +405,14 @@ export default function MessagesTab() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              ListEmptyComponent={
+                <EmptyState
+                  icon="chatbubbles-outline"
+                  title="Pas encore de messages"
+                  description="Tes échanges avec chauffeurs et hébergeurs apparaitront ici."
+                  iconSize={56}
+                />
+              }
               renderItem={({ item }) => (
                 <MessageCard
                   message={item}

@@ -5,8 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { AnimatedTabScreen, Confetti } from '../../../components/ui';
+import { AnimatedTabScreen, Confetti, EmptyState, CoachMark } from '../../../components/ui';
 import { shouldCelebrateFirstPublish } from '../../../utils/firstPublishCelebration';
+import { shouldShowCoachMark, markCoachMarkSeen } from '../../../utils/coachMarkSeen';
 import { useHebergementsStore } from '../../../stores/hebergementsStore';
 import { useAuthStore, ACCOMMODATION_TYPES } from '../../../stores/authStore';
 import { toast } from '../../../stores/toastStore';
@@ -26,6 +27,16 @@ export default function MesHebergementsTab() {
   const { listings, formData, addListing, removeListing, toggleStatus, updateForm, addFormImage, removeFormImage, loadListings } = useHebergementsStore();
   const [isUploading, setIsUploading] = useState(false);
   const [confettiVisible, setConfettiVisible] = useState(false);
+  const [coachVisible, setCoachVisible] = useState(false);
+
+  useEffect(() => {
+    shouldShowCoachMark('hebergement').then(setCoachVisible);
+  }, []);
+
+  const dismissCoach = () => {
+    setCoachVisible(false);
+    void markCoachMarkSeen('hebergement');
+  };
 
   useEffect(() => {
     if (supabaseProfileId) {
@@ -81,6 +92,7 @@ export default function MesHebergementsTab() {
 
     try {
       await addListing(user.id, supabaseProfileId, imageUrls);
+      if (coachVisible) dismissCoach();
       const isFirst = await shouldCelebrateFirstPublish('hebergement');
       if (isFirst) {
         setConfettiVisible(true);
@@ -126,6 +138,13 @@ export default function MesHebergementsTab() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           >
+            <CoachMark
+              visible={coachVisible}
+              title="Commence ici !"
+              message="Remplis le formulaire ci-dessous et publie ton premier logement."
+              arrowDirection="down"
+              onDismiss={dismissCoach}
+            />
             {/* Formulaire */}
             <View style={{
               backgroundColor: 'white',
@@ -520,15 +539,12 @@ export default function MesHebergementsTab() {
 
             {/* Empty state */}
             {activeListings.length === 0 && (
-              <View style={{ alignItems: 'center', marginTop: 32, paddingHorizontal: 20 }}>
-                <MaterialCommunityIcons name="home-city-outline" size={48} color="rgba(255,255,255,0.6)" />
-                <Text style={{ fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.8)', marginTop: 12, textAlign: 'center' }}>
-                  Aucun logement publié
-                </Text>
-                <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 4, textAlign: 'center' }}>
-                  Remplissez le formulaire ci-dessus pour ajouter votre premier logement
-                </Text>
-              </View>
+              <EmptyState
+                icon="bed-outline"
+                title="Aucun logement publié"
+                description="Remplis le formulaire ci-dessus pour ajouter ton premier logement"
+                iconSize={56}
+              />
             )}
           </ScrollView>
         </SafeAreaView>

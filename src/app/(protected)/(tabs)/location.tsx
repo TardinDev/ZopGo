@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocationStore } from '../../../stores';
-import { AnimatedTabScreen } from '../../../components/ui';
+import { AnimatedTabScreen, EmptyState } from '../../../components/ui';
 import {
   LocationHeader,
   LocationSearchBar,
@@ -54,15 +54,12 @@ export default function LocationTab() {
                   </View>
                 ))
               ) : (
-                <View style={styles.emptyState}>
-                  <View style={styles.emptyIconContainer}>
-                    <Ionicons name="car-sport-outline" size={48} color="#9CA3AF" />
-                  </View>
-                  <Text style={styles.emptyTitle}>Aucun véhicule trouvé</Text>
-                  <Text style={styles.emptySubtitle}>
-                    Essayez de modifier vos filtres de recherche
-                  </Text>
-                </View>
+                <EmptyState
+                  icon="car-sport-outline"
+                  title="Les véhicules sont au garage..."
+                  description="Essaie de modifier tes filtres pour les voir sortir."
+                  iconSize={56}
+                />
               )}
 
               <View style={{ height: 100 }} />

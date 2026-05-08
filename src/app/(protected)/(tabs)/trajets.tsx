@@ -5,8 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { AnimatedTabScreen, PickerModal, PickerOption, Confetti } from '../../../components/ui';
+import { AnimatedTabScreen, PickerModal, PickerOption, Confetti, EmptyState, CoachMark } from '../../../components/ui';
 import { shouldCelebrateFirstPublish } from '../../../utils/firstPublishCelebration';
+import { shouldShowCoachMark, markCoachMarkSeen } from '../../../utils/coachMarkSeen';
 import { COLORS } from '../../../constants';
 import { useTrajetsStore } from '../../../stores/trajetsStore';
 import { useAuthStore } from '../../../stores/authStore';
@@ -53,6 +54,16 @@ export default function TrajetsTab() {
   const [showCouleurPicker, setShowCouleurPicker] = useState(false);
   const [showPlacesPicker, setShowPlacesPicker] = useState(false);
   const [confettiVisible, setConfettiVisible] = useState(false);
+  const [coachVisible, setCoachVisible] = useState(false);
+
+  useEffect(() => {
+    shouldShowCoachMark('trajet').then(setCoachVisible);
+  }, []);
+
+  const dismissCoach = () => {
+    setCoachVisible(false);
+    void markCoachMarkSeen('trajet');
+  };
 
   // Charger les trajets au montage
   useEffect(() => {
@@ -77,6 +88,7 @@ export default function TrajetsTab() {
     }
     try {
       await addTrajet(user.id, supabaseProfileId);
+      if (coachVisible) dismissCoach();
       const isFirst = await shouldCelebrateFirstPublish('trajet');
       if (isFirst) {
         setConfettiVisible(true);
@@ -122,6 +134,13 @@ export default function TrajetsTab() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
           >
+            <CoachMark
+              visible={coachVisible}
+              title="Commence ici !"
+              message="Remplis le formulaire ci-dessous et publie ton premier trajet."
+              arrowDirection="down"
+              onDismiss={dismissCoach}
+            />
             {/* Formulaire */}
             <View style={{
               backgroundColor: 'white',
@@ -499,15 +518,12 @@ export default function TrajetsTab() {
 
             {/* Empty state */}
             {mesTrajetsEnAttente.length === 0 && (
-              <View style={{ alignItems: 'center', marginTop: 32, paddingHorizontal: 20 }}>
-                <MaterialCommunityIcons name="road-variant" size={48} color="rgba(255,255,255,0.6)" />
-                <Text style={{ fontSize: 16, fontWeight: '600', color: 'rgba(255,255,255,0.8)', marginTop: 12, textAlign: 'center' }}>
-                  Aucun trajet publié
-                </Text>
-                <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginTop: 4, textAlign: 'center' }}>
-                  Remplissez le formulaire ci-dessus pour proposer votre premier trajet
-                </Text>
-              </View>
+              <EmptyState
+                icon="car-sport-outline"
+                title="Aucun trajet en route"
+                description="Remplis le formulaire ci-dessus pour proposer ton premier trajet"
+                iconSize={56}
+              />
             )}
           </ScrollView>
         </SafeAreaView>
