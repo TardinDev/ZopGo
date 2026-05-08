@@ -31,7 +31,34 @@ interface ClerkSecondFactor {
 }
 
 interface ClerkError {
-  errors?: { longMessage?: string; message?: string }[];
+  errors?: { code?: string; longMessage?: string; message?: string }[];
+}
+
+// Map Clerk error codes to friendly French messages so users don't see
+// raw "form_password_incorrect" or stack-trace-ish text.
+function friendlyAuthError(err: ClerkError | undefined): string {
+  const first = err?.errors?.[0];
+  switch (first?.code) {
+    case 'form_password_incorrect':
+      return "Hmm, ce n'est pas le bon mot de passe. Réessaie.";
+    case 'form_identifier_not_found':
+      return "On ne te reconnaît pas... Vérifie ton email.";
+    case 'form_identifier_exists':
+      return "Cet email a déjà un compte. Connecte-toi à la place.";
+    case 'session_exists':
+      return "Tu es déjà connecté ailleurs.";
+    case 'form_password_pwned':
+      return "Ce mot de passe a fuité ailleurs. Choisis-en un autre, plus sûr.";
+    case 'form_password_length_too_short':
+      return "Mot de passe trop court — au moins 8 caractères.";
+    case 'verification_failed':
+    case 'form_code_incorrect':
+      return "Le code est incorrect. Vérifie l'email et réessaie.";
+    case 'too_many_requests':
+      return "Beaucoup de tentatives... Attends une minute avant de réessayer.";
+    default:
+      return first?.longMessage || first?.message || "Oups, une erreur est survenue.";
+  }
 }
 import { ModeTransition } from '../components/ui';
 import { COLORS } from '../constants/colors';
@@ -77,6 +104,14 @@ export default function AuthScreen() {
   const [showNewResetPassword, setShowNewResetPassword] = useState(false);
   const [showConfirmResetPassword, setShowConfirmResetPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [authErrorMsg, setAuthErrorMsg] = useState<string | null>(null);
+
+  // Auto-dismiss the friendly error banner after a few seconds.
+  useEffect(() => {
+    if (!authErrorMsg) return;
+    const t = setTimeout(() => setAuthErrorMsg(null), 5000);
+    return () => clearTimeout(t);
+  }, [authErrorMsg]);
 
   const nameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
@@ -166,6 +201,7 @@ export default function AuthScreen() {
       Haptics.selectionAsync().catch(() => {});
     }
     setIsLogin(!isLogin);
+    setAuthErrorMsg(null);
   };
 
   const handleRoleSwitchComplete = () => {
@@ -175,6 +211,7 @@ export default function AuthScreen() {
   };
 
   const handleSubmit = async () => {
+    setAuthErrorMsg(null);
     const email = formData.email.trim();
     const notifyError = () => {
       if (Platform.OS === 'ios') {
@@ -263,12 +300,7 @@ export default function AuthScreen() {
       if (Platform.OS === 'ios') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       }
-      const clerkErr = err as ClerkError;
-      const errorMessage =
-        clerkErr?.errors?.[0]?.longMessage ||
-        clerkErr?.errors?.[0]?.message ||
-        'Une erreur est survenue';
-      Alert.alert('Erreur', errorMessage);
+      setAuthErrorMsg(friendlyAuthError(err as ClerkError));
     } finally {
       setIsLoading(false);
     }
@@ -1106,6 +1138,26 @@ export default function AuthScreen() {
                   </View>
                 )}
 
+                {/* Friendly error banner — sad icon + warm message */}
+                {authErrorMsg && (
+                  <Animated.View
+                    entering={FadeInDown.springify().damping(15)}
+                    style={styles.errorBanner}>
+                    <Pressable
+                      onPress={() => setAuthErrorMsg(null)}
+                      style={styles.errorBannerInner}>
+                      <View style={styles.errorIconWrap}>
+                        <Ionicons name="sad-outline" size={28} color="#EF4444" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.errorTitle}>Aïe…</Text>
+                        <Text style={styles.errorMessage}>{authErrorMsg}</Text>
+                      </View>
+                      <Ionicons name="close" size={18} color="#B91C1C" />
+                    </Pressable>
+                  </Animated.View>
+                )}
+
                 {/* Name field (only for register) */}
                 {!isLogin && (
                   <View style={styles.fieldGroup}>
@@ -1517,6 +1569,38 @@ const styles = StyleSheet.create({
   },
   accommodationLabelActive: {
     color: VIOLET,
+  },
+  errorBanner: {
+    marginBottom: 12,
+  },
+  errorBannerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  errorIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#991B1B',
+  },
+  errorMessage: {
+    fontSize: 13,
+    color: '#7F1D1D',
+    marginTop: 2,
   },
   fieldGroup: {
     marginBottom: 7,
