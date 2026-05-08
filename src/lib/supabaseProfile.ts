@@ -28,7 +28,14 @@ export async function fetchProfileByClerkId(clerkId: string): Promise<SupabasePr
     .eq('clerk_id', clerkId)
     .single();
 
-  if (error || !data) return null;
+  if (error || !data) {
+    // PGRST116 = no rows (legitimate first-login case); other codes are real failures.
+    if (error && error.code !== 'PGRST116') {
+      console.warn('[fetchProfileByClerkId] FAILED', { code: error.code, message: error.message });
+    }
+    return null;
+  }
+  console.log('[fetchProfileByClerkId] OK', data.id);
   return data as SupabaseProfile;
 }
 
@@ -63,9 +70,10 @@ export async function upsertProfile(
     .single();
 
   if (error) {
-    if (__DEV__) console.error('Supabase upsertProfile error:', error.message);
+    console.warn('[upsertProfile] FAILED', { code: error.code, message: error.message, details: error.details });
     throw new Error(error.message);
   }
+  console.log('[upsertProfile] OK', (data as SupabaseProfile).id);
   return data as SupabaseProfile;
 }
 

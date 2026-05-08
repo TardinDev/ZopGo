@@ -30,6 +30,8 @@ function createMockChain(resolvedValue: { data: unknown; error: unknown }) {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 describe('supabaseTrajets', () => {
@@ -91,63 +93,63 @@ describe('supabaseTrajets', () => {
       expect(result).toEqual({ id: 'new_t1' });
     });
 
-    it('returns null on Supabase error', async () => {
+    it('throws on Supabase error so callers surface the failure', async () => {
       const mockChain = createMockChain({
         data: null,
         error: { message: 'Insert error' },
       });
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
-      const result = await insertTrajet({
-        chauffeur_id: 'c1',
-        ville_depart: 'Libreville',
-        ville_arrivee: 'Franceville',
-        prix: 15000,
-        vehicule: 'voiture',
-        places_disponibles: 4,
-      });
-
-      expect(result).toBeNull();
+      await expect(
+        insertTrajet({
+          chauffeur_id: 'c1',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Franceville',
+          prix: 15000,
+          vehicule: 'voiture',
+          places_disponibles: 4,
+        })
+      ).rejects.toThrow('Insert error');
     });
 
-    it('returns null for invalid city', async () => {
-      const result = await insertTrajet({
-        chauffeur_id: 'c1',
-        ville_depart: '',
-        ville_arrivee: 'Franceville',
-        prix: 15000,
-        vehicule: 'voiture',
-        places_disponibles: 4,
-      });
-
-      expect(result).toBeNull();
+    it('throws for invalid city', async () => {
+      await expect(
+        insertTrajet({
+          chauffeur_id: 'c1',
+          ville_depart: '',
+          ville_arrivee: 'Franceville',
+          prix: 15000,
+          vehicule: 'voiture',
+          places_disponibles: 4,
+        })
+      ).rejects.toThrow();
       expect(supabase.from).not.toHaveBeenCalled();
     });
 
-    it('returns null for invalid price', async () => {
-      const result = await insertTrajet({
-        chauffeur_id: 'c1',
-        ville_depart: 'Libreville',
-        ville_arrivee: 'Franceville',
-        prix: -100,
-        vehicule: 'voiture',
-        places_disponibles: 4,
-      });
-
-      expect(result).toBeNull();
+    it('throws for invalid price', async () => {
+      await expect(
+        insertTrajet({
+          chauffeur_id: 'c1',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Franceville',
+          prix: -100,
+          vehicule: 'voiture',
+          places_disponibles: 4,
+        })
+      ).rejects.toThrow();
     });
 
-    it('returns null for invalid places', async () => {
-      const result = await insertTrajet({
-        chauffeur_id: 'c1',
-        ville_depart: 'Libreville',
-        ville_arrivee: 'Franceville',
-        prix: 5000,
-        vehicule: 'voiture',
-        places_disponibles: 0,
-      });
-
-      expect(result).toBeNull();
+    it('throws for invalid places', async () => {
+      await expect(
+        insertTrajet({
+          chauffeur_id: 'c1',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Franceville',
+          prix: 5000,
+          vehicule: 'voiture',
+          places_disponibles: 0,
+        })
+      ).rejects.toThrow();
     });
   });
 

@@ -301,7 +301,7 @@ describe('Flow 1 — Chauffeur publishes trajet → Client voyages list', () => 
     jest.spyOn(console, 'error').mockImplementation(() => {});
     (insertTrajet as jest.Mock).mockRejectedValueOnce(new Error('DB down'));
 
-    await publishTrajetAsChauffeur();
+    await expect(publishTrajetAsChauffeur()).rejects.toThrow('DB down');
     await useVoyagesStore.getState().loadVoyages();
 
     expect(useVoyagesStore.getState().trajets).toHaveLength(0);
@@ -505,7 +505,9 @@ describe('Flow 3 — Push notifications on publication', () => {
         couleur: '',
       },
     });
-    await useTrajetsStore.getState().addTrajet('c1', 'supa_c1');
+    await expect(
+      useTrajetsStore.getState().addTrajet('c1', 'supa_c1')
+    ).rejects.toThrow('boom');
 
     expect(sendPushBroadcast).not.toHaveBeenCalled();
   });
@@ -524,8 +526,11 @@ describe('Flow 3 — Push notifications on publication', () => {
         couleur: '',
       },
     });
-    // No supabaseProfileId → purely local, no remote write, no push
-    await useTrajetsStore.getState().addTrajet('chauffeur_clerk_offline');
+    // No supabaseProfileId → addTrajet now rejects loudly so the chauffeur
+    // sees the failure instead of an empty local-only success.
+    await expect(
+      useTrajetsStore.getState().addTrajet('chauffeur_clerk_offline')
+    ).rejects.toThrow();
 
     expect(insertTrajet).not.toHaveBeenCalled();
     expect(sendPushBroadcast).not.toHaveBeenCalled();

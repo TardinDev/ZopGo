@@ -8,6 +8,8 @@ import {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'log').mockImplementation(() => {});
   useTrajetsStore.setState({
     trajets: [],
     formData: {
@@ -81,7 +83,8 @@ describe('trajetsStore', () => {
         },
       });
 
-      await useTrajetsStore.getState().addTrajet('chauffeur_1');
+      (insertTrajet as jest.Mock).mockResolvedValue({ id: 'supa_t_full' });
+      await useTrajetsStore.getState().addTrajet('chauffeur_1', 'supa_chauffeur_1');
       const trajets = useTrajetsStore.getState().trajets;
       expect(trajets).toHaveLength(1);
       expect(trajets[0].villeDepart).toBe('Libreville');
@@ -95,6 +98,7 @@ describe('trajetsStore', () => {
     });
 
     it('resets form after adding', async () => {
+      (insertTrajet as jest.Mock).mockResolvedValue({ id: 'supa_t_form' });
       useTrajetsStore.setState({
         formData: {
           villeDepart: 'A',
@@ -109,7 +113,7 @@ describe('trajetsStore', () => {
         },
       });
 
-      await useTrajetsStore.getState().addTrajet('chauffeur_1');
+      await useTrajetsStore.getState().addTrajet('chauffeur_1', 'supa_chauffeur_1');
       expect(useTrajetsStore.getState().formData.villeDepart).toBe('');
       expect(useTrajetsStore.getState().formData.marque).toBe('');
     });
@@ -145,8 +149,7 @@ describe('trajetsStore', () => {
       expect(useTrajetsStore.getState().trajets[0].id).toBe('supa_t1');
     });
 
-    it('removes local trajet on Supabase error', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('rolls back local trajet and re-throws on Supabase error', async () => {
       (insertTrajet as jest.Mock).mockRejectedValue(new Error('DB error'));
       useTrajetsStore.setState({
         formData: {
@@ -162,11 +165,13 @@ describe('trajetsStore', () => {
         },
       });
 
-      await useTrajetsStore.getState().addTrajet('c1', 'supa_c1');
+      await expect(
+        useTrajetsStore.getState().addTrajet('c1', 'supa_c1')
+      ).rejects.toThrow('DB error');
       expect(useTrajetsStore.getState().trajets).toHaveLength(0);
     });
 
-    it('does not call Supabase without supabaseProfileId', async () => {
+    it('throws and does not call Supabase without supabaseProfileId', async () => {
       useTrajetsStore.setState({
         formData: {
           villeDepart: 'A',
@@ -181,11 +186,13 @@ describe('trajetsStore', () => {
         },
       });
 
-      await useTrajetsStore.getState().addTrajet('c1');
+      await expect(useTrajetsStore.getState().addTrajet('c1')).rejects.toThrow();
       expect(insertTrajet).not.toHaveBeenCalled();
+      expect(useTrajetsStore.getState().trajets).toHaveLength(0);
     });
 
     it('uses current date when date is empty', async () => {
+      (insertTrajet as jest.Mock).mockResolvedValue({ id: 'supa_t_date' });
       useTrajetsStore.setState({
         formData: {
           villeDepart: 'A',
@@ -200,11 +207,12 @@ describe('trajetsStore', () => {
         },
       });
 
-      await useTrajetsStore.getState().addTrajet('c1');
+      await useTrajetsStore.getState().addTrajet('c1', 'supa_c1');
       expect(useTrajetsStore.getState().trajets[0].date).toBeTruthy();
     });
 
     it('handles invalid prix as 0', async () => {
+      (insertTrajet as jest.Mock).mockResolvedValue({ id: 'supa_t_invalid' });
       useTrajetsStore.setState({
         formData: {
           villeDepart: 'A',
@@ -219,7 +227,7 @@ describe('trajetsStore', () => {
         },
       });
 
-      await useTrajetsStore.getState().addTrajet('c1');
+      await useTrajetsStore.getState().addTrajet('c1', 'supa_c1');
       expect(useTrajetsStore.getState().trajets[0].prix).toBe(0);
       expect(useTrajetsStore.getState().trajets[0].placesDisponibles).toBe(1);
     });

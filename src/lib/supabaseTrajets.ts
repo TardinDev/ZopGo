@@ -44,18 +44,18 @@ export async function insertTrajet(trajet: {
   marque?: string;
   modele?: string;
   couleur?: string;
-}): Promise<SupabaseTrajet | null> {
+}): Promise<SupabaseTrajet> {
   if (!validateCity(trajet.ville_depart) || !validateCity(trajet.ville_arrivee)) {
-    if (__DEV__) console.error('Invalid city name');
-    return null;
+    console.warn('[insertTrajet] FAILED: invalid city name');
+    throw new Error('Ville de départ ou d\'arrivée invalide.');
   }
   if (!validatePrice(trajet.prix)) {
-    if (__DEV__) console.error('Invalid price');
-    return null;
+    console.warn('[insertTrajet] FAILED: invalid price', trajet.prix);
+    throw new Error('Prix invalide.');
   }
   if (!validatePlaces(trajet.places_disponibles)) {
-    if (__DEV__) console.error('Invalid places count');
-    return null;
+    console.warn('[insertTrajet] FAILED: invalid places', trajet.places_disponibles);
+    throw new Error('Nombre de places invalide.');
   }
 
   const sanitizedTrajet = {
@@ -74,9 +74,10 @@ export async function insertTrajet(trajet: {
     .single();
 
   if (error) {
-    if (__DEV__) console.error('Error inserting trajet:', error.message);
-    return null;
+    console.warn('[insertTrajet] FAILED', { code: error.code, message: error.message, details: error.details });
+    throw new Error(error.message);
   }
+  console.log('[insertTrajet] OK', (data as SupabaseTrajet).id);
   return data as SupabaseTrajet;
 }
 

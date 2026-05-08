@@ -60,14 +60,26 @@ export default function TrajetsTab() {
 
   const mesTrajetsEnAttente = trajets.filter((t) => t.status === 'en_attente');
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!formData.villeDepart.trim() || !formData.villeArrivee.trim() || !formData.prix.trim()) {
       Alert.alert('Champs requis', 'Veuillez remplir la ville de départ, la ville d\'arrivée et le prix.');
       return;
     }
     if (!user) return;
-    addTrajet(user.id, supabaseProfileId || undefined);
-    Alert.alert('Trajet publié', 'Votre trajet a été publié avec succès !');
+    if (!supabaseProfileId) {
+      Alert.alert(
+        'Profil non synchronisé',
+        'Votre profil n\'est pas encore connecté à la base. Reconnectez-vous puis réessayez.'
+      );
+      return;
+    }
+    try {
+      await addTrajet(user.id, supabaseProfileId);
+      Alert.alert('Trajet publié', 'Votre trajet a été publié avec succès !');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur inconnue.';
+      Alert.alert('Publication échouée', message);
+    }
   };
 
   const handleRemove = (id: string) => {

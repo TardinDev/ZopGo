@@ -74,47 +74,50 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
     };
     set({ trajets: [localTrajet, ...trajets], formData: { ...initialFormData } });
 
-    if (supabaseProfileId) {
-      try {
-        const result = await insertTrajet({
-          chauffeur_id: supabaseProfileId,
-          ville_depart: formData.villeDepart,
-          ville_arrivee: formData.villeArrivee,
-          prix: parseInt(formData.prix) || 0,
-          vehicule: formData.vehicule,
-          date: formData.date || undefined,
-          places_disponibles: parseInt(formData.placesDisponibles) || 1,
-          marque: formData.marque || undefined,
-          modele: formData.modele || undefined,
-          couleur: formData.couleur || undefined,
-        });
+    if (!supabaseProfileId) {
+      console.warn('[addTrajet] FAILED: supabaseProfileId is null — profile not synced. Login again.');
+      set((state) => ({ trajets: state.trajets.filter((t) => t.id !== localTrajet.id) }));
+      throw new Error('Profil non synchronisé avec la base. Reconnectez-vous puis réessayez.');
+    }
 
-        if (result) {
-          set((state) => ({
-            trajets: state.trajets.map((t) =>
-              t.id === localTrajet.id ? { ...t, id: result.id } : t
-            ),
-          }));
+    try {
+      const result = await insertTrajet({
+        chauffeur_id: supabaseProfileId,
+        ville_depart: formData.villeDepart,
+        ville_arrivee: formData.villeArrivee,
+        prix: parseInt(formData.prix) || 0,
+        vehicule: formData.vehicule,
+        date: formData.date || undefined,
+        places_disponibles: parseInt(formData.placesDisponibles) || 1,
+        marque: formData.marque || undefined,
+        modele: formData.modele || undefined,
+        couleur: formData.couleur || undefined,
+      });
 
-          // Broadcast to all clients (respects notification_preferences on the
-          // Edge Function side). Fire-and-forget.
-          void sendPushBroadcast({
-            category: 'trajets',
-            recipientRole: 'client',
-            title: 'Nouveau trajet disponible',
-            message: `${formData.villeDepart} → ${formData.villeArrivee} — ${formData.prix} FCFA`,
-            data: {
-              trajetId: result.id,
-              type: 'new_trajet',
-              villeDepart: formData.villeDepart,
-              villeArrivee: formData.villeArrivee,
-            },
-          });
-        }
-      } catch (err) {
-        set((state) => ({ trajets: state.trajets.filter((t) => t.id !== localTrajet.id) }));
-        if (__DEV__) console.error('addTrajet error:', err);
-      }
+      set((state) => ({
+        trajets: state.trajets.map((t) =>
+          t.id === localTrajet.id ? { ...t, id: result.id } : t
+        ),
+      }));
+
+      // Broadcast to all clients (respects notification_preferences on the
+      // Edge Function side). Fire-and-forget.
+      void sendPushBroadcast({
+        category: 'trajets',
+        recipientRole: 'client',
+        title: 'Nouveau trajet disponible',
+        message: `${formData.villeDepart} → ${formData.villeArrivee} — ${formData.prix} FCFA`,
+        data: {
+          trajetId: result.id,
+          type: 'new_trajet',
+          villeDepart: formData.villeDepart,
+          villeArrivee: formData.villeArrivee,
+        },
+      });
+    } catch (err) {
+      set((state) => ({ trajets: state.trajets.filter((t) => t.id !== localTrajet.id) }));
+      console.warn('[addTrajet] FAILED', err instanceof Error ? err.message : err);
+      throw err;
     }
   },
 
