@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,13 @@ import {
   Dimensions,
   ImageSourcePropType,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,6 +54,22 @@ export default function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const currentData = onboardingData[currentStep];
   const isLastStep = currentStep === onboardingData.length - 1;
+
+  // Subtle pulse on the main CTA so it draws the eye without being annoying.
+  const pulse = useSharedValue(1);
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.04, { duration: 900 }),
+        withTiming(1, { duration: 900 })
+      ),
+      -1,
+      false
+    );
+  }, [pulse]);
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
 
   const handleNext = () => {
     if (!isLastStep) {
@@ -118,25 +141,23 @@ export default function OnboardingScreen() {
           </View>
 
           {/* Main Button */}
-          <TouchableOpacity onPress={handleNext} activeOpacity={0.85}>
-            <LinearGradient
-              colors={isLastStep ? [COLORS.primary, '#1E40AF'] : ['#FFFFFF', '#F3F4F6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.nextButton}
-            >
-              <Text style={[styles.nextText, isLastStep && styles.nextTextWhite]}>
-                {isLastStep ? 'Commencer' : 'Suivant'}
-              </Text>
-              <View style={[styles.nextIconCircle, isLastStep && styles.nextIconCircleWhite]}>
-                <Ionicons
-                  name="arrow-forward"
-                  size={20}
-                  color={isLastStep ? COLORS.primary : COLORS.white}
-                />
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+          <Animated.View style={pulseStyle}>
+            <TouchableOpacity onPress={handleNext} activeOpacity={0.85}>
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.nextButton}
+              >
+                <Text style={[styles.nextText, styles.nextTextWhite]}>
+                  {isLastStep ? 'Commencer' : 'Suivant'}
+                </Text>
+                <View style={[styles.nextIconCircle, styles.nextIconCircleWhite]}>
+                  <Ionicons name="arrow-forward" size={20} color={COLORS.primary} />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </SafeAreaView>
     </View>
