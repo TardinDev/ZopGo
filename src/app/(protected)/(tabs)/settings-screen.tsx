@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { COLORS } from '../../../constants';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore } from '../../../stores/authStore';
@@ -11,8 +12,10 @@ import { useAuthStore } from '../../../stores/authStore';
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
+  const { user: clerkUser } = useUser();
   const { logout } = useAuthStore();
   const { generalSettings, updateGeneralSettings } = useSettingsStore();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleLogout = () => {
     Alert.alert('Déconnexion', 'Voulez-vous vous déconnecter ?', [
@@ -32,6 +35,61 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  // The profile soft-delete is handled by supabase/functions/clerk-webhook on
+  // user.deleted (sets profiles.deleted_at), then RLS filters the user out of
+  // public lists. Mobile just deletes the Clerk user + clears local state.
+  const performAccountDeletion = async () => {
+    if (!clerkUser) return;
+    setIsDeleting(true);
+    try {
+      await clerkUser.delete();
+      logout();
+      router.replace('/auth');
+    } catch (err) {
+      console.warn('[deleteAccount] FAILED', err instanceof Error ? err.message : err);
+      const message = err instanceof Error ? err.message : 'Erreur inconnue.';
+      Alert.alert(
+        'Suppression impossible',
+        `Une erreur est survenue : ${message}\n\nVérifiez votre connexion et réessayez.`
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (isDeleting) return;
+    // Step 1 — soft retention: one prompt, no insisting.
+    Alert.alert(
+      'Avant de partir',
+      'ZopGo est gratuit et vous pouvez vous reconnecter quand vous le souhaitez. Souhaitez-vous vraiment supprimer votre compte ?',
+      [
+        { text: 'Rester', style: 'cancel' },
+        {
+          text: 'Continuer',
+          style: 'destructive',
+          onPress: () => {
+            // Step 2 — final destructive confirmation.
+            Alert.alert(
+              'Supprimer le compte',
+              'Cette action est irréversible. Votre profil et vos données associées seront supprimés.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Supprimer définitivement',
+                  style: 'destructive',
+                  onPress: () => {
+                    void performAccountDeletion();
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -196,6 +254,26 @@ export default function SettingsScreen() {
           <View className="flex-row items-center">
             <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
             <Text className="ml-2 text-base font-bold text-red-500">Se déconnecter</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Delete account */}
+        <TouchableOpacity
+          onPress={handleDeleteAccount}
+          disabled={isDeleting}
+          className="mt-4 items-center rounded-2xl py-4"
+          style={{
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderColor: COLORS.error,
+            opacity: isDeleting ? 0.5 : 1,
+          }}
+          activeOpacity={0.8}>
+          <View className="flex-row items-center">
+            <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+            <Text className="ml-2 text-sm font-semibold text-red-500">
+              {isDeleting ? 'Suppression en cours…' : 'Supprimer mon compte'}
+            </Text>
           </View>
         </TouchableOpacity>
       </ScrollView>
