@@ -5,10 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { AnimatedTabScreen, PickerModal, PickerOption } from '../../../components/ui';
+import { AnimatedTabScreen, PickerModal, PickerOption, Confetti } from '../../../components/ui';
+import { shouldCelebrateFirstPublish } from '../../../utils/firstPublishCelebration';
 import { COLORS } from '../../../constants';
 import { useTrajetsStore } from '../../../stores/trajetsStore';
 import { useAuthStore } from '../../../stores/authStore';
+import { toast } from '../../../stores/toastStore';
 import { VehicleType } from '../../../types';
 
 const MARQUES: PickerOption[] = [
@@ -50,6 +52,7 @@ export default function TrajetsTab() {
   const [showMarquePicker, setShowMarquePicker] = useState(false);
   const [showCouleurPicker, setShowCouleurPicker] = useState(false);
   const [showPlacesPicker, setShowPlacesPicker] = useState(false);
+  const [confettiVisible, setConfettiVisible] = useState(false);
 
   // Charger les trajets au montage
   useEffect(() => {
@@ -62,23 +65,34 @@ export default function TrajetsTab() {
 
   const handlePublish = async () => {
     if (!formData.villeDepart.trim() || !formData.villeArrivee.trim() || !formData.prix.trim()) {
-      Alert.alert('Champs requis', 'Veuillez remplir la ville de départ, la ville d\'arrivée et le prix.');
+      toast.error('Remplis la ville de départ, d\'arrivée et le prix.', { title: 'Champs requis' });
       return;
     }
     if (!user) return;
     if (!supabaseProfileId) {
-      Alert.alert(
-        'Profil non synchronisé',
-        'Votre profil n\'est pas encore connecté à la base. Reconnectez-vous puis réessayez.'
-      );
+      toast.error('Profil pas encore connecté à la base. Reconnecte-toi puis réessaie.', {
+        title: 'Profil non synchronisé',
+      });
       return;
     }
     try {
       await addTrajet(user.id, supabaseProfileId);
-      Alert.alert('Trajet publié', 'Votre trajet a été publié avec succès !');
+      const isFirst = await shouldCelebrateFirstPublish('trajet');
+      if (isFirst) {
+        setConfettiVisible(true);
+        setTimeout(() => setConfettiVisible(false), 3000);
+        toast.success('Premier trajet en ligne ! Bienvenue dans la team ZopGo 🎉', {
+          title: 'Bravo !',
+          durationMs: 4500,
+        });
+      } else {
+        toast.success('Ton trajet est en ligne, les voyageurs vont le voir 🚗', {
+          title: 'Trajet publié',
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue.';
-      Alert.alert('Publication échouée', message);
+      toast.error(message, { title: 'Publication échouée', durationMs: 5000 });
     }
   };
 
@@ -92,6 +106,7 @@ export default function TrajetsTab() {
   return (
     <AnimatedTabScreen>
       <LinearGradient colors={COLORS.gradients.cyan} style={{ flex: 1 }}>
+        <Confetti visible={confettiVisible} />
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>

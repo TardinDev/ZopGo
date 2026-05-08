@@ -7,7 +7,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { Hebergement } from '../../../types';
 import { COLORS } from '../../../constants';
 import { useHebergementsDiscoveryStore } from '../../../stores';
-import { SkeletonList } from '../../../components/ui';
+import { SkeletonList, RotatingLoadingText } from '../../../components/ui';
+
+const HEBERGEMENT_LOADING_MESSAGES = [
+  'On scanne les hôtels...',
+  'On prépare les meilleures chambres...',
+  'On déplie les couvertures...',
+  'Presque prêt...',
+];
 import { hebergementTypes } from '../../../stores/hebergementsDiscoveryStore';
 import {
   HebergementCard,
@@ -125,7 +132,10 @@ export default function HebergementsTab() {
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="white" />
           }>
           {isLoading ? (
-            <SkeletonList count={4} />
+            <>
+              <RotatingLoadingText messages={HEBERGEMENT_LOADING_MESSAGES} />
+              <SkeletonList count={4} />
+            </>
           ) : filteredHebergements.length > 0 ? (
             filteredHebergements.map((hebergement, i) => (
               <HebergementCard
@@ -137,8 +147,9 @@ export default function HebergementsTab() {
             ))
           ) : (
             <EmptyResults
-              message="Aucun hébergement trouvé"
-              subMessage="Essayez une autre recherche ou un autre filtre"
+              icon="bed-outline"
+              message="Le Gabon prépare ses chambres..."
+              subMessage="Essaie une autre ville ou un autre type de logement"
               actionLabel="Voir tous"
               onAction={() => { setSelectedType('All'); setSearchLocation(''); }}
             />

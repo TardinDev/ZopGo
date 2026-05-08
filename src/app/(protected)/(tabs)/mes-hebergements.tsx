@@ -5,9 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { AnimatedTabScreen } from '../../../components/ui';
+import { AnimatedTabScreen, Confetti } from '../../../components/ui';
+import { shouldCelebrateFirstPublish } from '../../../utils/firstPublishCelebration';
 import { useHebergementsStore } from '../../../stores/hebergementsStore';
 import { useAuthStore, ACCOMMODATION_TYPES } from '../../../stores/authStore';
+import { toast } from '../../../stores/toastStore';
 import { uploadHebergementImage } from '../../../lib/supabaseHebergementImages';
 import { AccommodationType } from '../../../types';
 
@@ -23,6 +25,7 @@ export default function MesHebergementsTab() {
   const { user, supabaseProfileId } = useAuthStore();
   const { listings, formData, addListing, removeListing, toggleStatus, updateForm, addFormImage, removeFormImage, loadListings } = useHebergementsStore();
   const [isUploading, setIsUploading] = useState(false);
+  const [confettiVisible, setConfettiVisible] = useState(false);
 
   useEffect(() => {
     if (supabaseProfileId) {
@@ -49,15 +52,14 @@ export default function MesHebergementsTab() {
 
   const handlePublish = async () => {
     if (!formData.nom.trim() || !formData.ville.trim() || !formData.prixParNuit.trim()) {
-      Alert.alert('Champs requis', 'Veuillez remplir le nom, la ville et le prix par nuit.');
+      toast.error('Remplis le nom, la ville et le prix par nuit.', { title: 'Champs requis' });
       return;
     }
     if (!user) return;
     if (!supabaseProfileId) {
-      Alert.alert(
-        'Profil non synchronisé',
-        'Votre profil n\'est pas encore connecté à la base. Reconnectez-vous puis réessayez.'
-      );
+      toast.error('Profil pas encore connecté à la base. Reconnecte-toi puis réessaie.', {
+        title: 'Profil non synchronisé',
+      });
       return;
     }
 
@@ -79,10 +81,22 @@ export default function MesHebergementsTab() {
 
     try {
       await addListing(user.id, supabaseProfileId, imageUrls);
-      Alert.alert('Logement ajouté', 'Votre logement a été publié avec succès !');
+      const isFirst = await shouldCelebrateFirstPublish('hebergement');
+      if (isFirst) {
+        setConfettiVisible(true);
+        setTimeout(() => setConfettiVisible(false), 3000);
+        toast.success('Premier logement en ligne ! Bienvenue dans la team ZopGo 🎉', {
+          title: 'Bravo !',
+          durationMs: 4500,
+        });
+      } else {
+        toast.success('Ton logement est en ligne, les voyageurs vont le voir 🏠', {
+          title: 'Logement publié',
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue.';
-      Alert.alert('Publication échouée', message);
+      toast.error(message, { title: 'Publication échouée', durationMs: 5000 });
     }
   };
 
@@ -96,6 +110,7 @@ export default function MesHebergementsTab() {
   return (
     <AnimatedTabScreen>
       <LinearGradient colors={['#8B5CF6', '#A855F7']} style={{ flex: 1 }}>
+        <Confetti visible={confettiVisible} />
         <SafeAreaView style={{ flex: 1 }}>
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>

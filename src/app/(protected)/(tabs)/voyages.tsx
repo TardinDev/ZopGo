@@ -9,7 +9,14 @@ import type { Voyage } from '../../../types';
 import { COLORS } from '../../../constants';
 import { useVoyagesStore } from '../../../stores';
 import { transportTypes } from '../../../stores/voyagesStore';
-import { AnimatedTabScreen, SkeletonList } from '../../../components/ui';
+import { AnimatedTabScreen, SkeletonList, RotatingLoadingText } from '../../../components/ui';
+
+const VOYAGE_LOADING_MESSAGES = [
+  'On ratisse le Gabon...',
+  'Les motos s\'échauffent...',
+  'On cherche les meilleurs trajets...',
+  'Presque prêt...',
+];
 import {
   VoyageCard,
   TypeFilter,
@@ -146,7 +153,10 @@ export default function VoyagesTab() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="white" />
             }>
             {isLoading ? (
-              <SkeletonList count={4} />
+              <>
+                <RotatingLoadingText messages={VOYAGE_LOADING_MESSAGES} />
+                <SkeletonList count={4} />
+              </>
             ) : filteredVoyages.length > 0 ? (
               filteredVoyages.map((voyage, i) => (
                 <VoyageCard
@@ -159,8 +169,9 @@ export default function VoyagesTab() {
             ) : (
               <Animated.View entering={FadeIn.duration(300)}>
                 <EmptyResults
-                  message="Aucun voyage trouvé"
-                  subMessage="Essayez une autre recherche ou un autre filtre"
+                  icon="car-sport-outline"
+                  message="Les chauffeurs dorment encore..."
+                  subMessage="Essaie une autre ville ou un autre type de véhicule"
                   actionLabel="Voir tous les voyages"
                   onAction={resetFilters}
                 />

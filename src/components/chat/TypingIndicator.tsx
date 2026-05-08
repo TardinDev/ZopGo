@@ -9,12 +9,20 @@ import Animated, {
   withDelay,
   FadeIn,
 } from 'react-native-reanimated';
+import { useRotatingMessage } from '../../hooks/useRotatingMessage';
 
 interface TypingIndicatorProps {
   streamingContent: string;
 }
 
 const DOT_COLORS = ['#2162FE', '#4facfe', '#8B5CF6'];
+
+const THINKING_MESSAGES = [
+  'Je réfléchis…',
+  'Je consulte mes notes sur le Gabon…',
+  'Je prépare une réponse aux petits oignons…',
+  'Encore un instant…',
+];
 
 function AnimatedDot({ delay, color }: { delay: number; color: string }) {
   const scale = useSharedValue(0.6);
@@ -93,17 +101,24 @@ export function TypingIndicator({ streamingContent }: TypingIndicatorProps) {
     );
   }
 
-  // Sans contenu : trois dots gradient pulsants
+  return <ThinkingBubble />;
+}
+
+function ThinkingBubble() {
+  const message = useRotatingMessage(THINKING_MESSAGES, 2200);
   return (
     <Animated.View
       style={styles.row}
       entering={FadeIn.duration(200)}
       accessibilityRole="text"
       accessibilityLabel="L'assistant réfléchit">
-      <View style={[styles.bubble, styles.dotsBubble]}>
-        <AnimatedDot delay={0} color={DOT_COLORS[0]} />
-        <AnimatedDot delay={200} color={DOT_COLORS[1]} />
-        <AnimatedDot delay={400} color={DOT_COLORS[2]} />
+      <View style={[styles.bubble, styles.thinkingBubble]}>
+        <View style={styles.dotsRow}>
+          <AnimatedDot delay={0} color={DOT_COLORS[0]} />
+          <AnimatedDot delay={200} color={DOT_COLORS[1]} />
+          <AnimatedDot delay={400} color={DOT_COLORS[2]} />
+        </View>
+        <Text style={styles.thinkingText}>{message}</Text>
       </View>
     </Animated.View>
   );
@@ -141,6 +156,24 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 18,
     paddingLeft: 20,
+  },
+  thinkingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingLeft: 20,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  thinkingText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
   dot: {
     width: 9,

@@ -5,6 +5,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withRepeat,
+  withSequence,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../../constants';
@@ -27,20 +29,37 @@ export function EmptyResults({
 }: EmptyResultsProps) {
   const translateY = useSharedValue(20);
   const opacity = useSharedValue(0);
+  const iconWiggle = useSharedValue(0);
 
   useEffect(() => {
     translateY.value = withSpring(0, SPRING_CONFIG.default);
     opacity.value = withTiming(1, TIMING_CONFIG.normal);
-  }, [translateY, opacity]);
+    // Subtle wiggle: rotate -8° / +8° / 0°, repeating slowly so the screen feels alive.
+    iconWiggle.value = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 600 }),
+        withTiming(8, { duration: 600 }),
+        withTiming(0, { duration: 600 })
+      ),
+      -1,
+      false
+    );
+  }, [translateY, opacity, iconWiggle]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
 
+  const iconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${iconWiggle.value}deg` }],
+  }));
+
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <Ionicons name={icon} size={64} color="white" />
+      <Animated.View style={iconAnimatedStyle}>
+        <Ionicons name={icon} size={64} color="white" />
+      </Animated.View>
       <Text style={styles.message}>{message}</Text>
       {subMessage && <Text style={styles.subMessage}>{subMessage}</Text>}
       {actionLabel && onAction && (
