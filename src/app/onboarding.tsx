@@ -86,7 +86,7 @@ export default function OnboardingScreen() {
           {!isLastStep && (
             <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
               <Text style={styles.skipText}>Passer</Text>
-              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.9)" />
+              <Ionicons name="chevron-forward" size={16} color={COLORS.gray[900]} />
             </TouchableOpacity>
           )}
         </View>
@@ -181,16 +181,21 @@ const styles = StyleSheet.create({
   skipButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: COLORS.yellow,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     gap: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   skipText: {
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '600',
+    color: COLORS.gray[900],
+    fontWeight: '700',
   },
   contentSection: {
     alignItems: 'center',
