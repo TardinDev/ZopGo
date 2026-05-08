@@ -11,6 +11,7 @@ import Constants from 'expo-constants';
 import { tokenCache } from '../utils/tokenCache';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ToastHost } from '../components/ui/ToastHost';
+import { OfflineBanner } from '../components/ui/OfflineBanner';
 
 // Prevent splash from auto-hiding until the app is ready.
 // Wrapped in try/catch because on some Android builds this can throw
@@ -63,6 +64,7 @@ function RootLayout() {
                 <Stack.Screen name="auth" />
                 <Stack.Screen name="(protected)" options={{ contentStyle: { backgroundColor: '#fff' } }} />
               </Stack>
+              <OfflineBanner />
               <ToastHost />
             </SafeAreaProvider>
           </GestureHandlerRootView>
