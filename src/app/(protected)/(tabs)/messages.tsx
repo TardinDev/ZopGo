@@ -1,8 +1,8 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { View, Text, FlatList, Alert } from 'react-native';
+import { View, Text, FlatList, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../../constants';
@@ -51,6 +51,22 @@ export default function MessagesTab() {
 
   const { adminMessages, loadAdminMessages, markAsRead: markAdminMessageAsRead } =
     useAdminMessagesStore();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    if (!supabaseProfileId || !user) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        loadNotifications(supabaseProfileId, user.role),
+        loadConversations(supabaseProfileId),
+        loadAdminMessages(supabaseProfileId),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [supabaseProfileId, user, loadNotifications, loadConversations, loadAdminMessages]);
 
   // Charger notifications, conversations et annonces admin au focus + polling 15s
   useFocusEffect(
@@ -356,6 +372,13 @@ export default function MessagesTab() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor="white"
+                />
+              }
               ListEmptyComponent={
                 <EmptyState
                   icon="megaphone-outline"
@@ -378,6 +401,13 @@ export default function MessagesTab() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor="white"
+                />
+              }
               ListEmptyComponent={
                 <EmptyState
                   icon="notifications-outline"
@@ -405,6 +435,13 @@ export default function MessagesTab() {
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor="white"
+                />
+              }
               ListEmptyComponent={
                 <EmptyState
                   icon="chatbubbles-outline"

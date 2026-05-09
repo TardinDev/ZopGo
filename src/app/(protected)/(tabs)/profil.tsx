@@ -142,7 +142,14 @@ export default function ProfilTab() {
             contentContainerStyle={{ paddingBottom: 100 }}>
             {/* Header avec photo de profil */}
             <View className="items-center pb-6 pt-6">
-              <TouchableOpacity onPress={handleChangePhoto} disabled={isUploadingAvatar} activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={handleChangePhoto}
+                disabled={isUploadingAvatar}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Changer la photo de profil"
+                accessibilityState={{ disabled: isUploadingAvatar }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <View style={{ width: 96, height: 96, marginBottom: 16 }}>
                   <Image
                     source={{ uri: avatarUri || generateAvatarPlaceholder(profile.name || 'User', clerkId || 'default') }}

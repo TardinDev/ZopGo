@@ -178,7 +178,11 @@ export default function SecurityScreen() {
                   placeholderTextColor={COLORS.gray[300]}
                   className="flex-1 py-3.5 text-base text-gray-800"
                 />
-                <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
+                <TouchableOpacity
+                  onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showCurrentPassword ? 'Masquer le mot de passe actuel' : 'Afficher le mot de passe actuel'}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons
                     name={showCurrentPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
@@ -202,7 +206,11 @@ export default function SecurityScreen() {
                   placeholderTextColor={COLORS.gray[300]}
                   className="flex-1 py-3.5 text-base text-gray-800"
                 />
-                <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+                <TouchableOpacity
+                  onPress={() => setShowNewPassword(!showNewPassword)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showNewPassword ? 'Masquer le nouveau mot de passe' : 'Afficher le nouveau mot de passe'}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons
                     name={showNewPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
@@ -226,7 +234,11 @@ export default function SecurityScreen() {
                   placeholderTextColor={COLORS.gray[300]}
                   className="flex-1 py-3.5 text-base text-gray-800"
                 />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showConfirmPassword ? 'Masquer la confirmation' : 'Afficher la confirmation'}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
