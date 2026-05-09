@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { sanitizeInput, validateLocation } from '../utils/validation';
 import type { Livraison, LivraisonStatus } from '../types';
 
 interface SupabaseLivraisonRow {
@@ -59,19 +60,36 @@ export async function insertLivraison(params: {
   description?: string;
   prix_estime?: number;
 }): Promise<Livraison | null> {
+  if (!validateLocation(params.pickup_location) || !validateLocation(params.dropoff_location)) {
+    console.warn('[insertLivraison] FAILED: invalid pickup/dropoff location');
+    return null;
+  }
+  if (params.description && params.description.length > 500) {
+    console.warn('[insertLivraison] FAILED: description too long');
+    return null;
+  }
+
+  const sanitized = {
+    ...params,
+    pickup_location: sanitizeInput(params.pickup_location),
+    dropoff_location: sanitizeInput(params.dropoff_location),
+    description: params.description ? sanitizeInput(params.description) : undefined,
+  };
+
   const { data, error } = await supabase
     .from('livraisons')
     .insert({
-      ...params,
+      ...sanitized,
       status: 'en_attente',
     })
     .select('*, client:client_id(name, avatar), livreur:livreur_id(name, avatar)')
     .single();
 
   if (error) {
-    if (__DEV__) console.error('insertLivraison error:', error.message);
+    console.warn('[insertLivraison] FAILED', { code: error.code, message: error.message });
     return null;
   }
+  console.log('[insertLivraison] OK', (data as SupabaseLivraisonRow).id);
   return mapRow(data as SupabaseLivraisonRow);
 }
 

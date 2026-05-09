@@ -65,14 +65,6 @@ describe('sanitizeInput', () => {
     expect(sanitizeInput('a<b>c&d"e\'f')).toBe('acdef');
   });
 
-  it('strips SQL keywords', () => {
-    expect(sanitizeInput('DROP TABLE users')).toBe('TABLE users');
-  });
-
-  it('strips SQL keywords case-insensitively', () => {
-    expect(sanitizeInput('select * from users')).toBe('* from users');
-  });
-
   it('removes javascript: protocol', () => {
     expect(sanitizeInput('javascript:alert(1)')).toBe('alert(1)');
   });
@@ -81,10 +73,12 @@ describe('sanitizeInput', () => {
     expect(sanitizeInput('onclick=alert(1)')).toBe('alert(1)');
   });
 
-  it('handles multiple SQL keywords', () => {
-    const input = 'DROP TABLE; DELETE FROM; INSERT INTO';
-    const result = sanitizeInput(input);
-    expect(result).not.toMatch(/DROP|DELETE|INSERT/i);
+  it('does NOT strip SQL keywords from legitimate text', () => {
+    // Parametrized queries make SQL filtering unnecessary, and the previous
+    // strip mutilated valid French inputs.
+    expect(sanitizeInput('Auberge SELECT à Akanda')).toBe('Auberge SELECT à Akanda');
+    expect(sanitizeInput('DELETE Express livraison')).toBe('DELETE Express livraison');
+    expect(sanitizeInput('Hôtel UPDATE Resort')).toBe('Hôtel UPDATE Resort');
   });
 
   it('returns empty string for empty input', () => {

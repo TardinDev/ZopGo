@@ -16,15 +16,18 @@ export const validateLocation = (location: string): boolean => {
 };
 
 /**
- * Nettoie et sanitise une entrée utilisateur
- * Strip HTML tags, script injections, SQL keywords dangereux
+ * Strips XSS-style payloads from a free-text field. Supabase uses
+ * parameterized queries everywhere — SQL keyword filtering would only
+ * mutilate legitimate French inputs ("Auberge SELECT à Akanda" became
+ * "Auberge  à Akanda") without adding any real protection. Kept the
+ * HTML / JS protocol / event-handler scrubs that DO matter when these
+ * strings end up rendered in WebViews or admin dashboards.
  */
 export const sanitizeInput = (input: string): string => {
   return input
     .trim()
     .replace(/<[^>]*>/g, '') // Strip HTML tags
-    .replace(/[<>&"']/g, '') // Remove dangerous chars
-    .replace(/\b(DROP|DELETE|INSERT|UPDATE|ALTER|EXEC|UNION|SELECT)\b/gi, '') // SQL keywords
+    .replace(/[<>&"']/g, '') // Remove characters that break HTML/attr context
     .replace(/javascript:/gi, '') // JS protocol
     .replace(/on\w+\s*=/gi, '') // Event handlers (onclick=, etc.)
     .trim();
