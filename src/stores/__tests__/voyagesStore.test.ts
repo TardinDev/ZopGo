@@ -3,9 +3,11 @@ import { fetchAllAvailableTrajets } from '../../lib/supabaseTrajets';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
   useVoyagesStore.setState({
     trajets: [],
     isLoading: false,
+    error: null,
     selectedType: 'All',
     fromCity: '',
     toCity: '',
@@ -111,13 +113,27 @@ describe('voyagesStore', () => {
       expect(trajet.date).toBeUndefined();
     });
 
-    it('handles API error', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('sets error message and clears loading on API failure', async () => {
       (fetchAllAvailableTrajets as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       await useVoyagesStore.getState().loadVoyages();
-      expect(useVoyagesStore.getState().isLoading).toBe(false);
-      expect(useVoyagesStore.getState().trajets).toEqual([]);
+      const state = useVoyagesStore.getState();
+      expect(state.isLoading).toBe(false);
+      expect(state.trajets).toEqual([]);
+      expect(state.error).toBe('Impossible de charger les trajets. Vérifie ta connexion.');
+    });
+
+    it('clears a previous error on a successful retry', async () => {
+      // 1st call fails
+      (fetchAllAvailableTrajets as jest.Mock).mockRejectedValueOnce(new Error('boom'));
+      await useVoyagesStore.getState().loadVoyages();
+      expect(useVoyagesStore.getState().error).not.toBeNull();
+
+      // 2nd call succeeds — error must be reset to null so the UI leaves the
+      // retry banner state.
+      (fetchAllAvailableTrajets as jest.Mock).mockResolvedValueOnce([]);
+      await useVoyagesStore.getState().loadVoyages();
+      expect(useVoyagesStore.getState().error).toBeNull();
     });
 
     it('maps multiple trajets with correct ids', async () => {

@@ -3,9 +3,11 @@ import { fetchAllAvailableHebergements } from '../../lib/supabaseHebergements';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
   useHebergementsDiscoveryStore.setState({
     listings: [],
     isLoading: false,
+    error: null,
     selectedType: 'All',
     searchLocation: '',
   });
@@ -116,13 +118,24 @@ describe('hebergementsDiscoveryStore', () => {
       expect(listing.rating).toBe(0);
     });
 
-    it('handles API error', async () => {
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('sets error message and clears loading on API failure', async () => {
       (fetchAllAvailableHebergements as jest.Mock).mockRejectedValue(new Error('error'));
 
       await useHebergementsDiscoveryStore.getState().loadHebergements();
-      expect(useHebergementsDiscoveryStore.getState().isLoading).toBe(false);
-      expect(useHebergementsDiscoveryStore.getState().listings).toEqual([]);
+      const state = useHebergementsDiscoveryStore.getState();
+      expect(state.isLoading).toBe(false);
+      expect(state.listings).toEqual([]);
+      expect(state.error).toBe('Impossible de charger les hébergements. Vérifie ta connexion.');
+    });
+
+    it('clears a previous error on a successful retry', async () => {
+      (fetchAllAvailableHebergements as jest.Mock).mockRejectedValueOnce(new Error('boom'));
+      await useHebergementsDiscoveryStore.getState().loadHebergements();
+      expect(useHebergementsDiscoveryStore.getState().error).not.toBeNull();
+
+      (fetchAllAvailableHebergements as jest.Mock).mockResolvedValueOnce([]);
+      await useHebergementsDiscoveryStore.getState().loadHebergements();
+      expect(useHebergementsDiscoveryStore.getState().error).toBeNull();
     });
 
     it('maps all known types correctly', async () => {

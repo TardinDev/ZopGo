@@ -19,6 +19,7 @@ export const transportTypes = ['All', 'Moto', 'Voiture', 'Camionnette'];
 interface VoyagesState {
   trajets: Voyage[];
   isLoading: boolean;
+  error: string | null;
   selectedType: string;
   fromCity: string;
   toCity: string;
@@ -34,12 +35,13 @@ interface VoyagesState {
 export const useVoyagesStore = create<VoyagesState>((set, get) => ({
   trajets: [],
   isLoading: false,
+  error: null,
   selectedType: 'All',
   fromCity: '',
   toCity: '',
 
   loadVoyages: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const data = await fetchAllAvailableTrajets();
       const mapped: Voyage[] = data.map((t) => ({
@@ -59,9 +61,13 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
         modele: t.modele || undefined,
         couleur: t.couleur || undefined,
       }));
-      set({ trajets: mapped });
+      set({ trajets: mapped, error: null });
     } catch (err) {
-      if (__DEV__) console.error('loadVoyages error:', err);
+      console.warn('[loadVoyages] FAILED', err instanceof Error ? err.message : err);
+      // Distinguish a failed fetch from an empty result so the UI shows a
+      // retry banner rather than the cheerful "Les chauffeurs dorment encore"
+      // empty state.
+      set({ error: 'Impossible de charger les trajets. Vérifie ta connexion.' });
     } finally {
       set({ isLoading: false });
     }

@@ -29,6 +29,7 @@ export default function HebergementsTab() {
   const {
     listings,
     isLoading,
+    error,
     selectedType,
     searchLocation,
     loadHebergements,
@@ -138,6 +139,14 @@ export default function HebergementsTab() {
               <RotatingLoadingText messages={HEBERGEMENT_LOADING_MESSAGES} />
               <SkeletonList count={4} />
             </>
+          ) : error ? (
+            <EmptyResults
+              icon="cloud-offline-outline"
+              message="Connexion impossible"
+              subMessage={error}
+              actionLabel="Réessayer"
+              onAction={loadHebergements}
+            />
           ) : filteredHebergements.length > 0 ? (
             filteredHebergements.map((hebergement, i) => (
               <HebergementCard

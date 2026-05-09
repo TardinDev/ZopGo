@@ -44,11 +44,19 @@ export default function LivraisonsTab() {
 
   // Filter out drivers without a Supabase profile UUID (static demo drivers),
   // because livraisons.livreur_id is a real FK to profiles(id).
-  const { getAllDrivers } = useDriversStore();
+  const { getAllDrivers, loadDrivers } = useDriversStore();
   const livreurs = useMemo(
     () => getAllDrivers().filter((l) => !!l.supabaseProfileId),
     [getAllDrivers]
   );
+
+  // Without this the list is always empty: the store ships with
+  // connectedDrivers=[] and only adds the chauffeur of the current device
+  // (via authStore on login) — never the other available drivers in the
+  // region.
+  useEffect(() => {
+    loadDrivers();
+  }, [loadDrivers]);
   const currentLivreur = livreurs.find((l) => l.id === selectedLivreur);
 
   // Cleanup

@@ -2,7 +2,6 @@ export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteEr
 import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocationStore } from '../../../stores';
 import { AnimatedTabScreen, EmptyState } from '../../../components/ui';
 import {
@@ -35,16 +34,10 @@ export default function LocationTab() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}>
               <View style={styles.resultsHeader}>
-                <View style={styles.resultsRow}>
-                  <Text style={styles.resultsCount}>
-                    {filteredVehicles?.length || 0} véhicule
-                    {(filteredVehicles?.length || 0) > 1 ? 's' : ''}
-                  </Text>
-                  <View style={styles.sortButton}>
-                    <Ionicons name="swap-vertical" size={16} color="#E5E7EB" />
-                    <Text style={styles.sortText}>Trier</Text>
-                  </View>
-                </View>
+                <Text style={styles.resultsCount}>
+                  {filteredVehicles?.length || 0} véhicule
+                  {(filteredVehicles?.length || 0) > 1 ? 's' : ''}
+                </Text>
               </View>
 
               {filteredVehicles && filteredVehicles.length > 0 ? (
@@ -79,56 +72,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  resultsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   resultsCount: {
     fontSize: 14,
     fontWeight: '600',
     color: '#94A3B8',
-  },
-  sortButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
-  },
-  sortText: {
-    color: '#E5E7EB',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 40,
-  },
-  emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#F1F5F9',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
   },
 });

@@ -23,6 +23,7 @@ export const hebergementTypes = ['All', 'Hôtel', 'Auberge', 'Appart.', 'Maison'
 interface HebergementsDiscoveryState {
   listings: Hebergement[];
   isLoading: boolean;
+  error: string | null;
   selectedType: string;
   searchLocation: string;
 
@@ -34,11 +35,12 @@ interface HebergementsDiscoveryState {
 export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>((set) => ({
   listings: [],
   isLoading: false,
+  error: null,
   selectedType: 'All',
   searchLocation: '',
 
   loadHebergements: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const data = await fetchAllAvailableHebergements();
       const mapped: Hebergement[] = data.map((h, index) => ({
@@ -61,9 +63,13 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
         description: h.description,
         adresse: h.adresse,
       }));
-      set({ listings: mapped });
+      set({ listings: mapped, error: null });
     } catch (err) {
-      if (__DEV__) console.error('loadHebergements error:', err);
+      console.warn('[loadHebergements] FAILED', err instanceof Error ? err.message : err);
+      // Distinguish a failed fetch from an empty result so the UI shows a
+      // retry banner rather than the cheerful "Le Gabon prépare ses chambres"
+      // empty state.
+      set({ error: 'Impossible de charger les hébergements. Vérifie ta connexion.' });
     } finally {
       set({ isLoading: false });
     }

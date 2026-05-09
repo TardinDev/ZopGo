@@ -96,9 +96,6 @@ export default function ProfilTab() {
     }
   };
 
-  const comingSoon = (title: string) =>
-    Alert.alert(title, 'Cette fonctionnalité sera disponible prochainement.');
-
   // Filtrer le menu selon le rôle
   const userRole = isUserChauffeur ? 'chauffeur' : isUserHebergeur ? 'hebergeur' : 'client';
   const filteredMenuItems = menuItems.filter((item) => {
@@ -116,10 +113,10 @@ export default function ProfilTab() {
         router.push('/(protected)/(tabs)/vehicles-edit');
         break;
       case 'accommodations':
-        comingSoon('Mes logements');
+        router.push('/(protected)/(tabs)/mes-hebergements');
         break;
       case 'payment':
-        comingSoon('Méthodes de paiement');
+        router.push('/(protected)/(tabs)/payment-methods');
         break;
       case 'security':
         router.push('/(protected)/(tabs)/security');

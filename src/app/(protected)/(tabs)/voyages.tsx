@@ -32,6 +32,7 @@ export default function VoyagesTab() {
   const {
     trajets,
     isLoading,
+    error,
     selectedType,
     fromCity,
     toCity,
@@ -160,6 +161,16 @@ export default function VoyagesTab() {
                 <RotatingLoadingText messages={VOYAGE_LOADING_MESSAGES} />
                 <SkeletonList count={4} />
               </>
+            ) : error ? (
+              <Animated.View entering={FadeIn.duration(300)}>
+                <EmptyResults
+                  icon="cloud-offline-outline"
+                  message="Connexion impossible"
+                  subMessage={error}
+                  actionLabel="Réessayer"
+                  onAction={loadVoyages}
+                />
+              </Animated.View>
             ) : filteredVoyages.length > 0 ? (
               filteredVoyages.map((voyage, i) => (
                 <VoyageCard
