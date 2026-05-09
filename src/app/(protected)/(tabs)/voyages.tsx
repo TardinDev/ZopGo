@@ -101,6 +101,9 @@ export default function VoyagesTab() {
           chauffeurProfileId: voyage.chauffeurProfileId || '',
           placesDisponibles: voyage.placesDisponibles?.toString() || '',
           date: voyage.date || '',
+          marque: voyage.marque || '',
+          modele: voyage.modele || '',
+          couleur: voyage.couleur || '',
         },
       });
     },

@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useMemo, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,11 +15,30 @@ import { SPRING_CONFIG } from '../../../constants/animations';
 import { hapticSelection, hapticSuccess, hapticMedium } from '../../../utils/haptics';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
+import { toast } from '../../../stores/toastStore';
+import { ImageCarousel } from '../../../components/ui';
+import { validateHebergementBooking } from '../../../lib/bookingValidation';
+
+const HEBERGEUR_COLOR = '#8B5CF6';
 
 function getAvailabilityStyle(count: number) {
   if (count <= 0) return { color: COLORS.error, label: 'Complet' };
   if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
   return { color: COLORS.success, label: `${count} disponible${count > 1 ? 's' : ''}` };
+}
+
+function parseImagesParam(raw: unknown): string[] {
+  if (typeof raw !== 'string' || !raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((u): u is string => typeof u === 'string' && u.length > 0);
+    }
+  } catch {
+    // older callers may have passed a single URL — accept that gracefully
+    if (raw.startsWith('http')) return [raw];
+  }
+  return [];
 }
 
 export default function HebergementDetailScreen() {
@@ -31,7 +50,6 @@ export default function HebergementDetailScreen() {
   const { user, supabaseProfileId } = useAuthStore();
   const { bookHebergement } = useReservationsStore();
 
-  // Counter bounce animation
   const counterScale = useSharedValue(1);
   const totalScale = useSharedValue(1);
 
@@ -54,6 +72,13 @@ export default function HebergementDetailScreen() {
     transform: [{ scale: totalScale.value }],
   }));
 
+  // params.images is a JSON-serialised string[]. Older callers passed a
+  // single `image` URL — fallback handled by parseImagesParam.
+  const images = useMemo(
+    () => parseImagesParam(params.images ?? params.image),
+    [params.images, params.image]
+  );
+
   const hebergement = {
     supabaseId: String(params.supabaseId || ''),
     name: String(params.name || ''),
@@ -69,15 +94,21 @@ export default function HebergementDetailScreen() {
     hebergeurName: String(params.hebergeurName || 'Hébergeur'),
     hebergeurAvatar: String(params.hebergeurAvatar || ''),
     hebergeurRating: Number(params.hebergeurRating) || 0,
-    image: String(params.image || ''),
   };
 
   const totalPrice = hebergement.prixParNuit * nights;
   const availability = getAvailabilityStyle(hebergement.disponibilite);
 
+  const validation = validateHebergementBooking({
+    supabaseProfileId,
+    hebergeurProfileId: hebergement.hebergeurProfileId,
+    hebergementId: hebergement.supabaseId,
+    availableUnits: hebergement.disponibilite,
+  });
+
   const performBooking = async () => {
-    if (!supabaseProfileId || !hebergement.hebergeurProfileId || !hebergement.supabaseId) {
-      Alert.alert('Erreur', 'Informations de réservation incomplètes.');
+    if (!validation.ok) {
+      toast.error(validation.message, { title: 'Réservation impossible', durationMs: 5000 });
       return;
     }
 
@@ -86,7 +117,7 @@ export default function HebergementDetailScreen() {
       const clientName = user?.profile?.name || 'Client';
       const reservation = await bookHebergement({
         hebergementId: hebergement.supabaseId,
-        clientId: supabaseProfileId,
+        clientId: supabaseProfileId!,
         hebergeurId: hebergement.hebergeurProfileId,
         nombreNuits: nights,
         prixTotal: totalPrice,
@@ -97,89 +128,168 @@ export default function HebergementDetailScreen() {
       });
 
       if (reservation) {
-        Alert.alert(
-          'Demande envoyée',
-          "L'hébergeur a été notifié. Vous recevrez une réponse bientôt.",
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+        toast.success("L'hébergeur a été notifié. Réponse à venir bientôt.", {
+          title: 'Demande envoyée',
+        });
+        router.back();
       } else {
-        Alert.alert('Erreur', 'Impossible de créer la demande. Réessayez.');
+        toast.error('Impossible de créer la demande. Réessaie.', { title: 'Erreur' });
       }
     } catch {
-      Alert.alert('Erreur', 'Une erreur est survenue.');
+      toast.error('Une erreur est survenue.', { title: 'Erreur' });
     } finally {
       setIsBooking(false);
     }
   };
 
   const handleBooking = () => {
+    if (!validation.ok) {
+      toast.error(validation.message, { title: 'Réservation impossible', durationMs: 5000 });
+      return;
+    }
     hapticMedium();
-    Alert.alert(
-      'Confirmer la réservation',
-      `Réserver ${nights} nuit${nights > 1 ? 's' : ''} pour ${totalPrice} Fcfa ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: () => { hapticSuccess(); performBooking(); } },
-      ]
-    );
+    hapticSuccess();
+    performBooking();
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <LinearGradient
-        colors={COLORS.gradients.hebergeur}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.3 }}
-        style={{ paddingBottom: 32 }}>
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
-          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Retour">
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-white" accessibilityRole="header">Détails hébergement</Text>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ajouter aux favoris">
-            <Ionicons name="heart-outline" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Info Card */}
-        <View className="mx-6 rounded-2xl bg-white/10 p-6 backdrop-blur">
-          <View className="mb-4 flex-row items-center justify-between">
-            {hebergement.image ? (
-              <Image
-                source={{ uri: hebergement.image }}
-                style={{ width: 56, height: 56, borderRadius: 12 }}
-              />
-            ) : (
-              <Text className="text-4xl">{hebergement.icon}</Text>
-            )}
-            <View className="rounded-full bg-white/20 px-3 py-1">
-              <Text className="text-sm font-medium text-white">{hebergement.type}</Text>
-            </View>
+    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      {/* Hero gallery */}
+      <View>
+        <ImageCarousel
+          images={images}
+          height={280}
+          fallbackEmoji={hebergement.icon}
+          fallbackIcon="bed-outline"
+        />
+        {/* Gradient overlay for the back button readability */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.4)', 'transparent']}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
+          pointerEvents="none"
+        />
+        <SafeAreaView edges={['top']} style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+          <View className="flex-row items-center justify-between px-6 pb-2 pt-2">
+            <TouchableOpacity
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Retour"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-black/40">
+                <Ionicons name="arrow-back" size={22} color="white" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Ajouter aux favoris"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-black/40">
+                <Ionicons name="heart-outline" size={22} color="white" />
+              </View>
+            </TouchableOpacity>
           </View>
+        </SafeAreaView>
+      </View>
 
-          <Text className="mb-1 text-2xl font-bold text-white">{hebergement.name}</Text>
-          <View className="flex-row items-center">
-            <Ionicons name="location-outline" size={16} color="rgba(255,255,255,0.8)" />
-            <Text className="ml-1 text-white/80">{hebergement.location}</Text>
+      <ScrollView
+        className="-mt-6 flex-1"
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}>
+        {/* Title card */}
+        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+          <View className="flex-row items-center justify-between">
+            <View className="rounded-full px-3 py-1" style={{ backgroundColor: '#F3E8FF' }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: HEBERGEUR_COLOR }}>
+                {hebergement.type}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: availability.color }}>
+              {availability.label}
+            </Text>
+          </View>
+          <Text className="mt-3 text-2xl font-bold text-gray-900">{hebergement.name}</Text>
+          <View className="mt-2 flex-row items-center">
+            <Ionicons name="location-outline" size={16} color={COLORS.gray[500]} />
+            <Text className="ml-1 text-sm text-gray-600">{hebergement.location}</Text>
           </View>
           {hebergement.adresse ? (
-            <Text className="mt-1 text-sm text-white/60">{hebergement.adresse}</Text>
+            <Text className="mt-1 text-xs text-gray-500">{hebergement.adresse}</Text>
           ) : null}
-        </View>
-      </LinearGradient>
-
-      <ScrollView className="-mt-4 flex-1 px-6">
-        {/* Prix */}
-        <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-gray-600">Prix par nuit</Text>
-            <Text className="text-2xl font-bold text-[#8B5CF6]">{hebergement.prixParNuit} Fcfa</Text>
+          <View className="mt-4 flex-row items-center justify-between border-t border-gray-100 pt-3">
+            <View className="flex-row items-center">
+              <Ionicons name="people-outline" size={18} color={COLORS.gray[500]} />
+              <Text className="ml-2 text-sm text-gray-600">
+                {hebergement.capacite} personne{hebergement.capacite > 1 ? 's' : ''}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: HEBERGEUR_COLOR }}>
+              {hebergement.prixParNuit} Fcfa
+              <Text className="text-xs font-normal text-gray-500">/nuit</Text>
+            </Text>
           </View>
+        </View>
 
-          {/* Sélecteur de nuits */}
+        {/* Description */}
+        {hebergement.description ? (
+          <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+            <Text className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Description
+            </Text>
+            <Text className="text-sm leading-6 text-gray-700">{hebergement.description}</Text>
+          </View>
+        ) : null}
+
+        {/* Hebergeur card */}
+        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+          <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Hébergeur
+          </Text>
+          <View className="flex-row items-center">
+            {hebergement.hebergeurAvatar ? (
+              <Image
+                source={{ uri: hebergement.hebergeurAvatar }}
+                style={{ width: 56, height: 56, borderRadius: 28 }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: '#F3E8FF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <Ionicons name="person" size={28} color={HEBERGEUR_COLOR} />
+              </View>
+            )}
+            <View className="ml-4 flex-1">
+              <Text className="text-lg font-bold text-gray-900">{hebergement.hebergeurName}</Text>
+              <View className="mt-1 flex-row items-center">
+                {hebergement.hebergeurRating > 0 ? (
+                  <>
+                    <Ionicons name="star" size={14} color={COLORS.star} />
+                    <Text className="ml-1 text-sm font-semibold text-gray-700">
+                      {hebergement.hebergeurRating.toFixed(1)}
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="text-sm text-gray-500">Nouveau hôte</Text>
+                )}
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Counter card */}
+        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
           <View className="flex-row items-center justify-between">
-            <Text className="font-medium text-gray-700">Nombre de nuits</Text>
+            <View>
+              <Text className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Combien de nuits ?
+              </Text>
+              <Text className="mt-1 text-sm text-gray-600">Choisis ta durée de séjour</Text>
+            </View>
             <View className="flex-row items-center">
               <TouchableOpacity
                 onPress={() => {
@@ -191,14 +301,12 @@ export default function HebergementDetailScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Réduire le nombre de nuits"
-                className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
+                className="h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                <Ionicons name="remove" size={22} color={COLORS.gray[600]} />
               </TouchableOpacity>
               <Animated.Text
-                className="mx-4 text-lg font-bold"
-                style={counterAnimatedStyle}
-                accessibilityRole="text"
-                accessibilityLabel={`${nights} nuit${nights > 1 ? 's' : ''}`}>
+                className="mx-5 text-xl font-bold text-gray-900"
+                style={counterAnimatedStyle}>
                 {nights}
               </Animated.Text>
               <TouchableOpacity
@@ -211,87 +319,59 @@ export default function HebergementDetailScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Augmenter le nombre de nuits"
-                className="h-10 w-10 items-center justify-center rounded-full bg-[#8B5CF6]">
-                <Ionicons name="add" size={20} color="white" />
+                className="h-11 w-11 items-center justify-center rounded-full"
+                style={{ backgroundColor: HEBERGEUR_COLOR }}>
+                <Ionicons name="add" size={22} color="white" />
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Infos hébergement */}
-        <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-          <Text className="mb-4 text-lg font-bold text-gray-800">Informations</Text>
-
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-gray-600">Capacité</Text>
-            <Text className="font-medium">{hebergement.capacite} personne{hebergement.capacite > 1 ? 's' : ''}</Text>
-          </View>
-
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-gray-600">Disponibilité</Text>
-            <Text style={{ fontWeight: '600', color: availability.color }}>
-              {availability.label}
-            </Text>
-          </View>
-
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-gray-600">Hébergeur</Text>
-            <View className="flex-row items-center">
-              {hebergement.hebergeurAvatar ? (
-                <Image
-                  source={{ uri: hebergement.hebergeurAvatar }}
-                  style={{ width: 28, height: 28, borderRadius: 14, marginRight: 8 }}
-                />
-              ) : null}
-              <Text className="mr-2 font-medium">{hebergement.hebergeurName}</Text>
-              {hebergement.hebergeurRating > 0 && (
-                <View className="flex-row items-center">
-                  <Ionicons name="star" size={16} color={COLORS.star} />
-                  <Text className="ml-1 text-sm text-gray-600">{hebergement.hebergeurRating.toFixed(1)}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {hebergement.description ? (
-            <>
-              <Text className="mb-2 text-gray-600">Description</Text>
-              <Text className="text-gray-700">{hebergement.description}</Text>
-            </>
-          ) : null}
-        </View>
-
-        {/* Total et bouton */}
+        {/* Total + CTA */}
         <View
-          className="mb-8 rounded-2xl bg-white p-6"
-          style={{ ...LAYOUT.shadows.large, borderLeftWidth: 4, borderLeftColor: '#8B5CF6' }}>
+          className="rounded-3xl bg-white p-5"
+          style={{ ...LAYOUT.shadows.large, borderLeftWidth: 4, borderLeftColor: HEBERGEUR_COLOR }}>
           <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-gray-800">Total</Text>
+            <Text className="text-base font-semibold text-gray-700">Total</Text>
             <Animated.Text
-              className="text-2xl font-bold text-[#8B5CF6]"
-              style={totalAnimatedStyle}>
+              className="text-2xl font-bold"
+              style={[totalAnimatedStyle, { color: HEBERGEUR_COLOR }]}>
               {totalPrice} Fcfa
             </Animated.Text>
           </View>
 
+          {!validation.ok && (
+            <View className="mb-3 flex-row items-start rounded-2xl bg-red-50 px-3 py-2.5">
+              <Ionicons name="information-circle" size={18} color="#B91C1C" />
+              <Text className="ml-2 flex-1 text-xs text-red-900">{validation.message}</Text>
+            </View>
+          )}
+
           <TouchableOpacity
             onPress={handleBooking}
-            disabled={isBooking || hebergement.disponibilite <= 0}
+            disabled={isBooking || !validation.ok}
             accessibilityRole="button"
-            accessibilityLabel={hebergement.disponibilite <= 0 ? 'Hébergement complet' : `Réserver ${nights} nuit${nights > 1 ? 's' : ''} pour ${totalPrice} Fcfa`}
-            accessibilityState={{ disabled: isBooking || hebergement.disponibilite <= 0 }}
-            className="items-center rounded-2xl bg-[#8B5CF6] py-4"
-            style={{ opacity: isBooking || hebergement.disponibilite <= 0 ? 0.7 : 1 }}>
+            accessibilityLabel={
+              !validation.ok
+                ? 'Réservation indisponible'
+                : `Réserver ${nights} nuit${nights > 1 ? 's' : ''} pour ${totalPrice} Fcfa`
+            }
+            accessibilityState={{ disabled: isBooking || !validation.ok }}
+            className="items-center rounded-2xl py-4"
+            style={{
+              backgroundColor: HEBERGEUR_COLOR,
+              opacity: isBooking || !validation.ok ? 0.5 : 1,
+            }}>
             {isBooking ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-lg font-bold text-white">
-                {hebergement.disponibilite <= 0 ? 'Complet' : 'Réserver maintenant'}
+              <Text className="text-base font-bold text-white">
+                {!validation.ok && validation.reason === 'sold_out' ? 'Complet' : 'Réserver maintenant'}
               </Text>
             )}
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

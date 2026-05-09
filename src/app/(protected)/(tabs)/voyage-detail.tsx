@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,11 +15,28 @@ import { SPRING_CONFIG } from '../../../constants/animations';
 import { hapticSelection, hapticSuccess, hapticMedium } from '../../../utils/haptics';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
+import { toast } from '../../../stores/toastStore';
+import { validateTrajetBooking } from '../../../lib/bookingValidation';
 
 function getAvailabilityStyle(count: number) {
   if (count <= 0) return { color: COLORS.error, label: 'Complet' };
   if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
   return { color: COLORS.success, label: `${count} places` };
+}
+
+function formatDate(iso: string): string {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month}/${year} à ${hours}h${minutes}`;
+  } catch {
+    return '';
+  }
 }
 
 export default function VoyageDetailScreen() {
@@ -31,7 +48,6 @@ export default function VoyageDetailScreen() {
   const { user, supabaseProfileId } = useAuthStore();
   const { bookTrajet } = useReservationsStore();
 
-  // Counter bounce animation
   const counterScale = useSharedValue(1);
   const totalScale = useSharedValue(1);
 
@@ -56,30 +72,39 @@ export default function VoyageDetailScreen() {
 
   const voyage = {
     id: String(params.id || ''),
-    type: params.type || 'Bus',
-    from: params.from || 'Libreville',
-    to: params.to || 'Mouanda',
-    price: params.price || '25000 Fcfa',
-    icon: params.icon || '🚍',
-    departureTime: '14:30',
-    arrivalTime: '18:45',
-    duration: '4h 15min',
-    availableSeats: Number(params.placesDisponibles) || 4,
-    driver: (params.chauffeurName as string) || 'Conducteur',
+    type: String(params.type || 'Voiture'),
+    from: String(params.from || ''),
+    to: String(params.to || ''),
+    price: String(params.price || ''),
+    icon: String(params.icon || '🚗'),
+    availableSeats: Number(params.placesDisponibles) || 0,
+    driver: String(params.chauffeurName || 'Conducteur'),
     driverRating: Number(params.chauffeurRating) || 0,
-    driverAvatar: (params.chauffeurAvatar as string) || '',
-    chauffeurProfileId: (params.chauffeurProfileId as string) || '',
-    vehicle: String(params.type || 'Véhicule'),
-    amenities: ['Climatisation', 'Bagages'],
+    driverAvatar: String(params.chauffeurAvatar || ''),
+    chauffeurProfileId: String(params.chauffeurProfileId || ''),
+    date: String(params.date || ''),
+    marque: String(params.marque || ''),
+    modele: String(params.modele || ''),
+    couleur: String(params.couleur || ''),
   };
 
-  const unitPrice = parseInt(String(voyage.price).replace(/[^0-9]/g, '')) || 0;
+  const unitPrice = parseInt(voyage.price.replace(/[^0-9]/g, '')) || 0;
   const totalPrice = unitPrice * passengers;
   const availability = getAvailabilityStyle(voyage.availableSeats);
+  const dateLabel = formatDate(voyage.date);
+  const vehicleSpecs = [voyage.marque, voyage.modele, voyage.couleur].filter(Boolean).join(' · ');
+
+  const validation = validateTrajetBooking({
+    supabaseProfileId,
+    chauffeurProfileId: voyage.chauffeurProfileId,
+    trajetId: voyage.id,
+    availableSeats: voyage.availableSeats,
+    requestedSeats: passengers,
+  });
 
   const performBooking = async () => {
-    if (!supabaseProfileId || !voyage.chauffeurProfileId || !voyage.id) {
-      Alert.alert('Erreur', 'Informations de réservation incomplètes.');
+    if (!validation.ok) {
+      toast.error(validation.message, { title: 'Réservation impossible', durationMs: 5000 });
       return;
     }
 
@@ -88,95 +113,198 @@ export default function VoyageDetailScreen() {
       const clientName = user?.profile?.name || 'Client';
       const reservation = await bookTrajet({
         trajetId: voyage.id,
-        clientId: supabaseProfileId,
+        clientId: supabaseProfileId!,
         chauffeurId: voyage.chauffeurProfileId,
         nombrePlaces: passengers,
         prixTotal: totalPrice,
         clientName,
-        villeDepart: String(voyage.from),
-        villeArrivee: String(voyage.to),
+        villeDepart: voyage.from,
+        villeArrivee: voyage.to,
       });
 
       if (reservation) {
-        Alert.alert(
-          'Réservation envoyée',
-          'Le chauffeur a été notifié. Vous recevrez une réponse bientôt.',
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+        toast.success('Le chauffeur a été notifié. Réponse à venir bientôt.', {
+          title: 'Demande envoyée',
+        });
+        router.back();
       } else {
-        Alert.alert('Erreur', 'Impossible de créer la réservation. Réessayez.');
+        toast.error('Impossible de créer la réservation. Réessaie.', { title: 'Erreur' });
       }
     } catch {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la réservation.');
+      toast.error('Une erreur est survenue lors de la réservation.', { title: 'Erreur' });
     } finally {
       setIsBooking(false);
     }
   };
 
   const handleBooking = () => {
+    if (!validation.ok) {
+      toast.error(validation.message, { title: 'Réservation impossible', durationMs: 5000 });
+      return;
+    }
     hapticMedium();
-    Alert.alert(
-      'Confirmer la réservation',
-      `Réserver ${passengers} place(s) pour ${totalPrice} Fcfa ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: () => { hapticSuccess(); performBooking(); } },
-      ]
-    );
+    hapticSuccess();
+    performBooking();
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      {/* Hero header */}
       <LinearGradient
-        colors={COLORS.gradients.header}
+        colors={COLORS.gradients.header as [string, string]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.3 }}
-        style={{ paddingBottom: 32 }}>
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-6 pb-6 pt-4">
-          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Retour">
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-white" accessibilityRole="header">Détails du voyage</Text>
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Ajouter aux favoris">
-            <Ionicons name="heart-outline" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
+        end={{ x: 0, y: 1 }}
+        style={{ paddingBottom: 36 }}>
+        <SafeAreaView edges={['top']}>
+          <View className="flex-row items-center justify-between px-6 pb-2 pt-2">
+            <TouchableOpacity
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Retour"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <Ionicons name="arrow-back" size={22} color="white" />
+              </View>
+            </TouchableOpacity>
+            <Text className="text-base font-semibold text-white" accessibilityRole="header">
+              Détails du voyage
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Ajouter aux favoris"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <Ionicons name="heart-outline" size={22} color="white" />
+              </View>
+            </TouchableOpacity>
+          </View>
 
-        {/* Trip Info Card */}
-        <View className="mx-6 rounded-2xl bg-white/10 p-6 backdrop-blur">
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-4xl">{voyage.icon}</Text>
-            <View className="rounded-full bg-white/20 px-3 py-1">
-              <Text className="text-sm font-medium text-white">{voyage.type}</Text>
+          {/* Route hero */}
+          <View className="mx-6 mt-4 rounded-3xl bg-white/15 px-5 py-5">
+            <View className="mb-2 flex-row items-center">
+              <Text style={{ fontSize: 36, marginRight: 8 }}>{voyage.icon}</Text>
+              <View className="rounded-full bg-white/25 px-3 py-1">
+                <Text className="text-xs font-semibold text-white">{voyage.type}</Text>
+              </View>
             </View>
-          </View>
 
-          <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-2xl font-bold text-white">{voyage.from}</Text>
-            <Ionicons name="arrow-forward" size={20} color="white" />
-            <Text className="text-2xl font-bold text-white">{voyage.to}</Text>
-          </View>
+            <View className="mt-1">
+              <Text className="text-xs font-medium uppercase text-white/70">De</Text>
+              <Text className="mt-0.5 text-2xl font-bold text-white" numberOfLines={1}>
+                {voyage.from}
+              </Text>
+            </View>
 
-          <View className="flex-row items-center justify-between">
-            <Text className="text-white/80">{voyage.departureTime}</Text>
-            <Text className="text-white/80">{voyage.duration}</Text>
-            <Text className="text-white/80">{voyage.arrivalTime}</Text>
+            <View className="my-2 ml-1 h-5 w-px bg-white/40" />
+
+            <View>
+              <Text className="text-xs font-medium uppercase text-white/70">Vers</Text>
+              <Text className="mt-0.5 text-2xl font-bold text-white" numberOfLines={1}>
+                {voyage.to}
+              </Text>
+            </View>
+
+            {dateLabel ? (
+              <View className="mt-4 flex-row items-center border-t border-white/15 pt-3">
+                <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.85)" />
+                <Text className="ml-2 text-sm text-white/85">{dateLabel}</Text>
+              </View>
+            ) : null}
           </View>
-        </View>
+        </SafeAreaView>
       </LinearGradient>
 
-      <ScrollView className="-mt-4 flex-1 px-6">
-        {/* Price Card */}
-        <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-gray-600">Prix par personne</Text>
-            <Text className="text-2xl font-bold text-[#2162FE]">{voyage.price}</Text>
+      <ScrollView
+        className="-mt-6 flex-1"
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}>
+        {/* Driver card */}
+        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+          <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Conducteur
+          </Text>
+          <View className="flex-row items-center">
+            {voyage.driverAvatar ? (
+              <Image
+                source={{ uri: voyage.driverAvatar }}
+                style={{ width: 56, height: 56, borderRadius: 28 }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: '#EFF6FF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <Ionicons name="person" size={28} color={COLORS.primary} />
+              </View>
+            )}
+            <View className="ml-4 flex-1">
+              <Text className="text-lg font-bold text-gray-900">{voyage.driver}</Text>
+              <View className="mt-1 flex-row items-center">
+                {voyage.driverRating > 0 ? (
+                  <>
+                    <Ionicons name="star" size={14} color={COLORS.star} />
+                    <Text className="ml-1 text-sm font-semibold text-gray-700">
+                      {voyage.driverRating.toFixed(1)}
+                    </Text>
+                  </>
+                ) : (
+                  <Text className="text-sm text-gray-500">Nouveau chauffeur</Text>
+                )}
+              </View>
+            </View>
           </View>
+        </View>
 
-          {/* Passenger Selector */}
+        {/* Vehicle card */}
+        {(vehicleSpecs || voyage.type) && (
+          <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+            <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Véhicule
+            </Text>
+            <View className="flex-row items-center">
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  backgroundColor: '#EFF6FF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <MaterialCommunityIcons name="car-side" size={24} color={COLORS.primary} />
+              </View>
+              <View className="ml-3 flex-1">
+                <Text className="text-base font-semibold text-gray-900">{voyage.type}</Text>
+                {vehicleSpecs ? (
+                  <Text className="mt-0.5 text-sm text-gray-500">{vehicleSpecs}</Text>
+                ) : null}
+              </View>
+            </View>
+            <View className="mt-4 flex-row items-center justify-between border-t border-gray-100 pt-3">
+              <Text className="text-sm text-gray-500">Places disponibles</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: availability.color }}>
+                {availability.label}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Counter card */}
+        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
           <View className="flex-row items-center justify-between">
-            <Text className="font-medium text-gray-700">Nombre de passagers</Text>
+            <View>
+              <Text className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Prix par personne
+              </Text>
+              <Text className="mt-1 text-xl font-bold" style={{ color: COLORS.primary }}>
+                {voyage.price}
+              </Text>
+            </View>
             <View className="flex-row items-center">
               <TouchableOpacity
                 onPress={() => {
@@ -188,14 +316,12 @@ export default function VoyageDetailScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Réduire le nombre de passagers"
-                className="h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                <Ionicons name="remove" size={20} color={COLORS.gray[500]} />
+                className="h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                <Ionicons name="remove" size={22} color={COLORS.gray[600]} />
               </TouchableOpacity>
               <Animated.Text
-                className="mx-4 text-lg font-bold"
-                style={counterAnimatedStyle}
-                accessibilityRole="text"
-                accessibilityLabel={`${passengers} passager${passengers > 1 ? 's' : ''}`}>
+                className="mx-5 text-xl font-bold text-gray-900"
+                style={counterAnimatedStyle}>
                 {passengers}
               </Animated.Text>
               <TouchableOpacity
@@ -208,88 +334,59 @@ export default function VoyageDetailScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Augmenter le nombre de passagers"
-                className="h-10 w-10 items-center justify-center rounded-full bg-[#2162FE]">
-                <Ionicons name="add" size={20} color="white" />
+                className="h-11 w-11 items-center justify-center rounded-full"
+                style={{ backgroundColor: COLORS.primary }}>
+                <Ionicons name="add" size={22} color="white" />
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Vehicle Info */}
-        <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-          <Text className="mb-4 text-lg font-bold text-gray-800">Informations du véhicule</Text>
-
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-gray-600">Véhicule</Text>
-            <Text className="font-medium">{voyage.vehicle}</Text>
-          </View>
-
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="text-gray-600">Places disponibles</Text>
-            <Text style={{ fontWeight: '600', color: availability.color }}>
-              {availability.label}
-            </Text>
-          </View>
-
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-gray-600">Conducteur</Text>
-            <View className="flex-row items-center">
-              {voyage.driverAvatar ? (
-                <Image
-                  source={{ uri: voyage.driverAvatar }}
-                  style={{ width: 28, height: 28, borderRadius: 14, marginRight: 8 }}
-                />
-              ) : null}
-              <Text className="mr-2 font-medium">{voyage.driver}</Text>
-              {voyage.driverRating > 0 && (
-                <View className="flex-row items-center">
-                  <Ionicons name="star" size={16} color={COLORS.star} />
-                  <Text className="ml-1 text-sm text-gray-600">{voyage.driverRating.toFixed(1)}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Amenities */}
-          <Text className="mb-2 text-gray-600">Équipements</Text>
-          <View className="flex-row flex-wrap">
-            {voyage.amenities.map((amenity, index) => (
-              <View key={index} className="mb-2 mr-2 rounded-full bg-gray-100 px-3 py-1">
-                <Text className="text-sm text-gray-700">{amenity}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Total and Book Button */}
+        {/* Total + CTA */}
         <View
-          className="mb-8 rounded-2xl bg-white p-6"
+          className="rounded-3xl bg-white p-5"
           style={{ ...LAYOUT.shadows.large, borderLeftWidth: 4, borderLeftColor: COLORS.primary }}>
           <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-gray-800">Total</Text>
+            <Text className="text-base font-semibold text-gray-700">Total</Text>
             <Animated.Text
-              className="text-2xl font-bold text-[#2162FE]"
-              style={totalAnimatedStyle}>
+              className="text-2xl font-bold"
+              style={[totalAnimatedStyle, { color: COLORS.primary }]}>
               {totalPrice} Fcfa
             </Animated.Text>
           </View>
 
+          {!validation.ok && (
+            <View className="mb-3 flex-row items-start rounded-2xl bg-red-50 px-3 py-2.5">
+              <Ionicons name="information-circle" size={18} color="#B91C1C" />
+              <Text className="ml-2 flex-1 text-xs text-red-900">{validation.message}</Text>
+            </View>
+          )}
+
           <TouchableOpacity
             onPress={handleBooking}
-            disabled={isBooking}
+            disabled={isBooking || !validation.ok}
             accessibilityRole="button"
-            accessibilityLabel={`Réserver ${passengers} place${passengers > 1 ? 's' : ''} pour ${totalPrice} Fcfa`}
-            accessibilityState={{ disabled: isBooking }}
-            className="items-center rounded-2xl bg-[#2162FE] py-4"
-            style={{ opacity: isBooking ? 0.7 : 1 }}>
+            accessibilityLabel={
+              !validation.ok
+                ? 'Réservation indisponible'
+                : `Réserver ${passengers} place${passengers > 1 ? 's' : ''} pour ${totalPrice} Fcfa`
+            }
+            accessibilityState={{ disabled: isBooking || !validation.ok }}
+            className="items-center rounded-2xl py-4"
+            style={{
+              backgroundColor: COLORS.primary,
+              opacity: isBooking || !validation.ok ? 0.5 : 1,
+            }}>
             {isBooking ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-lg font-bold text-white">Réserver maintenant</Text>
+              <Text className="text-base font-bold text-white">
+                {!validation.ok && validation.reason === 'sold_out' ? 'Complet' : 'Réserver maintenant'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

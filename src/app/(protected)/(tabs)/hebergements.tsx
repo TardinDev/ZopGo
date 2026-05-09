@@ -94,7 +94,9 @@ export default function HebergementsTab() {
         hebergeurName: hebergement.hebergeurName || '',
         hebergeurAvatar: hebergement.hebergeurAvatar || '',
         hebergeurRating: String(hebergement.hebergeurRating || 0),
-        image: hebergement.images?.[0] || '',
+        // Pass the full image gallery (JSON-serialised). Detail screen
+        // parses it back so the client sees every photo, not just the first.
+        images: JSON.stringify(hebergement.images || []),
       },
     });
   }, [router]);
