@@ -16,6 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants';
 import { useAuthStore } from '../../../stores/authStore';
+import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
 import {
   sendDirectMessage,
   fetchConversation,
@@ -39,7 +40,6 @@ export default function ConversationScreen() {
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const listRef = useRef<FlatList<DirectMessage>>(null);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadMessages = useCallback(async () => {
     if (!supabaseProfileId || !receiverId) return;
@@ -52,13 +52,17 @@ export default function ConversationScreen() {
 
   useEffect(() => {
     loadMessages();
-    pollingRef.current = setInterval(loadMessages, 10000);
-    return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-      }
-    };
   }, [loadMessages]);
+
+  // Realtime: react to new direct_messages addressed to me from this peer.
+  // No polling — the previous 10s interval is replaced.
+  useSupabaseSubscription({
+    table: 'direct_messages',
+    filter: supabaseProfileId ? `receiver_id=eq.${supabaseProfileId}` : undefined,
+    event: 'INSERT',
+    onChange: loadMessages,
+    enabled: !!supabaseProfileId && !!receiverId,
+  });
 
   const handleSend = async () => {
     const content = input.trim();
@@ -192,8 +196,8 @@ export default function ConversationScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {isLoading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

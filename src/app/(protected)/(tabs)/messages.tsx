@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../../../constants';
+import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
 import {
   useMessagesStore,
   useAuthStore,
@@ -68,28 +69,50 @@ export default function MessagesTab() {
     }
   }, [supabaseProfileId, user, loadNotifications, loadConversations, loadAdminMessages]);
 
-  // Charger notifications, conversations et annonces admin au focus + polling 15s
+  // Refresh on focus — pulls everything fresh when the user lands on the tab.
   useFocusEffect(
     useCallback(() => {
       if (!supabaseProfileId || !user) return;
-
-      const refresh = () => {
-        loadNotifications(supabaseProfileId, user.role);
-        loadConversations(supabaseProfileId);
-        loadAdminMessages(supabaseProfileId);
-      };
-
-      refresh();
-      const interval = setInterval(refresh, 15000);
-      return () => clearInterval(interval);
-    }, [
-      supabaseProfileId,
-      user,
-      loadNotifications,
-      loadConversations,
-      loadAdminMessages,
-    ])
+      loadNotifications(supabaseProfileId, user.role);
+      loadConversations(supabaseProfileId);
+      loadAdminMessages(supabaseProfileId);
+    }, [supabaseProfileId, user, loadNotifications, loadConversations, loadAdminMessages])
   );
+
+  // Realtime fan-out instead of the previous 15s interval. Each
+  // subscription is filtered to the current user so we don't get
+  // notified for events that don't concern them.
+  const refreshNotifications = useCallback(() => {
+    if (supabaseProfileId && user) loadNotifications(supabaseProfileId, user.role);
+  }, [supabaseProfileId, user, loadNotifications]);
+
+  const refreshConversations = useCallback(() => {
+    if (supabaseProfileId) loadConversations(supabaseProfileId);
+  }, [supabaseProfileId, loadConversations]);
+
+  const refreshAdminMessages = useCallback(() => {
+    if (supabaseProfileId) loadAdminMessages(supabaseProfileId);
+  }, [supabaseProfileId, loadAdminMessages]);
+
+  useSupabaseSubscription({
+    table: 'notifications',
+    filter: supabaseProfileId ? `recipient_id=eq.${supabaseProfileId}` : undefined,
+    onChange: refreshNotifications,
+    enabled: !!supabaseProfileId,
+  });
+
+  useSupabaseSubscription({
+    table: 'direct_messages',
+    filter: supabaseProfileId ? `receiver_id=eq.${supabaseProfileId}` : undefined,
+    onChange: refreshConversations,
+    enabled: !!supabaseProfileId,
+  });
+
+  useSupabaseSubscription({
+    table: 'admin_messages',
+    onChange: refreshAdminMessages,
+    enabled: !!supabaseProfileId,
+  });
 
   // Handlers
   const handleTabChange = useCallback(

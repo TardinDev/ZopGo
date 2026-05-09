@@ -23,6 +23,7 @@ import {
   EmptyResults,
 } from '../../../components/voyages';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
 
 export default function HebergementsTab() {
   const router = useRouter();
@@ -44,21 +45,19 @@ export default function HebergementsTab() {
     loadHebergements();
   }, [loadHebergements]);
 
-  // Auto-refresh quand l'écran devient actif (l'utilisateur revient sur cet onglet)
+  // Refresh when the user returns to this tab.
   useFocusEffect(
     useCallback(() => {
-      // Rafraîchir immédiatement quand l'écran devient actif
       loadHebergements();
-
-      // Auto-refresh périodique toutes les 30 secondes
-      const interval = setInterval(() => {
-        loadHebergements();
-      }, 30000); // 30 secondes
-
-      // Nettoyer l'intervalle quand l'écran devient inactif
-      return () => clearInterval(interval);
     }, [loadHebergements])
   );
+
+  // Realtime instead of 30s polling — only the 'actif' bucket matters here.
+  useSupabaseSubscription({
+    table: 'hebergements',
+    filter: 'status=eq.actif',
+    onChange: loadHebergements,
+  });
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {

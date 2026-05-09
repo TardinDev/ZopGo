@@ -24,6 +24,7 @@ import {
   EmptyResults,
 } from '../../../components/voyages';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
 
 export default function VoyagesTab() {
   const router = useRouter();
@@ -51,21 +52,21 @@ export default function VoyagesTab() {
     loadVoyages();
   }, [loadVoyages]);
 
-  // Auto-refresh quand l'écran devient actif (l'utilisateur revient sur cet onglet)
+  // Refresh when the user returns to this tab (cheap, just refetches once).
   useFocusEffect(
     useCallback(() => {
-      // Rafraîchir immédiatement quand l'écran devient actif
       loadVoyages();
-
-      // Auto-refresh périodique toutes les 30 secondes
-      const interval = setInterval(() => {
-        loadVoyages();
-      }, 30000); // 30 secondes
-
-      // Nettoyer l'intervalle quand l'écran devient inactif
-      return () => clearInterval(interval);
     }, [loadVoyages])
   );
+
+  // Realtime instead of 30s polling — battery + data win in 3G/4G regions.
+  // We only refetch on changes to en_attente trajets, which is the only
+  // bucket this screen displays.
+  useSupabaseSubscription({
+    table: 'trajets',
+    filter: 'status=eq.en_attente',
+    onChange: loadVoyages,
+  });
 
   // Pull-to-refresh
   const handleRefresh = useCallback(async () => {
