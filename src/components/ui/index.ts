@@ -14,3 +14,4 @@ export * from './RotatingLoadingText';
 export * from './Confetti';
 export * from './OfflineBanner';
 export * from './CoachMark';
+export * from './ImageCarousel';
