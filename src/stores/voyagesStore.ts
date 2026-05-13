@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { fetchAllAvailableTrajets } from '../lib/supabaseTrajets';
 import type { Voyage } from '../types';
+import type { DepartureWindow, VoyageSort } from '../lib/voyagesFilters';
 
 const VEHICLE_LABEL: Record<string, string> = {
   moto: 'Moto',
@@ -23,12 +24,18 @@ interface VoyagesState {
   selectedType: string;
   fromCity: string;
   toCity: string;
+  priceMax: number | null;
+  departureWindow: DepartureWindow | null;
+  sortBy: VoyageSort;
 
   loadVoyages: () => Promise<void>;
   setSelectedType: (type: string) => void;
   setFromCity: (city: string) => void;
   setToCity: (city: string) => void;
   swapCities: () => void;
+  setPriceMax: (price: number | null) => void;
+  setDepartureWindow: (w: DepartureWindow | null) => void;
+  setSortBy: (s: VoyageSort) => void;
   resetFilters: () => void;
 }
 
@@ -39,6 +46,9 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
   selectedType: 'All',
   fromCity: '',
   toCity: '',
+  priceMax: null,
+  departureWindow: null,
+  sortBy: 'default',
 
   loadVoyages: async () => {
     set({ isLoading: true, error: null });
@@ -79,10 +89,16 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
     const { fromCity, toCity } = get();
     set({ fromCity: toCity, toCity: fromCity });
   },
+  setPriceMax: (priceMax) => set({ priceMax }),
+  setDepartureWindow: (departureWindow) => set({ departureWindow }),
+  setSortBy: (sortBy) => set({ sortBy }),
   resetFilters: () =>
     set({
       selectedType: 'All',
       fromCity: '',
       toCity: '',
+      priceMax: null,
+      departureWindow: null,
+      sortBy: 'default',
     }),
 }));

@@ -6,6 +6,10 @@ import {
   fetchReservationById,
   acceptReservation as acceptReservationApi,
   refuseReservation as refuseReservationApi,
+  cancelReservationByClient,
+  updateReservationStatus,
+  expireStaleReservations,
+  markReservationReviewed,
 } from '../lib/supabaseReservations';
 import {
   insertHebergementReservation,
@@ -53,6 +57,44 @@ interface ReservationsState {
     villeDepart?: string;
     villeArrivee?: string;
   }) => Promise<boolean>;
+
+  cancelReservation: (params: {
+    reservationId: string;
+    clientId: string;
+    chauffeurId: string;
+    clientName?: string;
+    villeDepart?: string;
+    villeArrivee?: string;
+  }) => Promise<boolean>;
+
+  startTrajet: (params: {
+    reservationId: string;
+    clientId: string;
+    chauffeurName: string;
+    villeDepart?: string;
+    villeArrivee?: string;
+  }) => Promise<boolean>;
+
+  markArrivee: (params: {
+    reservationId: string;
+    clientId: string;
+    chauffeurName: string;
+    villeDepart?: string;
+    villeArrivee?: string;
+  }) => Promise<boolean>;
+
+  completeTrajet: (params: {
+    reservationId: string;
+    clientId: string;
+    chauffeurName: string;
+    chauffeurId: string;
+    villeDepart?: string;
+    villeArrivee?: string;
+  }) => Promise<boolean>;
+
+  markReviewed: (reservationId: string) => Promise<void>;
+
+  expireStale: () => Promise<number>;
 
   bookHebergement: (params: {
     hebergementId: string;
@@ -271,6 +313,220 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+
+  // ── F3: client cancel + chauffeur status flow ──
+
+  cancelReservation: async ({
+    reservationId,
+    clientId,
+    chauffeurId,
+    clientName,
+    villeDepart,
+    villeArrivee,
+  }) => {
+    set({ isLoading: true });
+    try {
+      const ok = await cancelReservationByClient(reservationId);
+      if (!ok) return false;
+
+      const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
+      const who = clientName || 'Le client';
+      const pushBody = routeLabel
+        ? `${who} a annulé sa réservation — ${routeLabel}`
+        : `${who} a annulé sa réservation`;
+
+      void sendPushIfAllowed({
+        recipientProfileId: chauffeurId,
+        category: 'trajets',
+        type: 'reservation_annulee',
+        title: 'Réservation annulée',
+        body: pushBody,
+        message: pushBody,
+        icon: 'close-circle',
+        iconColor: '#EF4444',
+        iconBg: '#FEE2E2',
+        data: {
+          reservationId,
+          clientId,
+          ...(villeDepart && { villeDepart }),
+          ...(villeArrivee && { villeArrivee }),
+        },
+      });
+
+      set((state) => ({
+        clientReservations: state.clientReservations.map((r) =>
+          r.id === reservationId ? { ...r, status: 'annulee' } : r
+        ),
+        chauffeurReservations: state.chauffeurReservations.map((r) =>
+          r.id === reservationId ? { ...r, status: 'annulee' } : r
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      if (__DEV__) console.error('cancelReservation error:', err);
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  startTrajet: async ({ reservationId, clientId, chauffeurName, villeDepart, villeArrivee }) => {
+    set({ isLoading: true });
+    try {
+      const ok = await updateReservationStatus(reservationId, 'en_route');
+      if (!ok) return false;
+
+      const routeLabel = villeDepart && villeArrivee ? ` (${villeDepart} → ${villeArrivee})` : '';
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'trajets',
+        type: 'trajet_en_route',
+        title: 'Trajet démarré',
+        body: `${chauffeurName} est en route${routeLabel}`,
+        icon: 'navigate',
+        iconColor: '#2162FE',
+        iconBg: '#DBEAFE',
+        data: { reservationId },
+      });
+
+      set((state) => ({
+        chauffeurReservations: state.chauffeurReservations.map((r) =>
+          r.id === reservationId
+            ? { ...r, status: 'en_route', startedAt: new Date().toISOString() }
+            : r
+        ),
+        clientReservations: state.clientReservations.map((r) =>
+          r.id === reservationId
+            ? { ...r, status: 'en_route', startedAt: new Date().toISOString() }
+            : r
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      if (__DEV__) console.error('startTrajet error:', err);
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  markArrivee: async ({ reservationId, clientId, chauffeurName, villeDepart, villeArrivee }) => {
+    set({ isLoading: true });
+    try {
+      const ok = await updateReservationStatus(reservationId, 'arrivee');
+      if (!ok) return false;
+
+      const routeLabel = villeArrivee ? ` à ${villeArrivee}` : '';
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'trajets',
+        type: 'trajet_arrivee',
+        title: 'Arrivé',
+        body: `${chauffeurName} est arrivé${routeLabel}`,
+        icon: 'map-marker-check',
+        iconColor: '#10B981',
+        iconBg: '#D1FAE5',
+        data: { reservationId, ...(villeDepart && { villeDepart }), ...(villeArrivee && { villeArrivee }) },
+      });
+
+      set((state) => ({
+        chauffeurReservations: state.chauffeurReservations.map((r) =>
+          r.id === reservationId ? { ...r, status: 'arrivee' } : r
+        ),
+        clientReservations: state.clientReservations.map((r) =>
+          r.id === reservationId ? { ...r, status: 'arrivee' } : r
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      if (__DEV__) console.error('markArrivee error:', err);
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  completeTrajet: async ({ reservationId, clientId, chauffeurName, chauffeurId, villeDepart, villeArrivee }) => {
+    set({ isLoading: true });
+    try {
+      const ok = await updateReservationStatus(reservationId, 'terminee');
+      if (!ok) return false;
+
+      void sendPushIfAllowed({
+        recipientProfileId: clientId,
+        category: 'trajets',
+        type: 'trajet_terminee',
+        title: 'Course terminée',
+        body: `Notez votre course avec ${chauffeurName}`,
+        icon: 'star',
+        iconColor: '#F59E0B',
+        iconBg: '#FEF3C7',
+        data: {
+          reservationId,
+          chauffeurId,
+          chauffeurName,
+          promptReview: 'true',
+          ...(villeDepart && { villeDepart }),
+          ...(villeArrivee && { villeArrivee }),
+        },
+      });
+
+      set((state) => ({
+        chauffeurReservations: state.chauffeurReservations.map((r) =>
+          r.id === reservationId
+            ? { ...r, status: 'terminee', completedAt: new Date().toISOString() }
+            : r
+        ),
+        clientReservations: state.clientReservations.map((r) =>
+          r.id === reservationId
+            ? { ...r, status: 'terminee', completedAt: new Date().toISOString() }
+            : r
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      if (__DEV__) console.error('completeTrajet error:', err);
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  markReviewed: async (reservationId) => {
+    await markReservationReviewed(reservationId);
+    set((state) => ({
+      clientReservations: state.clientReservations.map((r) =>
+        r.id === reservationId ? { ...r, reviewed: true } : r
+      ),
+    }));
+  },
+
+  expireStale: async () => {
+    const count = await expireStaleReservations();
+    if (count > 0) {
+      // Update local state mirror — anything still in 'en_attente' for >5min
+      // becomes 'expiree' locally. We re-derive the cutoff client-side rather
+      // than fetching every row again.
+      const cutoff = Date.now() - 5 * 60 * 1000;
+      set((state) => ({
+        clientReservations: state.clientReservations.map((r) =>
+          r.status === 'en_attente' && new Date(r.createdAt).getTime() < cutoff
+            ? { ...r, status: 'expiree' }
+            : r
+        ),
+        chauffeurReservations: state.chauffeurReservations.map((r) =>
+          r.status === 'en_attente' && new Date(r.createdAt).getTime() < cutoff
+            ? { ...r, status: 'expiree' }
+            : r
+        ),
+      }));
+    }
+    return count;
   },
 
   // ── Hébergements ──

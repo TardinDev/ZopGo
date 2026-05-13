@@ -127,7 +127,20 @@ export interface RatingSummaryData {
 export type TrajetStatus = 'en_attente' | 'effectue' | 'complet';
 
 // Types pour les réservations
-export type ReservationStatus = 'en_attente' | 'acceptee' | 'refusee' | 'annulee';
+// Status flow (post-migration 022):
+//   en_attente -> acceptee | refusee | annulee | expiree
+//   acceptee   -> en_route | annulee
+//   en_route   -> arrivee  | annulee
+//   arrivee    -> terminee
+export type ReservationStatus =
+  | 'en_attente'
+  | 'acceptee'
+  | 'refusee'
+  | 'annulee'
+  | 'en_route'
+  | 'arrivee'
+  | 'terminee'
+  | 'expiree';
 
 export interface Reservation {
   id: string;
@@ -139,6 +152,9 @@ export interface Reservation {
   status: ReservationStatus;
   createdAt: string;
   updatedAt: string;
+  startedAt?: string;     // set when transitioning to en_route
+  completedAt?: string;   // set when transitioning to terminee
+  reviewed?: boolean;     // true once the client submits a rating
   // Optional joined data
   clientName?: string;
   clientAvatar?: string;

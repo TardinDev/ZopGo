@@ -16,18 +16,24 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants';
 import { useAuthStore } from '../../../stores/authStore';
+import { useReservationsStore } from '../../../stores/reservationsStore';
 import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
+import { toast } from '../../../stores/toastStore';
 import {
   sendDirectMessage,
   fetchConversation,
   markMessagesAsRead,
 } from '../../../lib/supabaseDirectMessages';
-import type { DirectMessage } from '../../../types';
+import { fetchFullReservation } from '../../../lib/supabaseReservations';
+import { ReservationStatusBanner } from '../../../components/chat/ReservationStatusBanner';
+import { RatingModal } from '../../../components/ratings/RatingModal';
+import type { DirectMessage, Reservation } from '../../../types';
 
 export default function ConversationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { supabaseProfileId } = useAuthStore();
+  const { user, supabaseProfileId } = useAuthStore();
+  const { cancelReservation, markReviewed } = useReservationsStore();
 
   const receiverId = String(params.receiverId || '');
   const receiverName = String(params.receiverName || 'Utilisateur');
@@ -39,7 +45,12 @@ export default function ConversationScreen() {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [reservation, setReservation] = useState<Reservation | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
   const listRef = useRef<FlatList<DirectMessage>>(null);
+
+  const isClientViewer = user?.role === 'client';
 
   const loadMessages = useCallback(async () => {
     if (!supabaseProfileId || !receiverId) return;
@@ -54,6 +65,28 @@ export default function ConversationScreen() {
     loadMessages();
   }, [loadMessages]);
 
+  // Load the reservation context (status, route, prixTotal) so the top banner
+  // can render the correct CTA for the viewer (cancel for client en_attente,
+  // rate for client terminée, plain status pill otherwise).
+  const loadReservation = useCallback(async () => {
+    if (!reservationId) return;
+    const r = await fetchFullReservation(reservationId);
+    if (r) setReservation(r);
+  }, [reservationId]);
+
+  useEffect(() => {
+    loadReservation();
+  }, [loadReservation]);
+
+  // Auto-open the rating modal when the chauffeur marks the course terminée
+  // while the client is on this screen. Only fires once per visit.
+  useEffect(() => {
+    if (!reservation || !isClientViewer) return;
+    if (reservation.status === 'terminee' && !reservation.reviewed) {
+      setShowRatingModal(true);
+    }
+  }, [reservation, isClientViewer]);
+
   // Realtime: react to new direct_messages addressed to me from this peer.
   // No polling — the previous 10s interval is replaced.
   useSupabaseSubscription({
@@ -63,6 +96,51 @@ export default function ConversationScreen() {
     onChange: loadMessages,
     enabled: !!supabaseProfileId && !!receiverId,
   });
+
+  // Realtime on reservation status — captures chauffeur transitions.
+  useSupabaseSubscription({
+    table: 'reservations',
+    filter: reservationId ? `id=eq.${reservationId}` : undefined,
+    event: 'UPDATE',
+    onChange: loadReservation,
+    enabled: !!reservationId,
+  });
+
+  const handleCancelReservation = useCallback(async () => {
+    if (!reservation || !supabaseProfileId) return;
+    setCancelling(true);
+    try {
+      const ok = await cancelReservation({
+        reservationId: reservation.id,
+        clientId: supabaseProfileId,
+        chauffeurId: reservation.chauffeurId,
+        clientName: user?.profile?.name,
+        villeDepart: reservation.villeDepart,
+        villeArrivee: reservation.villeArrivee,
+      });
+      if (ok) {
+        toast.success('Le chauffeur a été prévenu.', { title: 'Réservation annulée' });
+        setReservation({ ...reservation, status: 'annulee' });
+      } else {
+        toast.error(
+          'Impossible d\'annuler — la réservation a peut-être déjà été acceptée.',
+          { title: 'Annulation refusée' }
+        );
+      }
+    } finally {
+      setCancelling(false);
+    }
+  }, [reservation, supabaseProfileId, user, cancelReservation]);
+
+  const handleSubmitRating = useCallback(
+    async (_rating: number, _comment: string) => {
+      if (!reservation) return;
+      await markReviewed(reservation.id);
+      toast.success('Merci pour ton avis ⭐', { title: 'Évaluation envoyée' });
+      setReservation((prev) => (prev ? { ...prev, reviewed: true } : prev));
+    },
+    [reservation, markReviewed]
+  );
 
   const handleSend = async () => {
     const content = input.trim();
@@ -194,6 +272,17 @@ export default function ConversationScreen() {
         </View>
       </View>
 
+      {/* Bannière statut réservation + actions contextuelles */}
+      {reservation && (
+        <ReservationStatusBanner
+          reservation={reservation}
+          isClient={isClientViewer}
+          onCancel={handleCancelReservation}
+          onRate={() => setShowRatingModal(true)}
+          cancelling={cancelling}
+        />
+      )}
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -276,6 +365,14 @@ export default function ConversationScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <RatingModal
+        visible={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        onSubmit={handleSubmitRating}
+        userName={receiverName}
+        tripType="voyage"
+      />
     </SafeAreaView>
   );
 }

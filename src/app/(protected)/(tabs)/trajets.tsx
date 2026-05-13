@@ -1,17 +1,21 @@
 export { RouteErrorBoundary as ErrorBoundary } from '../../../components/RouteErrorBoundary';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useFocusEffect } from '@react-navigation/native';
 import { AnimatedTabScreen, PickerModal, PickerOption, Confetti, EmptyState, CoachMark } from '../../../components/ui';
+import { ChauffeurDashboard, ActiveReservationCard } from '../../../components/chauffeur';
 import { shouldCelebrateFirstPublish } from '../../../utils/firstPublishCelebration';
 import { shouldShowCoachMark, markCoachMarkSeen } from '../../../utils/coachMarkSeen';
 import { COLORS } from '../../../constants';
 import { useTrajetsStore } from '../../../stores/trajetsStore';
 import { useAuthStore } from '../../../stores/authStore';
+import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
+import { computeChauffeurStats } from '../../../lib/chauffeurStats';
 import { VehicleType } from '../../../types';
 
 const MARQUES: PickerOption[] = [
@@ -46,6 +50,15 @@ const VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [
 export default function TrajetsTab() {
   const { user, supabaseProfileId } = useAuthStore();
   const { trajets, formData, addTrajet, removeTrajet, markEffectue, updateForm, loadTrajets } = useTrajetsStore();
+  const {
+    chauffeurReservations,
+    loadChauffeurReservations,
+    startTrajet,
+    markArrivee,
+    completeTrajet,
+    expireStale,
+  } = useReservationsStore();
+  const [busyReservationId, setBusyReservationId] = useState<string | null>(null);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -69,10 +82,77 @@ export default function TrajetsTab() {
   useEffect(() => {
     if (supabaseProfileId) {
       loadTrajets(supabaseProfileId);
+      loadChauffeurReservations(supabaseProfileId);
     }
-  }, [supabaseProfileId, loadTrajets]);
+  }, [supabaseProfileId, loadTrajets, loadChauffeurReservations]);
+
+  // Refresh + auto-expire on focus.
+  useFocusEffect(
+    useCallback(() => {
+      if (!supabaseProfileId) return;
+      loadChauffeurReservations(supabaseProfileId);
+      void expireStale();
+    }, [supabaseProfileId, loadChauffeurReservations, expireStale])
+  );
 
   const mesTrajetsEnAttente = trajets.filter((t) => t.status === 'en_attente');
+
+  const activeReservations = useMemo(
+    () =>
+      chauffeurReservations.filter((r) =>
+        ['acceptee', 'en_route', 'arrivee'].includes(r.status)
+      ),
+    [chauffeurReservations]
+  );
+
+  const stats = useMemo(
+    () => computeChauffeurStats(chauffeurReservations, user?.profile?.rating),
+    [chauffeurReservations, user?.profile?.rating]
+  );
+
+  const handleReservationAction = useCallback(
+    async (reservationId: string, action: 'start' | 'arrive' | 'complete') => {
+      if (!supabaseProfileId) return;
+      const r = chauffeurReservations.find((x) => x.id === reservationId);
+      if (!r) return;
+      const chauffeurName = user?.profile?.name || 'Chauffeur';
+      setBusyReservationId(reservationId);
+      try {
+        if (action === 'start') {
+          const ok = await startTrajet({
+            reservationId,
+            clientId: r.clientId,
+            chauffeurName,
+            villeDepart: r.villeDepart,
+            villeArrivee: r.villeArrivee,
+          });
+          if (ok) toast.success('Le client a été notifié 🚗', { title: 'En route' });
+        } else if (action === 'arrive') {
+          const ok = await markArrivee({
+            reservationId,
+            clientId: r.clientId,
+            chauffeurName,
+            villeDepart: r.villeDepart,
+            villeArrivee: r.villeArrivee,
+          });
+          if (ok) toast.success("Position transmise au client", { title: 'Arrivée signalée' });
+        } else if (action === 'complete') {
+          const ok = await completeTrajet({
+            reservationId,
+            clientId: r.clientId,
+            chauffeurName,
+            chauffeurId: supabaseProfileId,
+            villeDepart: r.villeDepart,
+            villeArrivee: r.villeArrivee,
+          });
+          if (ok) toast.success("Bravo, course livrée ! 🏁", { title: 'Course terminée' });
+        }
+      } finally {
+        setBusyReservationId(null);
+      }
+    },
+    [supabaseProfileId, chauffeurReservations, user, startTrajet, markArrivee, completeTrajet]
+  );
 
   const handlePublish = async () => {
     if (!formData.villeDepart.trim() || !formData.villeArrivee.trim() || !formData.prix.trim()) {
@@ -147,6 +227,27 @@ export default function TrajetsTab() {
               arrowDirection="down"
               onDismiss={dismissCoach}
             />
+
+            {/* Dashboard chauffeur */}
+            <ChauffeurDashboard stats={stats} />
+
+            {/* Courses actives (acceptées / en route / arrivé) */}
+            {activeReservations.length > 0 && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: 'white', marginBottom: 10 }}>
+                  Courses en cours ({activeReservations.length})
+                </Text>
+                {activeReservations.map((r) => (
+                  <ActiveReservationCard
+                    key={r.id}
+                    reservation={r}
+                    busy={busyReservationId === r.id}
+                    onAction={(action) => handleReservationAction(r.id, action)}
+                  />
+                ))}
+              </View>
+            )}
+
             {/* Formulaire */}
             <View style={{
               backgroundColor: 'white',

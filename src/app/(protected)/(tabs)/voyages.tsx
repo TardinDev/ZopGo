@@ -10,6 +10,11 @@ import { COLORS } from '../../../constants';
 import { useVoyagesStore } from '../../../stores';
 import { transportTypes } from '../../../stores/voyagesStore';
 import { AnimatedTabScreen, SkeletonList, RotatingLoadingText } from '../../../components/ui';
+import {
+  applyVoyageFilters,
+  countActiveVoyageFilters,
+  type VoyageFilters,
+} from '../../../lib/voyagesFilters';
 
 const VOYAGE_LOADING_MESSAGES = [
   'On ratisse le Gabon...',
@@ -22,6 +27,8 @@ import {
   TypeFilter,
   TransportSearchBar,
   EmptyResults,
+  FiltersButton,
+  VoyageFiltersSheet,
 } from '../../../components/voyages';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
@@ -37,15 +44,22 @@ export default function VoyagesTab() {
     selectedType,
     fromCity,
     toCity,
+    priceMax,
+    departureWindow,
+    sortBy,
     loadVoyages,
     setSelectedType,
     setFromCity,
     setToCity,
     swapCities,
+    setPriceMax,
+    setDepartureWindow,
+    setSortBy,
     resetFilters,
   } = useVoyagesStore();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Charger les trajets au montage
   useEffect(() => {
@@ -75,16 +89,17 @@ export default function VoyagesTab() {
     setRefreshing(false);
   }, [loadVoyages]);
 
-  // Filtrage des voyages
-  const filteredVoyages = useMemo(() => {
-    return trajets
-      .filter((v) => selectedType === 'All' || v.type === selectedType)
-      .filter((v) => {
-        const matchFrom = !fromCity || v.from.toLowerCase().includes(fromCity.toLowerCase());
-        const matchTo = !toCity || v.to.toLowerCase().includes(toCity.toLowerCase());
-        return matchFrom && matchTo;
-      });
-  }, [trajets, selectedType, fromCity, toCity]);
+  const filters: VoyageFilters = useMemo(
+    () => ({ selectedType, fromCity, toCity, priceMax, departureWindow, sortBy }),
+    [selectedType, fromCity, toCity, priceMax, departureWindow, sortBy]
+  );
+
+  const filteredVoyages = useMemo(
+    () => applyVoyageFilters(trajets, filters),
+    [trajets, filters]
+  );
+
+  const activeCount = useMemo(() => countActiveVoyageFilters(filters), [filters]);
 
   const handleVoyagePress = useCallback(
     (voyage: Voyage) => {
@@ -143,12 +158,19 @@ export default function VoyagesTab() {
             />
           </Animated.View>
 
-          {/* Filtres par type */}
-          <TypeFilter
-            types={transportTypes}
-            selectedType={selectedType}
-            onTypeChange={setSelectedType}
-          />
+          {/* Filtres rapides type + bouton modale */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
+              <TypeFilter
+                types={transportTypes}
+                selectedType={selectedType}
+                onTypeChange={setSelectedType}
+              />
+            </View>
+            <View style={{ paddingRight: 20, paddingBottom: 14 }}>
+              <FiltersButton onPress={() => setFiltersOpen(true)} count={activeCount} />
+            </View>
+          </View>
 
           {/* Liste des résultats */}
           <ScrollView
@@ -193,6 +215,27 @@ export default function VoyagesTab() {
               </Animated.View>
             )}
           </ScrollView>
+
+          <VoyageFiltersSheet
+            visible={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            priceMax={priceMax}
+            departureWindow={departureWindow}
+            sortBy={sortBy}
+            computeCount={(drafts) =>
+              applyVoyageFilters(trajets, { ...filters, ...drafts }).length
+            }
+            onApply={(next) => {
+              setPriceMax(next.priceMax);
+              setDepartureWindow(next.departureWindow);
+              setSortBy(next.sortBy);
+            }}
+            onReset={() => {
+              setPriceMax(null);
+              setDepartureWindow(null);
+              setSortBy('default');
+            }}
+          />
         </SafeAreaView>
       </LinearGradient>
     </AnimatedTabScreen>

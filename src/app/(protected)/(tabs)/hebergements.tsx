@@ -8,6 +8,11 @@ import type { Hebergement } from '../../../types';
 import { COLORS } from '../../../constants';
 import { useHebergementsDiscoveryStore } from '../../../stores';
 import { SkeletonList, RotatingLoadingText } from '../../../components/ui';
+import {
+  applyHebergementFilters,
+  countActiveHebergementFilters,
+  type HebergementFilters,
+} from '../../../lib/hebergementsFilters';
 
 const HEBERGEMENT_LOADING_MESSAGES = [
   'On scanne les hôtels...',
@@ -21,6 +26,8 @@ import {
   TypeFilter,
   LocationSearchBar,
   EmptyResults,
+  FiltersButton,
+  HebergementFiltersSheet,
 } from '../../../components/voyages';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSupabaseSubscription } from '../../../hooks/useSupabaseSubscription';
@@ -33,12 +40,20 @@ export default function HebergementsTab() {
     error,
     selectedType,
     searchLocation,
+    priceMax,
+    minCapacity,
+    sortBy,
     loadHebergements,
     setSelectedType,
     setSearchLocation,
+    setPriceMax,
+    setMinCapacity,
+    setSortBy,
+    resetFilters,
   } = useHebergementsDiscoveryStore();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Charger les hébergements au montage
   useEffect(() => {
@@ -66,15 +81,17 @@ export default function HebergementsTab() {
     setRefreshing(false);
   }, [loadHebergements]);
 
-  // Filtrage des hébergements
-  const filteredHebergements = useMemo(() => {
-    return listings
-      .filter((h) => selectedType === 'All' || h.type === selectedType)
-      .filter((h) => {
-        if (!searchLocation.trim()) return true;
-        return (h.location || '').toLowerCase().includes(searchLocation.toLowerCase());
-      });
-  }, [listings, selectedType, searchLocation]);
+  const filters: HebergementFilters = useMemo(
+    () => ({ selectedType, searchLocation, priceMax, minCapacity, sortBy }),
+    [selectedType, searchLocation, priceMax, minCapacity, sortBy]
+  );
+
+  const filteredHebergements = useMemo(
+    () => applyHebergementFilters(listings, filters),
+    [listings, filters]
+  );
+
+  const activeCount = useMemo(() => countActiveHebergementFilters(filters), [filters]);
 
   const handleHebergementPress = useCallback((hebergement: Hebergement) => {
     router.push({
@@ -119,12 +136,19 @@ export default function HebergementsTab() {
           <LocationSearchBar value={searchLocation} onChange={setSearchLocation} />
         </View>
 
-        {/* Filtres par type */}
-        <TypeFilter
-          types={hebergementTypes}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-        />
+        {/* Filtres rapides type + bouton modale */}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <TypeFilter
+              types={hebergementTypes}
+              selectedType={selectedType}
+              onTypeChange={setSelectedType}
+            />
+          </View>
+          <View style={{ paddingRight: 20, paddingBottom: 14 }}>
+            <FiltersButton onPress={() => setFiltersOpen(true)} count={activeCount} />
+          </View>
+        </View>
 
         {/* Liste des résultats */}
         <ScrollView
@@ -159,12 +183,33 @@ export default function HebergementsTab() {
             <EmptyResults
               icon="bed-outline"
               message="Le Gabon prépare ses chambres..."
-              subMessage="Essaie une autre ville ou un autre type de logement"
+              subMessage="Essaie une autre ville, un autre type ou ajuste tes filtres"
               actionLabel="Voir tous"
-              onAction={() => { setSelectedType('All'); setSearchLocation(''); }}
+              onAction={resetFilters}
             />
           )}
         </ScrollView>
+
+        <HebergementFiltersSheet
+          visible={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          priceMax={priceMax}
+          minCapacity={minCapacity}
+          sortBy={sortBy}
+          computeCount={(drafts) =>
+            applyHebergementFilters(listings, { ...filters, ...drafts }).length
+          }
+          onApply={(next) => {
+            setPriceMax(next.priceMax);
+            setMinCapacity(next.minCapacity);
+            setSortBy(next.sortBy);
+          }}
+          onReset={() => {
+            setPriceMax(null);
+            setMinCapacity(null);
+            setSortBy('default');
+          }}
+        />
       </SafeAreaView>
     </LinearGradient>
   );

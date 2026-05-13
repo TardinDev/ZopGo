@@ -6,3 +6,6 @@ export { TypeFilter } from './TypeFilter';
 export { TransportSearchBar } from './TransportSearchBar';
 export { LocationSearchBar } from './LocationSearchBar';
 export { EmptyResults } from './EmptyResults';
+export { VoyageFiltersSheet } from './VoyageFiltersSheet';
+export { HebergementFiltersSheet } from './HebergementFiltersSheet';
+export { FiltersButton } from './FiltersButton';

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { fetchAllAvailableHebergements } from '../lib/supabaseHebergements';
 import type { Hebergement } from '../types';
+import type { HebergementSort } from '../lib/hebergementsFilters';
 
 const TYPE_LABEL: Record<string, string> = {
   hotel: 'Hôtel',
@@ -26,10 +27,17 @@ interface HebergementsDiscoveryState {
   error: string | null;
   selectedType: string;
   searchLocation: string;
+  priceMax: number | null;
+  minCapacity: number | null;
+  sortBy: HebergementSort;
 
   loadHebergements: () => Promise<void>;
   setSelectedType: (type: string) => void;
   setSearchLocation: (location: string) => void;
+  setPriceMax: (price: number | null) => void;
+  setMinCapacity: (capacity: number | null) => void;
+  setSortBy: (s: HebergementSort) => void;
+  resetFilters: () => void;
 }
 
 export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>((set) => ({
@@ -38,6 +46,9 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
   error: null,
   selectedType: 'All',
   searchLocation: '',
+  priceMax: null,
+  minCapacity: null,
+  sortBy: 'default',
 
   loadHebergements: async () => {
     set({ isLoading: true, error: null });
@@ -76,4 +87,15 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
   },
   setSelectedType: (type) => set({ selectedType: type }),
   setSearchLocation: (location) => set({ searchLocation: location }),
+  setPriceMax: (priceMax) => set({ priceMax }),
+  setMinCapacity: (minCapacity) => set({ minCapacity }),
+  setSortBy: (sortBy) => set({ sortBy }),
+  resetFilters: () =>
+    set({
+      selectedType: 'All',
+      searchLocation: '',
+      priceMax: null,
+      minCapacity: null,
+      sortBy: 'default',
+    }),
 }));
