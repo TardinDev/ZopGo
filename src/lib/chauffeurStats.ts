@@ -52,6 +52,7 @@ export function computeChauffeurStats(
 }
 
 export function formatFcfa(amount: number): string {
-  // 1 234 567 FCFA. Locale-fr separator is a thin no-break space.
-  return amount.toLocaleString('fr-FR').replace(/ /g, ' ') + ' FCFA';
+  // 1 234 567 FCFA. We keep Node's narrow no-break-space separator so
+  // the number doesn't wrap mid-figure on small screens.
+  return `${amount.toLocaleString('fr-FR')} FCFA`;
 }

@@ -13,6 +13,7 @@ import {
   useReservationsStore,
   useAdminMessagesStore,
 } from '../../../stores';
+import { toast } from '../../../stores/toastStore';
 import { AnimatedTabScreen, EmptyState } from '../../../components/ui';
 import { TabSelector } from '../../../components/voyages';
 import {
@@ -187,7 +188,7 @@ export default function MessagesTab() {
             text: 'Refuser',
             style: 'destructive',
             onPress: async () => {
-              await refuseReservation({
+              const ok = await refuseReservation({
                 reservationId,
                 clientId,
                 chauffeurId: supabaseProfileId,
@@ -195,13 +196,18 @@ export default function MessagesTab() {
                 villeArrivee,
               });
               markNotificationAsRead(notification.id);
+              if (!ok) {
+                toast.info('Le client a déjà annulé sa demande.', {
+                  title: 'Trop tard',
+                });
+              }
             },
           },
           {
             text: 'Accepter',
             onPress: async () => {
               const chauffeurName = user.profile?.name || 'Chauffeur';
-              await acceptReservation({
+              const ok = await acceptReservation({
                 reservationId,
                 clientId,
                 chauffeurName,
@@ -210,6 +216,11 @@ export default function MessagesTab() {
                 villeArrivee,
               });
               markNotificationAsRead(notification.id);
+              if (!ok) {
+                toast.info('Le client a annulé entre-temps, aucune course créée.', {
+                  title: 'Trop tard',
+                });
+              }
             },
           },
         ]

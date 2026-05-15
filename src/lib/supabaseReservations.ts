@@ -196,35 +196,58 @@ export async function fetchReservationById(
   };
 }
 
+/**
+ * Accepts the reservation only if it's still en_attente. The status guard
+ * makes this atomic so a client cancel that lands between the chauffeur's
+ * decision and the DB write doesn't produce a "cancelled + accepted" row.
+ * Returns false when the guard rejects (already cancelled / expired).
+ */
 export async function acceptReservation(id: string): Promise<boolean> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('reservations')
     .update({ status: 'acceptee' })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('status', 'en_attente')
+    .select('id');
 
   if (error) {
     if (__DEV__) console.error('Error accepting reservation:', error.message);
     return false;
   }
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 export async function refuseReservation(id: string): Promise<boolean> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('reservations')
     .update({ status: 'refusee' })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('status', 'en_attente')
+    .select('id');
 
   if (error) {
     if (__DEV__) console.error('Error refusing reservation:', error.message);
     return false;
   }
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 // ── F3: status flow transitions ────────────────────────────────────────────
 
-/** Generic status transition. Sets started_at/completed_at when relevant. */
+// Each forward transition is only allowed from a single predecessor state
+// (defense-in-depth: the UI already gates the buttons, this prevents bugs
+// like a stale "Démarrer" tap firing after the course already started).
+const ALLOWED_PRECURSOR: Partial<Record<ReservationStatus, ReservationStatus>> = {
+  en_route: 'acceptee',
+  arrivee: 'en_route',
+  terminee: 'arrivee',
+};
+
+/**
+ * Forward status transition. The predecessor guard is enforced at the DB
+ * layer so a doubled or out-of-order tap can't corrupt the flow.
+ * Returns false when the guard rejects.
+ */
 export async function updateReservationStatus(
   id: string,
   status: ReservationStatus
@@ -233,17 +256,22 @@ export async function updateReservationStatus(
   if (status === 'en_route') patch.started_at = new Date().toISOString();
   if (status === 'terminee') patch.completed_at = new Date().toISOString();
 
-  const { error } = await supabase
+  let query = supabase
     .from('reservations')
     .update(patch)
     .eq('id', id);
+
+  const precursor = ALLOWED_PRECURSOR[status];
+  if (precursor) query = query.eq('status', precursor);
+
+  const { data, error } = await query.select('id');
 
   if (error) {
     if (__DEV__)
       console.error('Error updating reservation status:', error.message);
     return false;
   }
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 /**

@@ -7,6 +7,7 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { useAuthStore } from '../../stores/authStore';
 import { setClerkTokenProvider } from '../../lib/supabase';
 import { logError } from '../../utils/errorHandler';
+import { GlobalRatingPrompt } from '../../components/ratings/GlobalRatingPrompt';
 import { UserRole, VehicleType, AccommodationType } from '../../types';
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
@@ -101,6 +102,7 @@ export default function ProtectedLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
+        <GlobalRatingPrompt />
       </View>
     </TabAnimationProvider>
   );

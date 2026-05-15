@@ -49,6 +49,10 @@ export default function ConversationScreen() {
   const [cancelling, setCancelling] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const listRef = useRef<FlatList<DirectMessage>>(null);
+  // Ref so we don't re-prompt for the same reservation if the user dismisses
+  // the modal without rating. Realtime updates would otherwise re-trigger
+  // the effect every time the reservation row changes (e.g. updated_at bump).
+  const promptedForRef = useRef<string | null>(null);
 
   const isClientViewer = user?.role === 'client';
 
@@ -79,10 +83,17 @@ export default function ConversationScreen() {
   }, [loadReservation]);
 
   // Auto-open the rating modal when the chauffeur marks the course terminée
-  // while the client is on this screen. Only fires once per visit.
+  // while the client is on this screen. Guarded by `promptedForRef` so we
+  // don't reopen if the user dismissed without rating (subsequent realtime
+  // updates to the same reservation would otherwise re-trigger this).
   useEffect(() => {
     if (!reservation || !isClientViewer) return;
-    if (reservation.status === 'terminee' && !reservation.reviewed) {
+    if (
+      reservation.status === 'terminee' &&
+      !reservation.reviewed &&
+      promptedForRef.current !== reservation.id
+    ) {
+      promptedForRef.current = reservation.id;
       setShowRatingModal(true);
     }
   }, [reservation, isClientViewer]);

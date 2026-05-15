@@ -36,8 +36,8 @@ beforeEach(() => {
 });
 
 describe('updateReservationStatus', () => {
-  it('writes started_at when transitioning to en_route', async () => {
-    const c = chain({ data: null, error: null });
+  it('writes started_at + en_attente precursor guard when transitioning to en_route', async () => {
+    const c = chain({ data: [{ id: 'r-1' }], error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
     const ok = await updateReservationStatus('r-1', 'en_route');
@@ -49,20 +49,23 @@ describe('updateReservationStatus', () => {
     expect(updatePayload.started_at).toBeDefined();
     expect(updatePayload.completed_at).toBeUndefined();
     expect(c.eq).toHaveBeenCalledWith('id', 'r-1');
+    // Precursor guard: en_route is only reachable from acceptee
+    expect(c.eq).toHaveBeenCalledWith('status', 'acceptee');
   });
 
-  it('writes completed_at when transitioning to terminee', async () => {
-    const c = chain({ data: null, error: null });
+  it('writes completed_at + arrivee precursor guard when transitioning to terminee', async () => {
+    const c = chain({ data: [{ id: 'r-1' }], error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
     await updateReservationStatus('r-1', 'terminee');
 
     const payload = c.update.mock.calls[0][0];
     expect(payload.completed_at).toBeDefined();
+    expect(c.eq).toHaveBeenCalledWith('status', 'arrivee');
   });
 
-  it('does not set timestamps for arrivee', async () => {
-    const c = chain({ data: null, error: null });
+  it('does not set timestamps for arrivee but enforces en_route precursor', async () => {
+    const c = chain({ data: [{ id: 'r-1' }], error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
     await updateReservationStatus('r-1', 'arrivee');
@@ -70,6 +73,15 @@ describe('updateReservationStatus', () => {
     const payload = c.update.mock.calls[0][0];
     expect(payload.started_at).toBeUndefined();
     expect(payload.completed_at).toBeUndefined();
+    expect(c.eq).toHaveBeenCalledWith('status', 'en_route');
+  });
+
+  it('returns false when the precursor guard rejects (out-of-order tap)', async () => {
+    const c = chain({ data: [], error: null });
+    (supabase.from as jest.Mock).mockReturnValue(c);
+
+    const ok = await updateReservationStatus('r-1', 'terminee');
+    expect(ok).toBe(false);
   });
 
   it('returns false when supabase errors', async () => {

@@ -173,13 +173,23 @@ describe('supabaseReservations', () => {
   });
 
   describe('acceptReservation', () => {
-    it('updates status to acceptee', async () => {
-      const mockChain = createMockChain({ data: null, error: null });
+    it('updates status to acceptee when guard passes (returns row)', async () => {
+      const mockChain = createMockChain({ data: [{ id: 'res-1' }], error: null });
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
       const result = await acceptReservation('res-1');
       expect(result).toBe(true);
       expect(supabase.from).toHaveBeenCalledWith('reservations');
+      // Guard must filter on the en_attente status to avoid a race with cancel
+      expect(mockChain.eq).toHaveBeenCalledWith('status', 'en_attente');
+    });
+
+    it('returns false when guard rejects (row already cancelled / accepted)', async () => {
+      const mockChain = createMockChain({ data: [], error: null });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      const result = await acceptReservation('res-1');
+      expect(result).toBe(false);
     });
 
     it('returns false on error', async () => {
@@ -195,12 +205,21 @@ describe('supabaseReservations', () => {
   });
 
   describe('refuseReservation', () => {
-    it('updates status to refusee', async () => {
-      const mockChain = createMockChain({ data: null, error: null });
+    it('updates status to refusee when guard passes', async () => {
+      const mockChain = createMockChain({ data: [{ id: 'res-1' }], error: null });
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
       const result = await refuseReservation('res-1');
       expect(result).toBe(true);
+      expect(mockChain.eq).toHaveBeenCalledWith('status', 'en_attente');
+    });
+
+    it('returns false when guard rejects', async () => {
+      const mockChain = createMockChain({ data: [], error: null });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      const result = await refuseReservation('res-1');
+      expect(result).toBe(false);
     });
 
     it('returns false on error', async () => {
