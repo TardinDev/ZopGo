@@ -27,3 +27,9 @@ __tests__/
 jest.config.js
 jest.setup.js
 admin-ZopGo/
+.claude/
+.firebaserc
+firebase.json
+skills-lock.json
+*.md
+docs/
