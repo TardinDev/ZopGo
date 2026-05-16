@@ -105,12 +105,16 @@ export default function HomeTab() {
                     right: 0,
                     height: SCREEN_HEIGHT,
                     zIndex: 10,
+                    elevation: 10,
                     backgroundColor: 'rgba(33, 98, 254, 0.92)',
                     borderTopLeftRadius: 40,
                     borderTopRightRadius: 40,
                     paddingHorizontal: 24,
                     paddingTop: 12,
-                    boxShadow: '0 -10px 24px rgba(0, 0, 0, 0.10)',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -10 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 20,
                   },
                   animatedStyle,
                 ]}>
@@ -128,7 +132,7 @@ export default function HomeTab() {
 
                 {/* Météo */}
                 <WeatherWidget />
-
+                    
                 {/* Barre de recherche */}
                 <View style={{ marginBottom: 24 }}>
                   <SearchBar />

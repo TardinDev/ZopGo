@@ -733,11 +733,11 @@ function AppStoreBadge() {
 function GooglePlayBadge() {
     return (
         <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
+            href="/download/zopgo.apk"
+            download="zopgo.apk"
             className="zopgo-store-badge"
             style={storeBadgeStyle}
-            aria-label="Disponible sur Google Play"
+            aria-label="Télécharger l'APK Android ZopGo"
         >
             <svg width="22" height="22" viewBox="0 0 512 512" style={{ flexShrink: 0 }}>
                 <path fill="#00D4FF" d="M325.3 234.3L104.1 13l280.5 161.9-59.3 59.4z" />

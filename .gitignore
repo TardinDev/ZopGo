@@ -33,6 +33,9 @@ android
 .mcp.json
 .cursor/
 
+# Per-machine Claude Code settings (permissions, plugin state) — never commit
+.claude/
+
 # Firebase / Google Services (contains API keys)
 google-services.json
 GoogleService-Info.plist
