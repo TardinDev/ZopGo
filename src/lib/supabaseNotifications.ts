@@ -12,13 +12,24 @@ const DEFAULT_PREFS: NotificationPreferences = {
 export { DEFAULT_PREFS };
 
 export async function updatePushToken(clerkId: string, token: string | null): Promise<boolean> {
-  const { error } = await supabase
+  // .select('id') so we can detect the "0 rows matched" case explicitly.
+  // Used to silently succeed even when the profile row didn't exist yet,
+  // which dropped the user's push token on first login.
+  const { data, error } = await supabase
     .from('profiles')
     .update({ push_token: token })
-    .eq('clerk_id', clerkId);
+    .eq('clerk_id', clerkId)
+    .select('id');
 
   if (error) {
     if (__DEV__) console.error('updatePushToken error:', error.message);
+    return false;
+  }
+  if (!Array.isArray(data) || data.length === 0) {
+    console.warn(
+      `[updatePushToken] no profile row matched clerk_id=${clerkId} — token NOT persisted. ` +
+        'Profile upsert may not have run yet, or RLS denied the update.'
+    );
     return false;
   }
   return true;

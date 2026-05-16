@@ -16,13 +16,19 @@ export default function ProtectedLayout() {
   const { isSignedIn, isLoaded, getToken, signOut } = useAuth();
   const { user: clerkUser } = useUser();
   const { user: localUser, setupProfile, logout } = useAuthStore();
+  const supabaseProfileId = useAuthStore((s) => s.supabaseProfileId);
   const router = useRouter();
   const backgroundTimestamp = useRef<number | null>(null);
   const [supabaseReady, setSupabaseReady] = useState(false);
 
-  // Register push notifications ONLY after Supabase JWT is injected.
-  // Without the JWT, updatePushToken fails silently due to RLS.
-  usePushNotifications(isSignedIn && supabaseReady ? clerkUser?.id ?? null : null);
+  // Register push notifications only after the Supabase JWT is injected AND
+  // the profile row exists. updatePushToken does an UPDATE on profiles —
+  // if the row hasn't been upserted yet (first login race), the update
+  // matches zero rows and the token is silently lost. Gating on
+  // supabaseProfileId guarantees the row is there.
+  usePushNotifications(
+    isSignedIn && supabaseReady && supabaseProfileId ? clerkUser?.id ?? null : null
+  );
 
   // Auto-logout after 15 min of inactivity (app in background)
   const handleAppStateChange = useCallback(

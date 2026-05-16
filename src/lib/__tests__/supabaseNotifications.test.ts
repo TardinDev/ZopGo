@@ -26,7 +26,7 @@ beforeEach(() => {
 
 describe('updatePushToken', () => {
   it('updates the token scoped by clerk_id', async () => {
-    const c = chain({ data: null, error: null });
+    const c = chain({ data: [{ id: 'p-1' }], error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
     const ok = await updatePushToken('clk_1', 'ExponentPushToken[abc]');
@@ -36,11 +36,24 @@ describe('updatePushToken', () => {
   });
 
   it('clears the token when null is passed (logout)', async () => {
-    const c = chain({ data: null, error: null });
+    const c = chain({ data: [{ id: 'p-1' }], error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
-    await updatePushToken('clk_1', null);
+    const ok = await updatePushToken('clk_1', null);
+    expect(ok).toBe(true);
     expect(c.update).toHaveBeenCalledWith({ push_token: null });
+  });
+
+  it('returns false + WARNS when no profile row matched (race on first login)', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const c = chain({ data: [], error: null });
+    (supabase.from as jest.Mock).mockReturnValue(c);
+
+    const ok = await updatePushToken('clk_new', 'ExponentPushToken[xyz]');
+    expect(ok).toBe(false);
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('no profile row matched')
+    );
   });
 
   it('returns false on error', async () => {

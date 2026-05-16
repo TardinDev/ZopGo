@@ -105,9 +105,54 @@ async function registerForPushNotifications(): Promise<string | null> {
  * Hook to register push notifications and handle foreground/tap events.
  * Pass `clerkId` when the user is signed in, or `null` when not.
  */
+// Pure routing function — exported so the cold-launch handler + the live
+// response listener share the same routing rules. Kept as a regular
+// function rather than inlined so tests can verify mappings without
+// rendering the hook.
+function routeFromNotificationData(
+  router: ReturnType<typeof useRouter>,
+  data: Record<string, string> | undefined
+): void {
+  const type = data?.type;
+
+  // Chat messages deep-link to the conversation with the sender
+  if (type === 'direct_message' && data?.senderId) {
+    router.push({
+      pathname: '/(protected)/(tabs)/conversation',
+      params: {
+        receiverId: data.senderId,
+        ...(data.reservationId && { reservationId: data.reservationId }),
+      },
+    });
+    return;
+  }
+
+  // Reservation / status-flow events that carry context → also open conversation
+  // so the client lands on the banner + can immediately rate/reply.
+  if (
+    (type === 'reservation_acceptee' || type === 'trajet_terminee') &&
+    data?.chauffeurId &&
+    data?.reservationId
+  ) {
+    router.push({
+      pathname: '/(protected)/(tabs)/conversation',
+      params: {
+        receiverId: data.chauffeurId,
+        ...(data.chauffeurName && { receiverName: data.chauffeurName }),
+        reservationId: data.reservationId,
+      },
+    });
+    return;
+  }
+
+  // Default: open the messages tab
+  router.push('/(protected)/(tabs)/messages');
+}
+
 export function usePushNotifications(clerkId: string | null) {
   const router = useRouter();
   const lastTokenRef = useRef<string | null>(null);
+  const handledColdLaunchRef = useRef(false);
 
   useEffect(() => {
     if (!clerkId || !Notifications) return;
@@ -121,6 +166,25 @@ export function usePushNotifications(clerkId: string | null) {
       if (token && token !== lastTokenRef.current) {
         lastTokenRef.current = token;
         await updatePushToken(clerkId, token);
+      }
+
+      // Cold-launch routing: if the app was opened by tapping a notification
+      // while it was killed, `addNotificationResponseReceivedListener` may
+      // not fire on Android (and isn't guaranteed on iOS either). We pull
+      // the last response explicitly and route once per session.
+      if (!handledColdLaunchRef.current) {
+        try {
+          const initial = await Notifications.getLastNotificationResponseAsync();
+          if (initial?.notification?.request?.content?.data) {
+            handledColdLaunchRef.current = true;
+            routeFromNotificationData(
+              router,
+              initial.notification.request.content.data as Record<string, string> | undefined
+            );
+          }
+        } catch (err) {
+          if (__DEV__) console.warn('[Push] cold-launch route failed:', err);
+        }
       }
 
       // Foreground notification → add to in-app store
@@ -139,28 +203,13 @@ export function usePushNotifications(clerkId: string | null) {
         });
       });
 
-      // Tap on notification → route based on payload type
+      // Live tap-on-notification (app already running / backgrounded).
       responseListener = Notifications.addNotificationResponseReceivedListener(
         (response) => {
           const data = response.notification.request.content.data as
             | Record<string, string>
             | undefined;
-          const type = data?.type;
-
-          // Chat messages deep-link to the conversation with the sender
-          if (type === 'direct_message' && data?.senderId) {
-            router.push({
-              pathname: '/(protected)/(tabs)/conversation',
-              params: {
-                receiverId: data.senderId,
-                ...(data.reservationId && { reservationId: data.reservationId }),
-              },
-            });
-            return;
-          }
-
-          // Default: open the messages tab
-          router.push('/(protected)/(tabs)/messages');
+          routeFromNotificationData(router, data);
         }
       );
     })();

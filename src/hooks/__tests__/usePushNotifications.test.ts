@@ -49,6 +49,8 @@ beforeEach(() => {
     responseCb = cb;
     return { remove: jest.fn() };
   });
+  // Default: no cold-launch notification — individual tests override
+  (Notifications.getLastNotificationResponseAsync as jest.Mock).mockResolvedValue(null);
 
   // updatePushToken is already mocked in jest.setup.js — reset its history
   (updatePushToken as jest.Mock).mockClear();
@@ -263,6 +265,138 @@ describe('usePushNotifications — tap response routing', () => {
       responseCb!({
         notification: {
           request: { content: { data: { type: 'direct_message' } } },
+        },
+      });
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/(protected)/(tabs)/messages');
+  });
+});
+
+describe('usePushNotifications — cold-launch routing', () => {
+  it('routes from the last notification when the app was killed and re-opened by tapping a push', async () => {
+    (Notifications.getLastNotificationResponseAsync as jest.Mock).mockResolvedValueOnce({
+      notification: {
+        request: {
+          content: {
+            data: {
+              type: 'direct_message',
+              senderId: 'user-cold',
+              reservationId: 'res-99',
+            },
+          },
+        },
+      },
+    });
+
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(protected)/(tabs)/conversation',
+      params: {
+        receiverId: 'user-cold',
+        reservationId: 'res-99',
+      },
+    });
+  });
+
+  it('does not route on cold-launch when there is no last notification', async () => {
+    (Notifications.getLastNotificationResponseAsync as jest.Mock).mockResolvedValueOnce(null);
+
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('survives getLastNotificationResponseAsync errors without breaking registration', async () => {
+    (Notifications.getLastNotificationResponseAsync as jest.Mock).mockRejectedValueOnce(
+      new Error('platform error')
+    );
+
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    // Token still registered — cold-launch failure shouldn't break the flow
+    expect(updatePushToken).toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
+describe('usePushNotifications — reservation deep-links', () => {
+  it('reservation_acceptee → conversation with the chauffeur', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    act(() => {
+      responseCb!({
+        notification: {
+          request: {
+            content: {
+              data: {
+                type: 'reservation_acceptee',
+                chauffeurId: 'cf-1',
+                chauffeurName: 'Pierre',
+                reservationId: 'res-1',
+              },
+            },
+          },
+        },
+      });
+    });
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(protected)/(tabs)/conversation',
+      params: {
+        receiverId: 'cf-1',
+        receiverName: 'Pierre',
+        reservationId: 'res-1',
+      },
+    });
+  });
+
+  it('trajet_terminee → conversation so the client lands on the "Noter" CTA', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    act(() => {
+      responseCb!({
+        notification: {
+          request: {
+            content: {
+              data: {
+                type: 'trajet_terminee',
+                chauffeurId: 'cf-1',
+                reservationId: 'res-1',
+              },
+            },
+          },
+        },
+      });
+    });
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(protected)/(tabs)/conversation',
+      params: {
+        receiverId: 'cf-1',
+        reservationId: 'res-1',
+      },
+    });
+  });
+
+  it('falls back to messages tab when reservation push is missing chauffeurId', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    act(() => {
+      responseCb!({
+        notification: {
+          request: {
+            content: {
+              data: { type: 'reservation_acceptee', reservationId: 'res-1' },
+            },
+          },
         },
       });
     });
