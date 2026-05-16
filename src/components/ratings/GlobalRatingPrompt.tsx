@@ -32,15 +32,20 @@ export function GlobalRatingPrompt() {
     loadClientReservations(supabaseProfileId);
   }, [isClient, supabaseProfileId, loadClientReservations]);
 
+  // useCallback so the subscription isn't torn down + re-created on every
+  // render (the hook tracks `onChange` in its dep array). Without this the
+  // channel would flap and we'd miss updates that land during the gap.
+  const handleReservationUpdate = useCallback(() => {
+    if (supabaseProfileId) loadClientReservations(supabaseProfileId);
+  }, [supabaseProfileId, loadClientReservations]);
+
   // Stay subscribed to client's reservation updates so a terminée transition
   // anywhere in the app surfaces the prompt within ~1s.
   useSupabaseSubscription({
     table: 'reservations',
     filter: supabaseProfileId ? `client_id=eq.${supabaseProfileId}` : undefined,
     event: 'UPDATE',
-    onChange: () => {
-      if (supabaseProfileId) loadClientReservations(supabaseProfileId);
-    },
+    onChange: handleReservationUpdate,
     enabled: !!isClient && !!supabaseProfileId,
   });
 
