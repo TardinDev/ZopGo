@@ -66,7 +66,9 @@ export default function LocationTab() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingBottom: 20,
+    // Floating tab bar (~88-110px) overlays the bottom of the scroll —
+    // need at least 100 so the last card is fully visible.
+    paddingBottom: 110,
   },
   resultsHeader: {
     paddingHorizontal: 20,
