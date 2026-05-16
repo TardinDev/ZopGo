@@ -59,30 +59,39 @@ export async function insertHebergementReservation(params: {
   return mapReservation(data as SupabaseHebergementReservation);
 }
 
+/**
+ * Same atomic guard as the trajet reservations: refuse to transition out of
+ * en_attente if the row has already moved (e.g. client cancelled in flight).
+ * Returns false when the guard rejects.
+ */
 export async function acceptHebergementReservation(id: string): Promise<boolean> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('hebergement_reservations')
     .update({ status: 'acceptee' })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('status', 'en_attente')
+    .select('id');
 
   if (error) {
     if (__DEV__) console.error('Error accepting hebergement reservation:', error.message);
     return false;
   }
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 export async function refuseHebergementReservation(id: string): Promise<boolean> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('hebergement_reservations')
     .update({ status: 'refusee' })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('status', 'en_attente')
+    .select('id');
 
   if (error) {
     if (__DEV__) console.error('Error refusing hebergement reservation:', error.message);
     return false;
   }
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 export async function fetchHebergementReservationsForClient(

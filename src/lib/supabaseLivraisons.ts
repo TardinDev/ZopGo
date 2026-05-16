@@ -60,21 +60,25 @@ export async function insertLivraison(params: {
   description?: string;
   prix_estime?: number;
 }): Promise<Livraison | null> {
-  if (!validateLocation(params.pickup_location) || !validateLocation(params.dropoff_location)) {
-    console.warn('[insertLivraison] FAILED: invalid pickup/dropoff location');
-    return null;
-  }
   if (params.description && params.description.length > 500) {
     console.warn('[insertLivraison] FAILED: description too long');
     return null;
   }
 
+  // Sanitize FIRST then validate — otherwise a string like "<><><" passes
+  // validateLocation (5 chars, within bounds) and turns into "" after the
+  // HTML-stripping pass, silently writing empty locations to the DB.
   const sanitized = {
     ...params,
     pickup_location: sanitizeInput(params.pickup_location),
     dropoff_location: sanitizeInput(params.dropoff_location),
     description: params.description ? sanitizeInput(params.description) : undefined,
   };
+
+  if (!validateLocation(sanitized.pickup_location) || !validateLocation(sanitized.dropoff_location)) {
+    console.warn('[insertLivraison] FAILED: invalid pickup/dropoff location (post-sanitize)');
+    return null;
+  }
 
   const { data, error } = await supabase
     .from('livraisons')
@@ -141,40 +145,71 @@ export async function fetchLivraisonById(id: string): Promise<Livraison | null> 
   return mapRow(data as SupabaseLivraisonRow);
 }
 
+// Each forward transition is only allowed from a specific predecessor (the UI
+// gates the buttons but the DB-level guard prevents stale taps or concurrent
+// flows from producing an inconsistent row — same pattern as reservations).
+// `cancel` has multiple valid predecessors; we expose `allowedFrom` so the
+// caller declares the set explicitly.
 async function updateStatus(
   id: string,
   status: LivraisonStatus,
-  extra: Record<string, string> = {}
+  options: {
+    extra?: Record<string, string>;
+    allowedFrom?: LivraisonStatus | LivraisonStatus[];
+  } = {}
 ): Promise<boolean> {
-  const { error } = await supabase
+  const { extra = {}, allowedFrom } = options;
+  let query = supabase
     .from('livraisons')
     .update({ status, ...extra })
     .eq('id', id);
+
+  if (allowedFrom !== undefined) {
+    query = Array.isArray(allowedFrom)
+      ? query.in('status', allowedFrom)
+      : query.eq('status', allowedFrom);
+  }
+
+  const { data, error } = await query.select('id');
 
   if (error) {
     if (__DEV__)
       console.error(`updateStatus(${status}) error:`, error.message);
     return false;
   }
-  return true;
+  return Array.isArray(data) && data.length > 0;
 }
 
 export function acceptLivraison(id: string): Promise<boolean> {
-  return updateStatus(id, 'acceptee', { accepted_at: new Date().toISOString() });
+  return updateStatus(id, 'acceptee', {
+    extra: { accepted_at: new Date().toISOString() },
+    allowedFrom: 'en_attente',
+  });
 }
 
 export function refuseLivraison(id: string): Promise<boolean> {
-  return updateStatus(id, 'refusee');
+  return updateStatus(id, 'refusee', { allowedFrom: 'en_attente' });
 }
 
 export function markLivraisonEnCours(id: string): Promise<boolean> {
-  return updateStatus(id, 'en_cours', { picked_up_at: new Date().toISOString() });
+  return updateStatus(id, 'en_cours', {
+    extra: { picked_up_at: new Date().toISOString() },
+    allowedFrom: 'acceptee',
+  });
 }
 
 export function markLivraisonLivree(id: string): Promise<boolean> {
-  return updateStatus(id, 'livree', { delivered_at: new Date().toISOString() });
+  return updateStatus(id, 'livree', {
+    extra: { delivered_at: new Date().toISOString() },
+    allowedFrom: 'en_cours',
+  });
 }
 
 export function cancelLivraison(id: string): Promise<boolean> {
-  return updateStatus(id, 'annulee', { cancelled_at: new Date().toISOString() });
+  return updateStatus(id, 'annulee', {
+    extra: { cancelled_at: new Date().toISOString() },
+    // Cancel valid before delivery — once livrée/refusée/déjà annulée,
+    // we don't re-cancel.
+    allowedFrom: ['en_attente', 'acceptee', 'en_cours'],
+  });
 }
