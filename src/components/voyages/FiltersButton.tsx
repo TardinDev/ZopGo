@@ -21,8 +21,7 @@ export function FiltersButton({ onPress, count }: FiltersButtonProps) {
           : 'Ouvrir les filtres'
       }
     >
-      <MaterialCommunityIcons name="tune-variant" size={18} color={COLORS.primary} />
-      <Text style={styles.text}>Filtres</Text>
+      <MaterialCommunityIcons name="tune-variant" size={26} color={COLORS.primary} />
       {count > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{count}</Text>
@@ -34,20 +33,17 @@ export function FiltersButton({ onPress, count }: FiltersButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: 'row',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    justifyContent: 'center',
     backgroundColor: 'white',
-    gap: 6,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.primary,
   },
   badge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -55,11 +51,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-    marginLeft: 2,
+    borderWidth: 2,
+    borderColor: 'white',
   },
   badgeText: {
     color: 'white',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
 });

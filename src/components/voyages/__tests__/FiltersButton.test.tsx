@@ -3,9 +3,9 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { FiltersButton } from '../FiltersButton';
 
 describe('FiltersButton', () => {
-  it('renders "Filtres" label', () => {
-    const { getByText } = render(<FiltersButton onPress={jest.fn()} count={0} />);
-    expect(getByText('Filtres')).toBeTruthy();
+  it('renders the filters icon button', () => {
+    const { getByLabelText } = render(<FiltersButton onPress={jest.fn()} count={0} />);
+    expect(getByLabelText('Ouvrir les filtres')).toBeTruthy();
   });
 
   it('does not show a badge when count=0', () => {
@@ -20,8 +20,8 @@ describe('FiltersButton', () => {
 
   it('calls onPress when tapped', () => {
     const onPress = jest.fn();
-    const { getByText } = render(<FiltersButton onPress={onPress} count={0} />);
-    fireEvent.press(getByText('Filtres'));
+    const { getByLabelText } = render(<FiltersButton onPress={onPress} count={0} />);
+    fireEvent.press(getByLabelText('Ouvrir les filtres'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 

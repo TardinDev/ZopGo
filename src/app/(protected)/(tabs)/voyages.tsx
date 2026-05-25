@@ -167,7 +167,7 @@ export default function VoyagesTab() {
                 onTypeChange={setSelectedType}
               />
             </View>
-            <View style={{ paddingRight: 20, paddingBottom: 14 }}>
+            <View style={{ paddingRight: 20 }}>
               <FiltersButton onPress={() => setFiltersOpen(true)} count={activeCount} />
             </View>
           </View>
