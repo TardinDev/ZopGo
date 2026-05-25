@@ -1,18 +1,15 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, { FadeInUp, LinearTransition } from 'react-native-reanimated';
+import type { Activity } from '../../types';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-interface Activity {
-  id: number;
-  type: string;
-  title: string;
-  time: string;
-  price: string;
-  status: string;
-  icon: string;
-}
+const ICON_BG_BY_TYPE: Record<Activity['type'], string> = {
+  course: '#3B82F6',
+  delivery: '#EAB308',
+  hebergement: '#0F172A',
+};
 
 interface ActivityListProps {
   activities: Activity[];
@@ -28,58 +25,65 @@ export function ActivityList({ activities }: ActivityListProps) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 10 }}>
-        {activities.map((activity, i) => (
-          <AnimatedTouchable
-            key={activity.id}
-            entering={FadeInUp.delay(i * 60).duration(400).springify().damping(18)}
-            layout={LinearTransition.springify()}
-            activeOpacity={0.8}
-            style={styles.card}>
-            <View style={styles.cardContent}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  {
-                    backgroundColor: activity.type === 'course' ? '#3B82F6' : '#EAB308',
-                  },
-                ]}>
-                <Text style={styles.iconText}>{activity.icon}</Text>
-              </View>
-
-              <View style={styles.info}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                <Text style={styles.activityTime}>{activity.time}</Text>
-              </View>
-
-              <View style={styles.rightContent}>
-                <Text style={styles.price}>{activity.price} F</Text>
+      {activities.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>Aucune activité récente</Text>
+          <Text style={styles.emptySubtitle}>
+            Vos prochaines courses, livraisons et réservations s&apos;afficheront ici.
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 10 }}>
+          {activities.map((activity, i) => (
+            <AnimatedTouchable
+              key={activity.id}
+              entering={FadeInUp.delay(i * 60).duration(400).springify().damping(18)}
+              layout={LinearTransition.springify()}
+              activeOpacity={0.8}
+              style={styles.card}>
+              <View style={styles.cardContent}>
                 <View
                   style={[
-                    styles.statusBadge,
-                    {
-                      backgroundColor: activity.status === 'completed' ? '#DCFCE7' : '#F3F4F6',
-                    },
+                    styles.iconContainer,
+                    { backgroundColor: ICON_BG_BY_TYPE[activity.type] },
                   ]}>
-                  <Text
+                  <Text style={styles.iconText}>{activity.icon}</Text>
+                </View>
+
+                <View style={styles.info}>
+                  <Text style={styles.activityTitle}>{activity.title}</Text>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
+                </View>
+
+                <View style={styles.rightContent}>
+                  <Text style={styles.price}>{activity.price} F</Text>
+                  <View
                     style={[
-                      styles.statusText,
+                      styles.statusBadge,
                       {
-                        color: activity.status === 'completed' ? '#15803D' : '#374151',
+                        backgroundColor: activity.status === 'completed' ? '#DCFCE7' : '#F3F4F6',
                       },
                     ]}>
-                    {activity.status === 'completed' ? 'Terminée' : 'En cours'}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.statusText,
+                        {
+                          color: activity.status === 'completed' ? '#15803D' : '#374151',
+                        },
+                      ]}>
+                      {activity.status === 'completed' ? 'Terminée' : 'En cours'}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </AnimatedTouchable>
-        ))}
-        {/* Padding pour le bas de page */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+            </AnimatedTouchable>
+          ))}
+          {/* Padding pour le bas de page */}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -164,5 +168,25 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12, // text-xs
     fontWeight: '600',
+  },
+  emptyState: {
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.75)',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
