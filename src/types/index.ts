@@ -74,8 +74,8 @@ export interface Stat {
 
 // Types pour les activités récentes
 export interface Activity {
-  id: number;
-  type: 'course' | 'delivery';
+  id: string;
+  type: 'course' | 'delivery' | 'hebergement';
   title: string;
   time: string;
   price: string;
@@ -326,9 +326,15 @@ export interface AdminMessage {
   readAt?: string | null;
 }
 
-// Utilisateur authentifié (peut être client, chauffeur ou hébergeur)
+// Utilisateur authentifié (peut être client, chauffeur ou hébergeur).
+// `role` reste le rôle "actif" courant (celui qui pilote la tab bar et
+// `clerkUser.unsafeMetadata.role`). `roles` est l'ensemble des rôles
+// disponibles pour l'utilisateur (multi-role MVP, migration 023). Quand
+// `roles` est absent (vieux profil persisté avant la migration), on
+// retombe sur `[role]` côté lecture.
 export interface AuthUser {
   id: string;
   role: UserRole;
+  roles?: UserRole[];
   profile: UserInfo | ChauffeurProfile | HebergeurProfile;
 }

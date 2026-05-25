@@ -15,7 +15,13 @@ import {
   NotificationPreferences,
 } from '../types';
 import { useDriversStore } from './driversStore';
-import { upsertProfile, fetchProfileByClerkId, updateProfile as updateSupabaseProfile } from '../lib/supabaseProfile';
+import {
+  upsertProfile,
+  fetchProfileByClerkId,
+  updateProfile as updateSupabaseProfile,
+  getEffectiveRoles,
+  buildDefaultRoles,
+} from '../lib/supabaseProfile';
 import { fetchNotificationPreferences, updateNotificationPreferences, updatePushToken } from '../lib/supabaseNotifications';
 import { generateAvatarPlaceholder } from '../lib/supabaseAvatar';
 
@@ -138,6 +144,9 @@ export const useAuthStore = create<AuthState>()(
         const newUser: AuthUser = {
           id: clerkId || Date.now().toString(),
           role,
+          // Optimistic default — the Supabase fetch below will replace
+          // this with the authoritative roles[] from the row.
+          roles: buildDefaultRoles(role),
           profile,
         };
 
@@ -153,12 +162,14 @@ export const useAuthStore = create<AuthState>()(
             try {
               const existing = await fetchProfileByClerkId(clerkId);
               if (existing) {
+                const effectiveRoles = getEffectiveRoles(existing);
                 set((state) => {
                   if (!state.user) return state;
                   return {
                     supabaseProfileId: existing.id,
                     user: {
                       ...state.user,
+                      roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
                       profile: {
                         ...state.user.profile,
                         avatar: existing.avatar || state.user.profile.avatar,
@@ -180,9 +191,19 @@ export const useAuthStore = create<AuthState>()(
                   name,
                   email,
                   disponible: role === 'chauffeur' || role === 'hebergeur',
+                  roles: buildDefaultRoles(role),
                 });
                 if (created) {
-                  set({ supabaseProfileId: created.id });
+                  const effectiveRoles = getEffectiveRoles(created);
+                  set((state) => ({
+                    supabaseProfileId: created.id,
+                    user: state.user
+                      ? {
+                          ...state.user,
+                          roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
+                        }
+                      : state.user,
+                  }));
                 }
               }
             } catch (err) {

@@ -5,6 +5,8 @@ import {
   fetchProfileByClerkId,
   upsertProfile,
   updateProfile,
+  getEffectiveRoles,
+  buildDefaultRoles,
 } from '../supabaseProfile';
 
 function chain(resolved: { data: unknown; error: unknown }) {
@@ -89,6 +91,41 @@ describe('upsertProfile', () => {
     expect(payload.disponible).toBe(false);
   });
 
+  it('defaults roles to [client, role] for a chauffeur', async () => {
+    const c = chain({ data: { id: 'p-1' }, error: null });
+    (supabase.from as jest.Mock).mockReturnValue(c);
+
+    await upsertProfile('clk_3', { role: 'chauffeur', name: 'Bob', email: 'bob@x.com' });
+
+    const payload = c.upsert.mock.calls[0][0];
+    expect(payload.roles).toEqual(['client', 'chauffeur']);
+  });
+
+  it('defaults roles to [client] for a client (no duplicate)', async () => {
+    const c = chain({ data: { id: 'p-1' }, error: null });
+    (supabase.from as jest.Mock).mockReturnValue(c);
+
+    await upsertProfile('clk_4', { role: 'client', name: 'A', email: 'a@x.com' });
+
+    const payload = c.upsert.mock.calls[0][0];
+    expect(payload.roles).toEqual(['client']);
+  });
+
+  it('honours an explicit roles override', async () => {
+    const c = chain({ data: { id: 'p-1' }, error: null });
+    (supabase.from as jest.Mock).mockReturnValue(c);
+
+    await upsertProfile('clk_5', {
+      role: 'chauffeur',
+      name: 'C',
+      email: 'c@x.com',
+      roles: ['client', 'chauffeur', 'hebergeur'],
+    });
+
+    const payload = c.upsert.mock.calls[0][0];
+    expect(payload.roles).toEqual(['client', 'chauffeur', 'hebergeur']);
+  });
+
   it('throws on supabase error so caller can surface it', async () => {
     const c = chain({ data: null, error: { code: 'PGRST301', message: 'boom', details: '' } });
     (supabase.from as jest.Mock).mockReturnValue(c);
@@ -131,5 +168,54 @@ describe('updateProfile', () => {
     expect(payload.name).toBeUndefined();
     expect(payload.rating).toBe(4.5);
     expect(payload.total_trips).toBe(10);
+  });
+});
+
+describe('getEffectiveRoles', () => {
+  it('uses the roles[] column when present', () => {
+    expect(
+      getEffectiveRoles({ roles: ['client', 'chauffeur'], role: 'chauffeur' })
+    ).toEqual(['client', 'chauffeur']);
+  });
+
+  it('falls back to [role] when roles is null (pre-migration row)', () => {
+    expect(getEffectiveRoles({ roles: null, role: 'hebergeur' })).toEqual([
+      'hebergeur',
+    ]);
+  });
+
+  it('falls back to [role] when roles is empty', () => {
+    expect(getEffectiveRoles({ roles: [], role: 'client' })).toEqual(['client']);
+  });
+
+  it('drops unknown role values defensively', () => {
+    expect(
+      getEffectiveRoles({ roles: ['client', 'admin', 'chauffeur'], role: 'client' })
+    ).toEqual(['client', 'chauffeur']);
+  });
+
+  it('deduplicates', () => {
+    expect(
+      getEffectiveRoles({ roles: ['client', 'client', 'chauffeur'], role: 'client' })
+    ).toEqual(['client', 'chauffeur']);
+  });
+
+  it('returns [] for null/undefined profile', () => {
+    expect(getEffectiveRoles(null)).toEqual([]);
+    expect(getEffectiveRoles(undefined)).toEqual([]);
+  });
+});
+
+describe('buildDefaultRoles', () => {
+  it('returns [client] for client (no duplicate)', () => {
+    expect(buildDefaultRoles('client')).toEqual(['client']);
+  });
+
+  it('returns [client, chauffeur] for chauffeur', () => {
+    expect(buildDefaultRoles('chauffeur')).toEqual(['client', 'chauffeur']);
+  });
+
+  it('returns [client, hebergeur] for hebergeur', () => {
+    expect(buildDefaultRoles('hebergeur')).toEqual(['client', 'hebergeur']);
   });
 });

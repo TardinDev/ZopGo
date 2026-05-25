@@ -107,11 +107,26 @@ jest.mock('./src/lib/supabase', () => {
 });
 
 // Mock supabaseProfile
-jest.mock('./src/lib/supabaseProfile', () => ({
-  fetchProfileByClerkId: jest.fn(),
-  upsertProfile: jest.fn(),
-  updateProfile: jest.fn(),
-}));
+jest.mock('./src/lib/supabaseProfile', () => {
+  const VALID_ROLES = ['client', 'chauffeur', 'hebergeur'];
+  return {
+    fetchProfileByClerkId: jest.fn(),
+    upsertProfile: jest.fn(),
+    updateProfile: jest.fn(),
+    // Pure helpers — keep behaviour faithful to the real module so
+    // consumers (authStore, etc.) exercise the same logic in tests.
+    getEffectiveRoles: jest.fn((profile) => {
+      if (!profile) return [];
+      const raw =
+        profile.roles && profile.roles.length > 0 ? profile.roles : [profile.role];
+      const filtered = raw.filter((r) => VALID_ROLES.includes(r));
+      return Array.from(new Set(filtered));
+    }),
+    buildDefaultRoles: jest.fn((role) =>
+      Array.from(new Set(['client', role])).filter((r) => VALID_ROLES.includes(r))
+    ),
+  };
+});
 
 // Mock supabaseNotifications
 jest.mock('./src/lib/supabaseNotifications', () => ({

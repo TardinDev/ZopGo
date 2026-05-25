@@ -1,11 +1,17 @@
 import { supabase } from './supabase';
 import { sanitizeInput } from '../utils/validation';
-import type { NotificationPreferences } from '../types';
+import type { NotificationPreferences, UserRole } from '../types';
+
+const VALID_ROLES: UserRole[] = ['client', 'chauffeur', 'hebergeur'];
 
 export interface SupabaseProfile {
   id: string;
   clerk_id: string;
   role: string;
+  // Multi-role array (migration 023). Nullable in the TS layer because
+  // freshly-fetched rows from a pre-migration DB or partial selects may
+  // omit it; reads must go through `getEffectiveRoles` for the fallback.
+  roles: string[] | null;
   name: string;
   email: string;
   phone: string;
@@ -19,6 +25,30 @@ export interface SupabaseProfile {
   member_since: string;
   push_token: string | null;
   notification_preferences: NotificationPreferences | null;
+}
+
+// Returns the effective roles array for a profile: prefers the multi-role
+// `roles` column, falls back to `[role]` when it is missing/empty (e.g. a
+// row read before migration 023 was applied). Output is always non-empty
+// and constrained to known UserRole values.
+export function getEffectiveRoles(
+  profile: Pick<SupabaseProfile, 'roles' | 'role'> | null | undefined
+): UserRole[] {
+  if (!profile) return [];
+  const raw = profile.roles && profile.roles.length > 0 ? profile.roles : [profile.role];
+  const filtered = raw.filter((r): r is UserRole =>
+    VALID_ROLES.includes(r as UserRole)
+  );
+  return filtered.length > 0 ? Array.from(new Set(filtered)) : [];
+}
+
+// Build the canonical `roles` array to persist when creating a profile.
+// Policy (migration 023): every user implicitly owns 'client', plus their
+// declared active role. Dedup + filter to valid values.
+export function buildDefaultRoles(activeRole: UserRole): UserRole[] {
+  return Array.from(new Set<UserRole>(['client', activeRole])).filter((r) =>
+    VALID_ROLES.includes(r)
+  );
 }
 
 export async function fetchProfileByClerkId(clerkId: string): Promise<SupabaseProfile | null> {
@@ -42,20 +72,30 @@ export async function fetchProfileByClerkId(clerkId: string): Promise<SupabasePr
 export async function upsertProfile(
   clerkId: string,
   profileData: {
-    role: string;
+    role: UserRole;
     name: string;
     email: string;
     phone?: string;
     avatar?: string;
     disponible?: boolean;
+    // Optional explicit override; when omitted we derive `['client', role]`.
+    roles?: UserRole[];
   }
 ): Promise<SupabaseProfile | null> {
+  const roles =
+    profileData.roles && profileData.roles.length > 0
+      ? Array.from(new Set(profileData.roles)).filter((r) =>
+          VALID_ROLES.includes(r)
+        )
+      : buildDefaultRoles(profileData.role);
+
   const { data, error } = await supabase
     .from('profiles')
     .upsert(
       {
         clerk_id: clerkId,
         role: profileData.role,
+        roles,
         name: sanitizeInput(profileData.name),
         email: sanitizeInput(profileData.email),
         phone: profileData.phone || '',

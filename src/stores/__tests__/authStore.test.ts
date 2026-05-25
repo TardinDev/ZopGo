@@ -138,6 +138,88 @@ describe('setupProfile', () => {
     }));
     expect(useAuthStore.getState().supabaseProfileId).toBe('new_supa_1');
   });
+
+  // ─── Multi-role (migration 023) ───────────────────────────────
+
+  it('sets optimistic roles=[client] for a client before Supabase sync', () => {
+    useAuthStore.getState().setupProfile('client', 'Jean', 'jean@test.com');
+    expect(useAuthStore.getState().user!.roles).toEqual(['client']);
+  });
+
+  it('sets optimistic roles=[client, chauffeur] for a chauffeur before Supabase sync', () => {
+    useAuthStore.getState().setupProfile('chauffeur', 'Pierre', 'pierre@test.com', 'moto');
+    expect(useAuthStore.getState().user!.roles).toEqual(['client', 'chauffeur']);
+  });
+
+  it('sets optimistic roles=[client, hebergeur] for a hebergeur before Supabase sync', () => {
+    useAuthStore.getState().setupProfile('hebergeur', 'Marie', 'marie@test.com');
+    expect(useAuthStore.getState().user!.roles).toEqual(['client', 'hebergeur']);
+  });
+
+  it('replaces optimistic roles with the authoritative roles[] from Supabase', async () => {
+    (fetchProfileByClerkId as jest.Mock).mockResolvedValue({
+      id: 'supa_1',
+      role: 'chauffeur',
+      roles: ['client', 'chauffeur', 'hebergeur'],
+      rating: 4.2,
+      total_trips: 10,
+      total_deliveries: 5,
+      member_since: '2025-01-01',
+    });
+
+    useAuthStore
+      .getState()
+      .setupProfile('chauffeur', 'Pierre', 'p@test.com', 'moto', 'clerk_456');
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(useAuthStore.getState().user!.roles).toEqual([
+      'client',
+      'chauffeur',
+      'hebergeur',
+    ]);
+  });
+
+  it('falls back to [role] when fetched profile has roles=null (pre-migration row)', async () => {
+    (fetchProfileByClerkId as jest.Mock).mockResolvedValue({
+      id: 'supa_2',
+      role: 'chauffeur',
+      roles: null,
+      rating: 5,
+      total_trips: 0,
+      total_deliveries: 0,
+      member_since: '2025-01-01',
+    });
+
+    useAuthStore
+      .getState()
+      .setupProfile('chauffeur', 'P', 'p@test.com', 'moto', 'clerk_789');
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(useAuthStore.getState().user!.roles).toEqual(['chauffeur']);
+  });
+
+  it('passes roles=[client, role] to upsertProfile when creating a new profile', async () => {
+    (fetchProfileByClerkId as jest.Mock).mockResolvedValue(null);
+    (upsertProfile as jest.Mock).mockResolvedValue({
+      id: 'new_supa_2',
+      role: 'chauffeur',
+      roles: ['client', 'chauffeur'],
+    });
+
+    useAuthStore
+      .getState()
+      .setupProfile('chauffeur', 'Pierre', 'p@test.com', 'moto', 'clerk_999');
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(upsertProfile).toHaveBeenCalledWith(
+      'clerk_999',
+      expect.objectContaining({ roles: ['client', 'chauffeur'] })
+    );
+    expect(useAuthStore.getState().user!.roles).toEqual(['client', 'chauffeur']);
+  });
 });
 
 // ─── logout ─────────────────────────────────────────────────────────
