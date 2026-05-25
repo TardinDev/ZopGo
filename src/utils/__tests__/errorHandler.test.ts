@@ -1,15 +1,19 @@
 import { handleError, logError, isNetworkError } from '../errorHandler';
 
-const originalDev = global.__DEV__;
+// React Native declares __DEV__ as a `const`, so it isn't a property of
+// `typeof globalThis`. We need to mutate it to exercise prod-vs-dev
+// branches — go through a typed view of the global object.
+const devGlobal = globalThis as unknown as { __DEV__: boolean };
+const originalDev = devGlobal.__DEV__;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  global.__DEV__ = true;
+  devGlobal.__DEV__ = true;
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(() => {
-  global.__DEV__ = originalDev;
+  devGlobal.__DEV__ = originalDev;
   jest.restoreAllMocks();
 });
 
@@ -70,7 +74,7 @@ describe('handleError', () => {
   });
 
   it('does not log in production', () => {
-    global.__DEV__ = false;
+    devGlobal.__DEV__ = false;
     handleError(new Error('prod error'), 'ProdContext');
     expect(console.error).not.toHaveBeenCalled();
   });
@@ -104,7 +108,7 @@ describe('logError', () => {
   });
 
   it('does not log in production', () => {
-    global.__DEV__ = false;
+    devGlobal.__DEV__ = false;
     logError(new Error('prod log'), 'Ctx');
     expect(console.error).not.toHaveBeenCalled();
   });

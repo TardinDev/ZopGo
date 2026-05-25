@@ -1,7 +1,14 @@
 import * as SecureStore from 'expo-secure-store';
 import type { TokenCache } from '@clerk/clerk-expo';
 
-const createTokenCache = (): TokenCache => {
+// Clerk types `clearToken` as optional, but our SecureStore-backed impl
+// always provides it. Tightening the return type means consumers (and
+// tests) don't need optional chaining or `!` assertions.
+type StrictTokenCache = Omit<TokenCache, 'clearToken'> & {
+  clearToken: (key: string) => Promise<void>;
+};
+
+const createTokenCache = (): StrictTokenCache => {
     return {
         getToken: async (key: string) => {
             try {
