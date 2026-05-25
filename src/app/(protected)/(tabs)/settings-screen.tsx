@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,12 @@ import { COLORS } from '../../../constants';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { LogoutSheet, ModeTransition } from '../../../components/ui';
+import {
+  getPushPermissionStatus,
+  requestPushPermission,
+  type PushPermissionStatus,
+} from '../../../lib/pushPermission';
+import { toast } from '../../../stores/toastStore';
 import type { UserRole } from '../../../types';
 
 export default function SettingsScreen() {
@@ -20,6 +26,48 @@ export default function SettingsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [logoutSheetVisible, setLogoutSheetVisible] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole | null>(null);
+  const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
+  const [requestingPush, setRequestingPush] = useState(false);
+
+  // Re-read the OS permission status on mount + whenever the user comes
+  // back to settings (after a trip to the OS Settings app).
+  const refreshPushStatus = useCallback(async () => {
+    const next = await getPushPermissionStatus();
+    setPushStatus(next);
+  }, []);
+
+  useEffect(() => {
+    void refreshPushStatus();
+  }, [refreshPushStatus]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshPushStatus();
+    }, [refreshPushStatus])
+  );
+
+  const handleEnablePush = useCallback(async () => {
+    if (requestingPush) return;
+    setRequestingPush(true);
+    try {
+      const result = await requestPushPermission();
+      setPushStatus(result.status);
+      if (result.status === 'granted') {
+        toast.success('Notifications activées.');
+      } else if (result.openedSettings) {
+        toast.info(
+          'Active "Notifications" pour ZopGo, puis reviens dans l\'app.',
+          { title: 'Paramètres système ouverts' }
+        );
+      } else if (result.status === 'denied') {
+        toast.info('Active les notifications dans Réglages > ZopGo.', {
+          title: 'Notifications désactivées',
+        });
+      }
+    } finally {
+      setRequestingPush(false);
+    }
+  }, [requestingPush]);
 
   const availableRoles = (user?.roles && user.roles.length > 0
     ? user.roles
@@ -156,6 +204,42 @@ export default function SettingsScreen() {
         className="-mt-4 flex-1 px-6"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Push notifications status + recovery */}
+        {pushStatus && pushStatus !== 'granted' && pushStatus !== 'unsupported' && (
+          <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+            <View className="mb-3 flex-row items-center">
+              <View className="mr-3 h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: '#FEF3C7' }}>
+                <Ionicons name="notifications-off-outline" size={20} color="#B45309" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text className="text-base font-bold text-gray-800">Notifications désactivées</Text>
+                <Text className="text-sm text-gray-500">
+                  {pushStatus === 'denied'
+                    ? 'Active-les pour recevoir messages et réservations en temps réel.'
+                    : 'Active-les pour ne rien manquer.'}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={handleEnablePush}
+              disabled={requestingPush}
+              accessibilityRole="button"
+              accessibilityLabel="Activer les notifications push"
+              style={{
+                backgroundColor: COLORS.primary,
+                borderRadius: 14,
+                borderCurve: 'continuous',
+                paddingVertical: 12,
+                alignItems: 'center',
+                opacity: requestingPush ? 0.6 : 1,
+              }}>
+              <Text style={{ color: 'white', fontSize: 14, fontWeight: '700', letterSpacing: 0.5 }}>
+                {pushStatus === 'denied' ? "Ouvrir les réglages" : 'Activer les notifications'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Language */}
         <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
           <View className="mb-5 flex-row items-center">

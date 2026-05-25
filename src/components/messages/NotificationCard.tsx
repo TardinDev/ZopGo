@@ -1,13 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { formatTimeAgo } from '../../utils/timeAgo';
 
 interface Notification {
   id: string;
   type: string;
   title: string;
   message: string;
+  /** Pre-computed at insertion. Used as a fallback when createdAtMs is absent. */
   time: string;
+  /** Epoch ms — when present, the card recomputes the relative label at render. */
+  createdAtMs?: number;
   read: boolean;
   icon: string;
   iconColor: string;
@@ -78,7 +82,11 @@ export const NotificationCard = React.memo(function NotificationCard({
               </Text>
             </View>
           )}
-          <Text style={styles.time}>{notification.time}</Text>
+          <Text style={styles.time}>
+            {notification.createdAtMs !== undefined
+              ? formatTimeAgo(notification.createdAtMs)
+              : notification.time}
+          </Text>
         </View>
       </View>
 

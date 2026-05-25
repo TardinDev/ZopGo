@@ -5,6 +5,7 @@ import { fetchConversationsList } from '../lib/supabaseDirectMessages';
 import { fetchReservationContexts } from '../lib/supabaseReservations';
 import { fetchHebergementReservationContexts } from '../lib/supabaseHebergementReservations';
 import { markNotificationAsReadInDb } from '../lib/supabaseNotificationsCreate';
+import { formatTimeAgo } from '../utils/timeAgo';
 
 type MessageTab = 'annonces' | 'notifications' | 'messages';
 
@@ -13,7 +14,17 @@ export interface Notification {
   type: string;
   title: string;
   message: string;
+  /**
+   * Pre-computed relative label (e.g. "Il y a 5 min"). Set at insertion
+   * time. Stale for long-lived sessions — render code should prefer
+   * `createdAtMs` when present and recompute on mount.
+   */
   time: string;
+  /**
+   * Epoch ms of when the notification was created. Optional for backward
+   * compatibility, but always set by every code path that inserts now.
+   */
+  createdAtMs?: number;
   read: boolean;
   icon: string;
   iconColor: string;
@@ -120,20 +131,24 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       }
 
       if (data) {
-        const notifications: Notification[] = data.map((n: SupabaseNotificationRow) => ({
-          id: n.id,
-          type: n.type,
-          title: n.title,
-          message: n.message,
-          time: formatTimeAgo(new Date(n.created_at)),
-          read: n.read,
-          icon: n.icon || 'information-circle',
-          iconColor: n.icon_color || '#6366F1',
-          iconBg: n.icon_bg || '#E0E7FF',
-          recipientRole: n.recipient_role,
-          recipientId: n.recipient_id,
-          data: n.data || {},
-        }));
+        const notifications: Notification[] = data.map((n: SupabaseNotificationRow) => {
+          const createdAtMs = new Date(n.created_at).getTime();
+          return {
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            message: n.message,
+            time: formatTimeAgo(createdAtMs),
+            createdAtMs,
+            read: n.read,
+            icon: n.icon || 'information-circle',
+            iconColor: n.icon_color || '#6366F1',
+            iconBg: n.icon_bg || '#E0E7FF',
+            recipientRole: n.recipient_role,
+            recipientId: n.recipient_id,
+            data: n.data || {},
+          };
+        });
         set({ notifications });
       }
     } catch (err) {
@@ -199,17 +214,3 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     }
   },
 }));
-
-function formatTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffH = Math.floor(diffMin / 60);
-  const diffD = Math.floor(diffH / 24);
-
-  if (diffMin < 1) return "À l'instant";
-  if (diffMin < 60) return `Il y a ${diffMin} min`;
-  if (diffH < 24) return `Il y a ${diffH}h`;
-  if (diffD === 1) return 'Hier';
-  return `Il y a ${diffD} jours`;
-}

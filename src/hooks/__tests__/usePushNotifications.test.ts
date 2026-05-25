@@ -3,11 +3,26 @@
 // we can isolate the hook's logic from real native modules.
 
 import { renderHook, act } from '@testing-library/react-native';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
+}));
+
+// jest.mock factories are hoisted above `const` declarations, so any
+// out-of-scope reference (even `mock`-prefixed) is in the TDZ when the
+// factory runs. Declaring the jest.fns inside the factory keeps them
+// initialised; tests access them via the imported `toast` object.
+jest.mock('../../stores/toastStore', () => ({
+  toast: {
+    info: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+  useToastStore: {
+    getState: () => ({ show: jest.fn(), dismiss: jest.fn() }),
+  },
 }));
 
 jest.mock('expo-constants', () => ({
@@ -23,17 +38,36 @@ jest.mock('expo-constants', () => ({
 import * as Notifications from 'expo-notifications';
 import { useMessagesStore } from '../../stores/messagesStore';
 import { updatePushToken } from '../../lib/supabaseNotifications';
+import { toast } from '../../stores/toastStore';
 import { usePushNotifications } from '../usePushNotifications';
+
+// `addPushTokenListener` isn't in jest-expo's auto-mock surface. The
+// module namespace from `import * as Notifications` is sealed, so we
+// stamp the function onto the *CommonJS exports* object that the hook's
+// `require('expo-notifications')` returns — they point at the same
+// underlying mock module, but the CJS exports object is writable.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const NotificationsCjs = require('expo-notifications') as Record<string, unknown>;
+if (typeof NotificationsCjs.addPushTokenListener !== 'function') {
+  NotificationsCjs.addPushTokenListener = jest.fn();
+}
 
 // Capture the listeners the hook registers so we can fire events at them.
 let foregroundCb: ((n: unknown) => void) | null = null;
 let responseCb: ((r: unknown) => void) | null = null;
+let tokenCb: ((event: { data?: string } | string) => void) | null = null;
+
+function setAppState(state: 'active' | 'background' | 'inactive') {
+  (AppState as { currentState: string }).currentState = state;
+}
 
 beforeEach(() => {
   jest.clearAllMocks();
   foregroundCb = null;
   responseCb = null;
+  tokenCb = null;
   Platform.OS = 'ios';
+  setAppState('active');
 
   (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
   (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
@@ -47,6 +81,10 @@ beforeEach(() => {
   });
   (Notifications.addNotificationResponseReceivedListener as jest.Mock).mockImplementation((cb) => {
     responseCb = cb;
+    return { remove: jest.fn() };
+  });
+  (NotificationsCjs.addPushTokenListener as jest.Mock).mockImplementation((cb) => {
+    tokenCb = cb;
     return { remove: jest.fn() };
   });
   // Default: no cold-launch notification — individual tests override
@@ -270,6 +308,129 @@ describe('usePushNotifications — tap response routing', () => {
     });
 
     expect(mockPush).toHaveBeenCalledWith('/(protected)/(tabs)/messages');
+  });
+});
+
+describe('usePushNotifications — foreground UX (toast + createdAtMs)', () => {
+  it('stamps every notification with createdAtMs so the card recomputes the relative label', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    const before = Date.now();
+    act(() => {
+      foregroundCb!({
+        request: {
+          identifier: 'notif-time',
+          content: { title: 'T', body: 'B', data: {} },
+        },
+      });
+    });
+    const after = Date.now();
+
+    const inserted = useMessagesStore.getState().notifications[0];
+    expect(inserted.createdAtMs).toBeGreaterThanOrEqual(before);
+    expect(inserted.createdAtMs).toBeLessThanOrEqual(after);
+  });
+
+  it('shows an in-app toast when a notification arrives while the app is foregrounded', async () => {
+    setAppState('active');
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    act(() => {
+      foregroundCb!({
+        request: {
+          identifier: 'notif-fg',
+          content: { title: 'Pierre M.', body: 'Salut !', data: { category: 'messages' } },
+        },
+      });
+    });
+
+    expect(toast.info).toHaveBeenCalledWith(
+      'Salut !',
+      expect.objectContaining({ title: 'Pierre M.' })
+    );
+  });
+
+  it('does NOT show a toast when the app is in background (OS banner takes over)', async () => {
+    setAppState('background');
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    act(() => {
+      foregroundCb!({
+        request: {
+          identifier: 'notif-bg',
+          content: { title: 'X', body: 'Y', data: {} },
+        },
+      });
+    });
+
+    expect(toast.info).not.toHaveBeenCalled();
+  });
+});
+
+describe('usePushNotifications — token rotation (Android FCM)', () => {
+  it('registers a token listener on mount', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+
+    expect(NotificationsCjs.addPushTokenListener).toHaveBeenCalledTimes(1);
+    expect(tokenCb).toBeTruthy();
+  });
+
+  it('persists the new token to Supabase when it rotates', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+    (updatePushToken as jest.Mock).mockClear();
+
+    act(() => {
+      tokenCb!({ data: 'ExponentPushToken[rotated-token]' });
+    });
+
+    expect(updatePushToken).toHaveBeenCalledWith('clk_1', 'ExponentPushToken[rotated-token]');
+  });
+
+  it('also accepts a raw string token shape (some SDK versions)', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+    (updatePushToken as jest.Mock).mockClear();
+
+    act(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tokenCb!('fcm-rotated-raw' as any);
+    });
+
+    expect(updatePushToken).toHaveBeenCalledWith('clk_1', 'fcm-rotated-raw');
+  });
+
+  it('ignores the rotation event when the token is unchanged', async () => {
+    // The hook persisted ExponentPushToken[ios-token] on mount; firing the
+    // same value through the listener must NOT cause a second write.
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+    (updatePushToken as jest.Mock).mockClear();
+
+    act(() => {
+      tokenCb!({ data: 'ExponentPushToken[ios-token]' });
+    });
+
+    expect(updatePushToken).not.toHaveBeenCalled();
+  });
+
+  it('ignores empty / non-string token payloads', async () => {
+    renderHook(() => usePushNotifications('clk_1'));
+    await flushAsync();
+    (updatePushToken as jest.Mock).mockClear();
+
+    act(() => {
+      tokenCb!({ data: undefined });
+      tokenCb!({ data: '' });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tokenCb!({ data: 42 as any });
+    });
+
+    expect(updatePushToken).not.toHaveBeenCalled();
   });
 });
 

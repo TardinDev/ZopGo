@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import * as Device from 'expo-device';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { updatePushToken } from '../lib/supabaseNotifications';
 import { useMessagesStore } from '../stores/messagesStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { toast } from '../stores/toastStore';
 
 // Expo Go (SDK 53+) no longer supports remote push notifications on Android.
 // The native module itself throws an error on import, so we must avoid loading
@@ -19,16 +20,26 @@ const Notifications = pushNotificationsDisabled
   ? null
   : (require('expo-notifications') as typeof import('expo-notifications'));
 
-// Configure foreground notification behavior (module-level, runs once)
+// Configure foreground notification behavior (module-level, runs once).
+//
+// When the app is in the foreground we suppress the native OS banner /
+// alert: an in-app toast (fired from the addNotificationReceivedListener
+// below) shows the same message without competing with the OS chrome.
+// When the app is backgrounded/killed, the OS banner is the only surface
+// the user sees, so we show it as normal.
 if (Notifications) {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: useSettingsStore.getState().generalSettings.notificationSound,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async () => {
+      const inForeground = AppState.currentState === 'active';
+      const sound = useSettingsStore.getState().generalSettings.notificationSound;
+      return {
+        shouldShowAlert: !inForeground,
+        shouldShowBanner: !inForeground,
+        shouldShowList: true,
+        shouldPlaySound: !inForeground && sound,
+        shouldSetBadge: true,
+      };
+    },
   });
 }
 
@@ -159,6 +170,7 @@ export function usePushNotifications(clerkId: string | null) {
 
     let notificationListener: { remove(): void } | undefined;
     let responseListener: { remove(): void } | undefined;
+    let tokenListener: { remove(): void } | undefined;
 
     (async () => {
       const token = await registerForPushNotifications();
@@ -187,20 +199,38 @@ export function usePushNotifications(clerkId: string | null) {
         }
       }
 
-      // Foreground notification → add to in-app store
+      // Foreground notification arrived. We add it to the in-app
+      // notification feed AND, when the app is active, surface a toast
+      // (the OS banner is suppressed by the handler above).
       notificationListener = Notifications.addNotificationReceivedListener((notification) => {
         const { title, body, data } = notification.request.content;
+        const inForeground = AppState.currentState === 'active';
+
         useMessagesStore.getState().addNotification({
           id: notification.request.identifier,
           type: (data?.category as string) || 'info',
           title: title || '',
           message: body || '',
+          // Static label is kept for legacy consumers, but `createdAtMs`
+          // below lets the card recompute "Il y a Nh" at render time.
           time: "À l'instant",
+          createdAtMs: Date.now(),
           read: false,
           icon: (data?.icon as string) || 'notifications',
           iconColor: (data?.iconColor as string) || '#2162FE',
           iconBg: (data?.iconBg as string) || '#DBEAFE',
         });
+
+        // Chat messages have their own UI (the conversation screen) so a
+        // generic toast would be redundant when the user is already on
+        // that screen. Still show one for every other category — that's
+        // the "professional app" foreground UX (Slack / WhatsApp pattern).
+        if (inForeground) {
+          toast.info(body || '', {
+            title: title || 'Notification',
+            durationMs: 4000,
+          });
+        }
       });
 
       // Live tap-on-notification (app already running / backgrounded).
@@ -212,11 +242,25 @@ export function usePushNotifications(clerkId: string | null) {
           routeFromNotificationData(router, data);
         }
       );
+
+      // Token rotation: FCM (Android) may issue a new device token at any
+      // time. Without this listener the old token stays in profiles.push_token
+      // until the next cold start, breaking push delivery in the meantime.
+      tokenListener = Notifications.addPushTokenListener?.((event) => {
+        const next = typeof event === 'string' ? event : event?.data;
+        if (!next || typeof next !== 'string') return;
+        if (next === lastTokenRef.current) return;
+        lastTokenRef.current = next;
+        // Fire-and-forget — failure is non-fatal, will retry on next launch.
+        void updatePushToken(clerkId, next);
+        if (__DEV__) console.log('[Push] token rotated, persisted to Supabase');
+      });
     })();
 
     return () => {
       notificationListener?.remove();
       responseListener?.remove();
+      tokenListener?.remove();
     };
   }, [clerkId, router]);
 }
