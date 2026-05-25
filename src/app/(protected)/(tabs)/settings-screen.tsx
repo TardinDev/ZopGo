@@ -59,8 +59,13 @@ export default function SettingsScreen() {
 
   const handleTransitionComplete = useCallback(() => {
     setTransitionRole(null);
-    router.replace('/(protected)/(tabs)');
-  }, [router]);
+    // Settings is reachable for every role, so the user can stay here
+    // after the switch — the Zustand role change already updated the
+    // tab bar and home below. We deliberately skip router.replace
+    // because expo-router (SDK 54) internally calls
+    // SplashScreen.hideAsync on group navigations and expo-splash-screen
+    // v31 throws when fired on a view controller it didn't show.
+  }, []);
 
   const handleLogout = useCallback(async () => {
     setLogoutSheetVisible(false);

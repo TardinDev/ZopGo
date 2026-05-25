@@ -81,10 +81,14 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
 
   const handleTransitionComplete = useCallback(() => {
     setTransitionRole(null);
-    // Land on the home tab — some role-restricted screens (e.g. "Mes
-    // trajets") disappear from the tab bar after the switch.
-    router.replace('/(protected)/(tabs)');
-  }, [router]);
+    // No router.replace here: HomeHeader lives on the home tab which is
+    // present for every role, so the Zustand role change is enough to
+    // re-render the tab bar. We deliberately don't call router.replace
+    // because expo-router (SDK 54) internally invokes
+    // SplashScreen.hideAsync() on group navigations, and expo-splash-screen
+    // v31 throws "No native splash screen registered for given view
+    // controller" when it fires on a VC that wasn't shown a splash.
+  }, []);
 
   const handleLogout = useCallback(async () => {
     setLogoutSheetVisible(false);
