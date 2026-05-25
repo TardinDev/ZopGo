@@ -272,7 +272,7 @@ export default function VoyageDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
-      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
         {/* Floating controls */}
         <View
           style={{
