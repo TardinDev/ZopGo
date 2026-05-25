@@ -36,10 +36,12 @@ import { COLORS } from '../constants/colors';
 
 const SPLASH_IMAGE = require('../../assets/zopgo_wallpaper_android_20x9_1080x2400.jpg');
 
-// Couleurs harmonisées avec l'illustration ZopGo
-const ACCENT = '#0B8457';       // vert profond (voiture/logo)
-const GOLD = '#E8A832';         // doré (motifs véhicule)
-const VIOLET = '#8B5CF6';       // violet (hébergeur)
+// Brand color (ZopGo blue). Replaces the previous green ACCENT so the
+// boarding-pass aesthetic stays consistent with the detail screens and
+// onboarding gates. Gold/Violet keep their per-role meaning.
+const ACCENT = COLORS.primary;
+const GOLD = '#E8A832';
+const VIOLET = '#8B5CF6';
 
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
@@ -949,38 +951,31 @@ export default function AuthScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-            {/* Header */}
-            <Animated.View
-              entering={FadeInDown.duration(500).springify().damping(18)}
-              style={styles.header}>
-              <Text style={styles.logo}>ZopGo</Text>
-              <Text style={styles.subtitle}>
-                {isLogin ? 'Bon retour parmi nous' : 'Créez votre compte'}
-              </Text>
-            </Animated.View>
-
             {/* Card */}
             <Animated.View
               entering={FadeInUp.duration(600).delay(100).springify().damping(18)}
               style={styles.cardContainer}>
               <Animated.View
                 layout={LinearTransition.springify().damping(22)}
-                style={[styles.card, {
-                  borderColor: selectedRole === 'chauffeur' ? GOLD
-                    : selectedRole === 'hebergeur' ? VIOLET
-                    : 'rgba(255, 255, 255, 0.4)'
-                }]}>
-                {/* Accent bar top */}
-                <LinearGradient
-                  colors={
-                    selectedRole === 'chauffeur' ? [GOLD, '#D97706']
-                    : selectedRole === 'hebergeur' ? [VIOLET, '#A855F7']
-                    : [ACCENT, GOLD]
-                  }
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.cardAccentBar}
-                />
+                style={styles.card}>
+                {/* Boarding-pass brand strip — solid color per selected role */}
+                <View
+                  style={[
+                    styles.brandStrip,
+                    {
+                      backgroundColor:
+                        selectedRole === 'chauffeur'
+                          ? GOLD
+                          : selectedRole === 'hebergeur'
+                          ? VIOLET
+                          : ACCENT,
+                    },
+                  ]}>
+                  <Text style={styles.brandStripTitle}>ZOPGO PASS</Text>
+                  <Text style={styles.brandStripCaption}>
+                    {isLogin ? 'Embarquement' : 'Inscription'}
+                  </Text>
+                </View>
                 {/* Sélecteur de rôle */}
                 <View style={styles.roleSection}>
                   <Text style={styles.sectionLabel}>Je suis</Text>
@@ -1108,6 +1103,14 @@ export default function AuthScreen() {
                     </View>
                   </View>
                 )}
+
+                {/* Boarding-pass perforation: separates "WHO" (role) from
+                    "credentials" (email/password) like a ticket coupon. */}
+                <View style={styles.perforationRow}>
+                  {Array.from({ length: 24 }).map((_, i) => (
+                    <View key={i} style={styles.perfDash} />
+                  ))}
+                </View>
 
                 {/* Friendly error banner — sad icon + warm message */}
                 {authErrorMsg && (
@@ -1311,28 +1314,32 @@ export default function AuthScreen() {
                   </TouchableOpacity>
                 )}
 
-                {/* Submit Button */}
+                {/* Submit Button — solid brand blue with arrow node (boarding-pass CTA) */}
                 <TouchableOpacity
                   onPress={handleSubmit}
                   disabled={isLoading}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={isLogin ? 'Se connecter' : 'Créer le compte'}
+                  accessibilityState={{ disabled: isLoading }}
                   style={[styles.submitTouchable, isLoading && styles.buttonDisabled]}>
-                  <LinearGradient
-                    colors={[ACCENT, '#065F46']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.submitButton}>
+                  <View style={styles.submitButton}>
                     {isLoading ? (
                       <View style={styles.submitLoadingRow}>
                         <ActivityIndicator color={COLORS.white} size="small" />
-                        <Text style={styles.submitText}>Chargement...</Text>
+                        <Text style={styles.submitText}>CHARGEMENT…</Text>
                       </View>
                     ) : (
-                      <Text style={styles.submitText}>
-                        {isLogin ? 'Se connecter' : 'Créer le compte'}
-                      </Text>
+                      <>
+                        <Text style={styles.submitText}>
+                          {(isLogin ? 'Se connecter' : 'Créer le compte').toUpperCase()}
+                        </Text>
+                        <View style={styles.submitArrowCircle}>
+                          <Ionicons name="arrow-forward" size={16} color={ACCENT} />
+                        </View>
+                      </>
                     )}
-                  </LinearGradient>
+                  </View>
                 </TouchableOpacity>
 
                 {/* Separator */}
@@ -1418,15 +1425,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    borderRadius: 20,
+    backgroundColor: 'white',
+    borderRadius: 22,
     borderCurve: 'continuous',
-    padding: 14,
-    paddingTop: 16,
-    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.20)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 14,
+    overflow: 'hidden',
+    boxShadow: '0 16px 36px rgba(0, 0, 0, 0.22)',
   },
+  // Legacy gradient strip — still used by the verification / 2FA /
+  // password-reset modal cards (those screens haven't been re-skinned
+  // yet). Kept here so they compile.
   cardAccentBar: {
     position: 'absolute',
     top: -1,
@@ -1436,6 +1446,42 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
+  },
+  brandStrip: {
+    marginHorizontal: -14,
+    marginTop: -14,
+    marginBottom: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  brandStripTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: 'white',
+    letterSpacing: 1.6,
+  },
+  brandStripCaption: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.92)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  perforationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: -2,
+    marginVertical: 10,
+  },
+  perfDash: {
+    flex: 1,
+    height: 1.5,
+    marginRight: 4,
+    borderRadius: 0.75,
+    backgroundColor: '#E5E7EB',
   },
   sectionLabel: {
     fontSize: 13,
@@ -1463,7 +1509,7 @@ const styles = StyleSheet.create({
   },
   rolePillActive: {
     borderColor: ACCENT,
-    backgroundColor: 'rgba(11, 132, 87, 0.15)',
+    backgroundColor: 'rgba(33, 98, 254, 0.12)',
     boxShadow: `0 2px 6px ${ACCENT}26`,
   },
   rolePillInactive: {
@@ -1515,7 +1561,7 @@ const styles = StyleSheet.create({
   },
   vehicleChipActive: {
     borderColor: ACCENT,
-    backgroundColor: 'rgba(11, 132, 87, 0.15)',
+    backgroundColor: 'rgba(33, 98, 254, 0.12)',
   },
   vehicleChipInactive: {
     borderColor: 'rgba(255, 255, 255, 0.5)',
@@ -1598,15 +1644,18 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   submitTouchable: {
-    marginTop: 4,
+    marginTop: 6,
   },
   submitButton: {
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    paddingVertical: 12,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: `0 6px 14px ${ACCENT}66`,
+    backgroundColor: ACCENT,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    boxShadow: `0 8px 18px ${ACCENT}66`,
   },
   submitLoadingRow: {
     flexDirection: 'row',
@@ -1615,9 +1664,18 @@ const styles = StyleSheet.create({
   },
   submitText: {
     color: COLORS.white,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 1.4,
+    marginRight: 12,
+  },
+  submitArrowCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   strengthContainer: {
     marginTop: -4,
