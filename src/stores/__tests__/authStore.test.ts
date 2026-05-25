@@ -7,7 +7,7 @@ import {
   ACCOMMODATION_TYPES,
 } from '../authStore';
 import { useDriversStore } from '../driversStore';
-import { fetchProfileByClerkId, upsertProfile } from '../../lib/supabaseProfile';
+import { fetchProfileByClerkId, upsertProfile, updateProfile as updateSupabaseProfile } from '../../lib/supabaseProfile';
 import { updatePushToken, fetchNotificationPreferences, updateNotificationPreferences } from '../../lib/supabaseNotifications';
 import type { AuthUser, ChauffeurProfile, HebergeurProfile } from '../../types';
 
@@ -147,21 +147,33 @@ describe('setupProfile', () => {
     expect(useAuthStore.getState().supabaseProfileId).toBe('new_supa_1');
   });
 
-  // ─── Multi-role (migration 023) ───────────────────────────────
+  // ─── Multi-role (migration 023 + 024 — all roles for everyone) ─────
 
-  it('sets optimistic roles=[client] for a client before Supabase sync', () => {
+  it('sets optimistic roles=[all three] for a client before Supabase sync', () => {
     useAuthStore.getState().setupProfile('client', 'Jean', 'jean@test.com');
-    expect(useAuthStore.getState().user!.roles).toEqual(['client']);
+    expect(useAuthStore.getState().user!.roles).toEqual([
+      'client',
+      'chauffeur',
+      'hebergeur',
+    ]);
   });
 
-  it('sets optimistic roles=[client, chauffeur] for a chauffeur before Supabase sync', () => {
+  it('sets optimistic roles=[all three] for a chauffeur before Supabase sync', () => {
     useAuthStore.getState().setupProfile('chauffeur', 'Pierre', 'pierre@test.com', 'moto');
-    expect(useAuthStore.getState().user!.roles).toEqual(['client', 'chauffeur']);
+    expect(useAuthStore.getState().user!.roles).toEqual([
+      'client',
+      'chauffeur',
+      'hebergeur',
+    ]);
   });
 
-  it('sets optimistic roles=[client, hebergeur] for a hebergeur before Supabase sync', () => {
+  it('sets optimistic roles=[all three] for a hebergeur before Supabase sync', () => {
     useAuthStore.getState().setupProfile('hebergeur', 'Marie', 'marie@test.com');
-    expect(useAuthStore.getState().user!.roles).toEqual(['client', 'hebergeur']);
+    expect(useAuthStore.getState().user!.roles).toEqual([
+      'client',
+      'chauffeur',
+      'hebergeur',
+    ]);
   });
 
   it('replaces optimistic roles with the authoritative roles[] from Supabase', async () => {
@@ -208,12 +220,12 @@ describe('setupProfile', () => {
     expect(useAuthStore.getState().user!.roles).toEqual(['chauffeur']);
   });
 
-  it('passes roles=[client, role] to upsertProfile when creating a new profile', async () => {
+  it('passes roles=[all three] to upsertProfile when creating a new profile', async () => {
     (fetchProfileByClerkId as jest.Mock).mockResolvedValue(null);
     (upsertProfile as jest.Mock).mockResolvedValue({
       id: 'new_supa_2',
       role: 'chauffeur',
-      roles: ['client', 'chauffeur'],
+      roles: ['client', 'chauffeur', 'hebergeur'],
     });
 
     useAuthStore
@@ -224,9 +236,133 @@ describe('setupProfile', () => {
 
     expect(upsertProfile).toHaveBeenCalledWith(
       'clerk_999',
-      expect.objectContaining({ roles: ['client', 'chauffeur'] })
+      expect.objectContaining({
+        roles: ['client', 'chauffeur', 'hebergeur'],
+      })
     );
-    expect(useAuthStore.getState().user!.roles).toEqual(['client', 'chauffeur']);
+    expect(useAuthStore.getState().user!.roles).toEqual([
+      'client',
+      'chauffeur',
+      'hebergeur',
+    ]);
+  });
+});
+
+// ─── switchRole ─────────────────────────────────────────────────────
+
+describe('switchRole', () => {
+  function seedMultiRoleUser(roles: AuthUser['roles'], current: AuthUser['role'] = 'client') {
+    useAuthStore.setState({
+      user: {
+        id: 'user-1',
+        role: current,
+        roles,
+        profile: {
+          name: 'Pierre',
+          email: 'p@test.com',
+          phone: '',
+          address: '',
+          emergencyContact: '',
+          avatar: '',
+          rating: 5,
+          totalTrips: 0,
+          totalDeliveries: 0,
+          memberSince: '2026',
+        },
+      },
+      clerkId: 'clerk-abc',
+      supabaseProfileId: 'profile-1',
+    });
+  }
+
+  it('returns false when no user is signed in', () => {
+    const ok = useAuthStore.getState().switchRole('chauffeur');
+    expect(ok).toBe(false);
+    expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it('returns false when the requested role is not granted', () => {
+    seedMultiRoleUser(['client'], 'client');
+    const ok = useAuthStore.getState().switchRole('chauffeur');
+    expect(ok).toBe(false);
+    expect(useAuthStore.getState().user!.role).toBe('client');
+    expect(updateSupabaseProfile).not.toHaveBeenCalled();
+  });
+
+  it('returns true and is a no-op when switching to the current role', () => {
+    seedMultiRoleUser(['client', 'chauffeur'], 'chauffeur');
+    const ok = useAuthStore.getState().switchRole('chauffeur');
+    expect(ok).toBe(true);
+    expect(useAuthStore.getState().user!.role).toBe('chauffeur');
+    expect(updateSupabaseProfile).not.toHaveBeenCalled();
+  });
+
+  it('switches the active role locally and persists to Supabase', () => {
+    seedMultiRoleUser(['client', 'chauffeur'], 'client');
+    const ok = useAuthStore.getState().switchRole('chauffeur');
+    expect(ok).toBe(true);
+    expect(useAuthStore.getState().user!.role).toBe('chauffeur');
+    expect(updateSupabaseProfile).toHaveBeenCalledWith('clerk-abc', { role: 'chauffeur' });
+  });
+
+  it('falls back to [user.role] when roles[] is missing (pre-migration profile)', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'legacy-1',
+        role: 'chauffeur',
+        // roles intentionally absent — legacy persisted profile
+        profile: {
+          name: 'Old User',
+          email: 'old@test.com',
+          phone: '',
+          address: '',
+          emergencyContact: '',
+          avatar: '',
+          rating: 5,
+          totalTrips: 0,
+          totalDeliveries: 0,
+          memberSince: '2025',
+        },
+      },
+      clerkId: 'clerk-old',
+      supabaseProfileId: 'profile-old',
+    });
+
+    // Switching to a role not in the fallback set must fail.
+    expect(useAuthStore.getState().switchRole('client')).toBe(false);
+    expect(useAuthStore.getState().user!.role).toBe('chauffeur');
+    // Switching to the *fallback* current role is a no-op (truthy).
+    expect(useAuthStore.getState().switchRole('chauffeur')).toBe(true);
+  });
+
+  it('removes the chauffeur from driversStore when switching AWAY from chauffeur', () => {
+    seedMultiRoleUser(['client', 'chauffeur'], 'chauffeur');
+    useDriversStore.setState({
+      connectedDrivers: [
+        {
+          id: 'user-1',
+          prenom: 'Pierre',
+          vehicule: '🚗 Voiture',
+          etoiles: 5,
+          disponible: true,
+          photo: '',
+          commentaires: [],
+          distance: 0,
+        },
+      ],
+      isLoading: false,
+    });
+
+    useAuthStore.getState().switchRole('client');
+
+    expect(useDriversStore.getState().connectedDrivers).toHaveLength(0);
+  });
+
+  it('does not touch driversStore when switching between non-chauffeur roles', () => {
+    seedMultiRoleUser(['client', 'hebergeur'], 'client');
+    const before = useDriversStore.getState().connectedDrivers;
+    useAuthStore.getState().switchRole('hebergeur');
+    expect(useDriversStore.getState().connectedDrivers).toEqual(before);
   });
 });
 

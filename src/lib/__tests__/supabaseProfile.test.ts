@@ -91,24 +91,24 @@ describe('upsertProfile', () => {
     expect(payload.disponible).toBe(false);
   });
 
-  it('defaults roles to [client, role] for a chauffeur', async () => {
+  it('defaults roles to [all three] regardless of the picked active role (migration 024)', async () => {
     const c = chain({ data: { id: 'p-1' }, error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
     await upsertProfile('clk_3', { role: 'chauffeur', name: 'Bob', email: 'bob@x.com' });
 
     const payload = c.upsert.mock.calls[0][0];
-    expect(payload.roles).toEqual(['client', 'chauffeur']);
+    expect(payload.roles).toEqual(['client', 'chauffeur', 'hebergeur']);
   });
 
-  it('defaults roles to [client] for a client (no duplicate)', async () => {
+  it('grants all three roles even when the user signs up as a plain client', async () => {
     const c = chain({ data: { id: 'p-1' }, error: null });
     (supabase.from as jest.Mock).mockReturnValue(c);
 
     await upsertProfile('clk_4', { role: 'client', name: 'A', email: 'a@x.com' });
 
     const payload = c.upsert.mock.calls[0][0];
-    expect(payload.roles).toEqual(['client']);
+    expect(payload.roles).toEqual(['client', 'chauffeur', 'hebergeur']);
   });
 
   it('honours an explicit roles override', async () => {
@@ -169,6 +169,18 @@ describe('updateProfile', () => {
     expect(payload.rating).toBe(4.5);
     expect(payload.total_trips).toBe(10);
   });
+
+  it('persists the active role for the in-app mode switcher', async () => {
+    const c = chain({ data: null, error: null });
+    (supabase.from as jest.Mock).mockReturnValue(c);
+
+    const ok = await updateProfile('clk_switch', { role: 'chauffeur' });
+
+    expect(ok).toBe(true);
+    const payload = c.update.mock.calls[0][0];
+    expect(payload.role).toBe('chauffeur');
+    expect(c.eq).toHaveBeenCalledWith('clerk_id', 'clk_switch');
+  });
 });
 
 describe('getEffectiveRoles', () => {
@@ -206,16 +218,22 @@ describe('getEffectiveRoles', () => {
   });
 });
 
-describe('buildDefaultRoles', () => {
-  it('returns [client] for client (no duplicate)', () => {
-    expect(buildDefaultRoles('client')).toEqual(['client']);
+describe('buildDefaultRoles (migration 024 — all roles for everyone)', () => {
+  it('returns all three roles regardless of the active role at signup', () => {
+    expect(buildDefaultRoles('client')).toEqual(['client', 'chauffeur', 'hebergeur']);
+    expect(buildDefaultRoles('chauffeur')).toEqual(['client', 'chauffeur', 'hebergeur']);
+    expect(buildDefaultRoles('hebergeur')).toEqual(['client', 'chauffeur', 'hebergeur']);
   });
 
-  it('returns [client, chauffeur] for chauffeur', () => {
-    expect(buildDefaultRoles('chauffeur')).toEqual(['client', 'chauffeur']);
+  it('also returns all three when called without an active role', () => {
+    expect(buildDefaultRoles()).toEqual(['client', 'chauffeur', 'hebergeur']);
   });
 
-  it('returns [client, hebergeur] for hebergeur', () => {
-    expect(buildDefaultRoles('hebergeur')).toEqual(['client', 'hebergeur']);
+  it('is stable across calls (does not mutate)', () => {
+    const a = buildDefaultRoles('client');
+    const b = buildDefaultRoles('chauffeur');
+    expect(a).toEqual(b);
+    // Different array instances so callers can mutate freely if needed.
+    expect(a).not.toBe(b);
   });
 });

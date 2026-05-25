@@ -45,10 +45,17 @@ export function getEffectiveRoles(
 // Build the canonical `roles` array to persist when creating a profile.
 // Policy (migration 023): every user implicitly owns 'client', plus their
 // declared active role. Dedup + filter to valid values.
-export function buildDefaultRoles(activeRole: UserRole): UserRole[] {
-  return Array.from(new Set<UserRole>(['client', activeRole])).filter((r) =>
-    VALID_ROLES.includes(r)
-  );
+/**
+ * Returns the full set of roles granted to every user. Every account can
+ * be client AND chauffeur AND hebergeur — switching is purely a UI choice,
+ * not gated on verification. The `activeRole` parameter is no longer used
+ * (kept for backwards compatibility with older callers) — instead the
+ * picked role at signup becomes the *initial* active role, while all
+ * three are made available for the mode switcher.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function buildDefaultRoles(activeRole?: UserRole): UserRole[] {
+  return ['client', 'chauffeur', 'hebergeur'];
 }
 
 export async function fetchProfileByClerkId(clerkId: string): Promise<SupabaseProfile | null> {
@@ -129,6 +136,10 @@ export async function updateProfile(
     rating: number;
     total_trips: number;
     total_deliveries: number;
+    // The *active* role. Needed by the in-app mode switcher
+    // (authStore.switchRole) so the next cold start reads the
+    // up-to-date role from Supabase as well as from Clerk metadata.
+    role: 'client' | 'chauffeur' | 'hebergeur';
   }>
 ): Promise<boolean> {
   const sanitizedUpdates = { ...updates };

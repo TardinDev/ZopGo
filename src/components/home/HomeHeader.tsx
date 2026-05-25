@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,17 @@ import {
   Image,
   Modal,
   Pressable,
-  Alert,
   Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 import { COLORS } from '../../constants';
 import { useAuthStore } from '../../stores/authStore';
 import { generateAvatarPlaceholder } from '../../lib/supabaseAvatar';
+import { LogoutSheet, ModeTransition } from '../ui';
+import type { UserRole } from '../../types';
 
 interface HomeHeaderProps {
   userName: string;
@@ -25,36 +26,81 @@ interface HomeHeaderProps {
 export function HomeHeader({ userName }: HomeHeaderProps) {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
+  const [logoutSheetVisible, setLogoutSheetVisible] = useState(false);
+  const [transitionRole, setTransitionRole] = useState<UserRole | null>(null);
   const { signOut } = useAuth();
-  const { user, logout, setDisponible } = useAuthStore();
+  const { user: clerkUser } = useUser();
+  const { user, logout, setDisponible, switchRole } = useAuthStore();
   const isChauffeur = user?.role === 'chauffeur';
   const isHebergeur = user?.role === 'hebergeur';
   const isDisponible = (isChauffeur || isHebergeur) && user?.profile && 'disponible' in user.profile && user.profile.disponible;
 
-  const handleLogout = () => {
-    Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Déconnexion',
-        style: 'destructive',
-        onPress: async () => {
-          setModalVisible(false);
-          // Déconnexion Clerk (session distante)
-          await signOut();
-          // Purge des tokens du SecureStore
-          try {
-            await SecureStore.deleteItemAsync('__clerk_client_jwt');
-          } catch (err) {
-            if (__DEV__) console.warn('SecureStore cleanup failed:', err);
-          }
-          // Déconnexion locale (store Zustand)
-          logout();
-          // Redirection vers la page de connexion
-          router.replace('/auth');
-        },
-      },
-    ]);
+  const availableRoles = (user?.roles && user.roles.length > 0
+    ? user.roles
+    : user
+    ? [user.role]
+    : []) as UserRole[];
+
+  const openLogoutSheet = () => {
+    setModalVisible(false);
+    setLogoutSheetVisible(true);
   };
+
+  const handleSwitchRole = useCallback(
+    (newRole: UserRole) => {
+      if (!user || newRole === user.role) {
+        setLogoutSheetVisible(false);
+        return;
+      }
+      // Close the sheet so the transition overlay isn't competing with it.
+      setLogoutSheetVisible(false);
+      // Persist to Clerk in the background so the next cold start picks up
+      // the new active role from `unsafeMetadata.role`. Fire-and-forget so
+      // the transition feels instant — if the network call fails the local
+      // switch still applies for this session.
+      if (clerkUser) {
+        clerkUser
+          .update({
+            unsafeMetadata: {
+              ...(clerkUser.unsafeMetadata ?? {}),
+              role: newRole,
+            },
+          })
+          .catch((err) => {
+            if (__DEV__) console.warn('switchRole clerk persist failed:', err);
+          });
+      }
+      // Sync local state + Supabase (fire-and-forget inside switchRole).
+      switchRole(newRole);
+      // Show the animated "Mode X" overlay (~1.2s). Navigation happens in
+      // handleTransitionComplete so the user doesn't see screens shuffle.
+      setTransitionRole(newRole);
+    },
+    [user, clerkUser, switchRole]
+  );
+
+  const handleTransitionComplete = useCallback(() => {
+    setTransitionRole(null);
+    // Land on the home tab — some role-restricted screens (e.g. "Mes
+    // trajets") disappear from the tab bar after the switch.
+    router.replace('/(protected)/(tabs)');
+  }, [router]);
+
+  const handleLogout = useCallback(async () => {
+    setLogoutSheetVisible(false);
+    try {
+      await signOut();
+    } catch (err) {
+      if (__DEV__) console.warn('Clerk signOut failed:', err);
+    }
+    try {
+      await SecureStore.deleteItemAsync('__clerk_client_jwt');
+    } catch (err) {
+      if (__DEV__) console.warn('SecureStore cleanup failed:', err);
+    }
+    logout();
+    router.replace('/auth');
+  }, [signOut, logout, router]);
 
   return (
     <View style={styles.container}>
@@ -158,25 +204,51 @@ export function HomeHeader({ userName }: HomeHeaderProps) {
               )}
             </View>
 
-            {/* Bouton de déconnexion */}
+            {/* Bouton de déconnexion / bascule de mode */}
             <TouchableOpacity
               style={styles.logoutButton}
-              onPress={handleLogout}
+              onPress={openLogoutSheet}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Se déconnecter">
+              accessibilityLabel={
+                availableRoles.length > 1
+                  ? 'Changer de mode ou se déconnecter'
+                  : 'Se déconnecter'
+              }>
               <View style={[styles.roleIcon, { backgroundColor: COLORS.error + '20' }]}>
                 <Ionicons name="log-out-outline" size={24} color={COLORS.error} />
               </View>
               <View style={styles.roleTextContainer}>
-                <Text style={styles.logoutTitle}>Se déconnecter</Text>
-                <Text style={styles.roleSubtitle}>Quitter votre session</Text>
+                <Text style={styles.logoutTitle}>
+                  {availableRoles.length > 1 ? 'Changer de mode' : 'Se déconnecter'}
+                </Text>
+                <Text style={styles.roleSubtitle}>
+                  {availableRoles.length > 1
+                    ? 'Bascule sans te reconnecter'
+                    : 'Quitter votre session'}
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
             </TouchableOpacity>
           </View>
         </Pressable>
       </Modal>
+
+      <LogoutSheet
+        visible={logoutSheetVisible}
+        onClose={() => setLogoutSheetVisible(false)}
+        currentRole={user?.role ?? 'client'}
+        availableRoles={availableRoles}
+        onSwitchRole={handleSwitchRole}
+        onLogout={handleLogout}
+      />
+
+      <ModeTransition
+        visible={transitionRole !== null}
+        role={transitionRole ?? 'client'}
+        onComplete={handleTransitionComplete}
+        quick
+      />
     </View>
   );
 }

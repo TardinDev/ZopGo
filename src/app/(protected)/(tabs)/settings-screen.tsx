@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,34 +8,70 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import { COLORS } from '../../../constants';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore } from '../../../stores/authStore';
+import { LogoutSheet, ModeTransition } from '../../../components/ui';
+import type { UserRole } from '../../../types';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user: clerkUser } = useUser();
-  const { logout } = useAuthStore();
+  const { user, logout, switchRole } = useAuthStore();
   const { generalSettings, updateGeneralSettings } = useSettingsStore();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [logoutSheetVisible, setLogoutSheetVisible] = useState(false);
+  const [transitionRole, setTransitionRole] = useState<UserRole | null>(null);
 
-  const handleLogout = () => {
-    Alert.alert('Déconnexion', 'Voulez-vous vous déconnecter ?', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Déconnexion',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut();
-            logout();
-            router.replace('/auth');
-          } catch {
-            logout();
-            router.replace('/auth');
-          }
-        },
-      },
-    ]);
-  };
+  const availableRoles = (user?.roles && user.roles.length > 0
+    ? user.roles
+    : user
+    ? [user.role]
+    : []) as UserRole[];
+
+  const openLogoutSheet = () => setLogoutSheetVisible(true);
+
+  const handleSwitchRole = useCallback(
+    (newRole: UserRole) => {
+      if (!user || newRole === user.role) {
+        setLogoutSheetVisible(false);
+        return;
+      }
+      setLogoutSheetVisible(false);
+      // Persist to Clerk in background (next-launch source of truth).
+      if (clerkUser) {
+        clerkUser
+          .update({
+            unsafeMetadata: {
+              ...(clerkUser.unsafeMetadata ?? {}),
+              role: newRole,
+            },
+          })
+          .catch((err) => {
+            if (__DEV__) console.warn('switchRole clerk persist failed:', err);
+          });
+      }
+      // Local + Supabase switch (sync inside switchRole).
+      switchRole(newRole);
+      // Show animated overlay; navigation happens on completion.
+      setTransitionRole(newRole);
+    },
+    [user, clerkUser, switchRole]
+  );
+
+  const handleTransitionComplete = useCallback(() => {
+    setTransitionRole(null);
+    router.replace('/(protected)/(tabs)');
+  }, [router]);
+
+  const handleLogout = useCallback(async () => {
+    setLogoutSheetVisible(false);
+    try {
+      await signOut();
+    } catch (err) {
+      if (__DEV__) console.warn('Clerk signOut failed:', err);
+    }
+    logout();
+    router.replace('/auth');
+  }, [signOut, logout, router]);
 
   // The profile soft-delete is handled by supabase/functions/clerk-webhook on
   // user.deleted (sets profiles.deleted_at), then RLS filters the user out of
@@ -246,14 +282,16 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Logout */}
+        {/* Logout / switch mode */}
         <TouchableOpacity
-          onPress={handleLogout}
+          onPress={openLogoutSheet}
           className="items-center rounded-2xl bg-white py-4 shadow-sm"
           activeOpacity={0.8}>
           <View className="flex-row items-center">
             <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
-            <Text className="ml-2 text-base font-bold text-red-500">Se déconnecter</Text>
+            <Text className="ml-2 text-base font-bold text-red-500">
+              {availableRoles.length > 1 ? 'Changer de mode / Se déconnecter' : 'Se déconnecter'}
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -277,6 +315,22 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
       </ScrollView>
+
+      <LogoutSheet
+        visible={logoutSheetVisible}
+        onClose={() => setLogoutSheetVisible(false)}
+        currentRole={user?.role ?? 'client'}
+        availableRoles={availableRoles}
+        onSwitchRole={handleSwitchRole}
+        onLogout={handleLogout}
+      />
+
+      <ModeTransition
+        visible={transitionRole !== null}
+        role={transitionRole ?? 'client'}
+        onComplete={handleTransitionComplete}
+        quick
+      />
     </SafeAreaView>
   );
 }

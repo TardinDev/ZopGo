@@ -122,9 +122,9 @@ jest.mock('./src/lib/supabaseProfile', () => {
       const filtered = raw.filter((r) => VALID_ROLES.includes(r));
       return Array.from(new Set(filtered));
     }),
-    buildDefaultRoles: jest.fn((role) =>
-      Array.from(new Set(['client', role])).filter((r) => VALID_ROLES.includes(r))
-    ),
+    // Migration 024: every account gets all three roles. The activeRole
+    // parameter is accepted for API compatibility but ignored.
+    buildDefaultRoles: jest.fn(() => ['client', 'chauffeur', 'hebergeur']),
   };
 });
 

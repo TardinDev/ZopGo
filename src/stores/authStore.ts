@@ -65,6 +65,17 @@ interface AuthState {
     clerkId?: string,
     accommodationType?: AccommodationType
   ) => void;
+  /**
+   * Switch the active role *without re-authenticating*. The new role must
+   * already be in `user.roles[]` (multi-role MVP — migration 023). Returns
+   * true on success, false if the user is null or the role is not granted.
+   *
+   * Local state is updated synchronously so the tab bar / home re-render
+   * immediately. Supabase persistence is fire-and-forget (errors logged).
+   * Clerk metadata persistence is the caller's job — see the sheet handlers
+   * in HomeHeader / settings-screen.
+   */
+  switchRole: (newRole: UserRole) => boolean;
   logout: () => void;
   updateProfile: (profile: Partial<UserInfo | ChauffeurProfile | HebergeurProfile>) => void;
   setDisponible: (disponible: boolean) => void;
@@ -212,6 +223,31 @@ export const useAuthStore = create<AuthState>()(
             }
           })();
         }
+      },
+
+      switchRole: (newRole) => {
+        const { user, clerkId } = get();
+        if (!user) return false;
+
+        const granted = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+        if (!granted.includes(newRole)) return false;
+        if (user.role === newRole) return true;
+
+        set({ user: { ...user, role: newRole } });
+
+        // If the user was a chauffeur driving for the previous role and we
+        // switch away, drop them from the connected-drivers list so they
+        // stop appearing as available. Re-adding when switching *to*
+        // chauffeur is handled by the screens that need it (no static
+        // demo livreur synthesis).
+        if (user.role === 'chauffeur' && newRole !== 'chauffeur') {
+          useDriversStore.getState().removeConnectedDriver(user.id);
+        }
+
+        if (clerkId) {
+          updateSupabaseProfile(clerkId, { role: newRole });
+        }
+        return true;
       },
 
       logout: () => {
