@@ -140,7 +140,7 @@ export default function VoyagesTab() {
               Trouvez votre voyage
             </Text>
             <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-              Voitures, camionnettes, bus
+              Taxi, voiture, bus, train, avion, bateaux
             </Text>
           </Animated.View>
 

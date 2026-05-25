@@ -36,11 +36,15 @@ describe('voyagesStore', () => {
 
   describe('transportTypes', () => {
     it('contains expected types', () => {
-      expect(transportTypes).toEqual(['All', 'Voiture', 'Camionnette', 'Bus']);
+      expect(transportTypes).toEqual(['All', 'Taxi', 'Voiture', 'Bus', 'Train', 'Avion', 'Bateaux']);
     });
 
     it('excludes Moto (livraisons-only mode)', () => {
       expect(transportTypes).not.toContain('Moto');
+    });
+
+    it('excludes Camionnette', () => {
+      expect(transportTypes).not.toContain('Camionnette');
     });
 
     it('includes Bus', () => {

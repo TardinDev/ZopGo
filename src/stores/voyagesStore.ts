@@ -20,7 +20,7 @@ const VEHICLE_ICON: Record<string, string> = {
   bus: '🚌',
 };
 
-export const transportTypes = ['All', 'Voiture', 'Camionnette', 'Bus'];
+export const transportTypes = ['All', 'Taxi', 'Voiture', 'Bus', 'Train', 'Avion', 'Bateaux'];
 
 interface VoyagesState {
   trajets: Voyage[];
