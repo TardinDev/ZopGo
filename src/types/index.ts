@@ -328,6 +328,65 @@ export interface AdminMessage {
   readAt?: string | null;
 }
 
+// ─── Payments (migration 025) ───────────────────────────────────────
+
+export type PaymentMethod = 'airtel_money' | 'moov_money' | 'paypal';
+
+export type PaymentStatus =
+  | 'pending'
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'refunded'
+  | 'cancelled';
+
+export type PaymentRelatedType =
+  | 'trajet_reservation'
+  | 'hebergement_reservation'
+  | 'livraison';
+
+export type PaymentCurrency = 'XAF' | 'USD' | 'EUR';
+
+export interface Payment {
+  id: string;
+  profileId: string;
+  amount: number;
+  currency: PaymentCurrency;
+  method: PaymentMethod;
+  providerRef: string | null;
+  idempotencyKey: string;
+  relatedType: PaymentRelatedType;
+  relatedId: string;
+  status: PaymentStatus;
+  errorCode: string | null;
+  errorMessage: string | null;
+  payerPhone: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
+export interface InitiatePaymentParams {
+  amount: number;
+  currency: PaymentCurrency;
+  method: PaymentMethod;
+  relatedType: PaymentRelatedType;
+  relatedId: string;
+  /** E.164 phone for mobile-money methods. Ignored for PayPal. */
+  payerPhone?: string;
+  /** Client-generated UUID. Re-using the same key returns the existing payment. */
+  idempotencyKey: string;
+}
+
+export interface InitiatePaymentResult {
+  paymentId: string;
+  status: PaymentStatus;
+  /** PayPal approval URL (open in in-app browser) — null for mobile money. */
+  redirectUrl?: string | null;
+  /** Human-friendly message to show in the status modal. */
+  message?: string;
+}
+
 // Utilisateur authentifié (peut être client, chauffeur ou hébergeur).
 // `role` reste le rôle "actif" courant (celui qui pilote la tab bar et
 // `clerkUser.unsafeMetadata.role`). `roles` est l'ensemble des rôles

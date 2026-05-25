@@ -23,6 +23,13 @@ import {
   formatTime,
   getVoyageAvailability,
 } from '../../../utils/detailFormatters';
+import {
+  generateIdempotencyKey,
+  initiatePayment,
+  isSuccessStatus,
+} from '../../../lib/payments';
+import { PaymentMethodSheet, PaymentStatusModal } from '../../../components/payments';
+import type { PaymentMethod, Payment } from '../../../types';
 
 const PAGE_BG = '#F1F3F7';
 
@@ -81,6 +88,12 @@ export default function VoyageDetailScreen() {
   const params = useLocalSearchParams();
   const [passengers, setPassengers] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
+  // Payment flow state: opening the method sheet, then the status modal
+  // while the provider settles. On 'succeeded' we create the reservation
+  // via the existing bookTrajet path.
+  const [paymentSheetVisible, setPaymentSheetVisible] = useState(false);
+  const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
+  const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
 
   const { user, supabaseProfileId } = useAuthStore();
   const { bookTrajet } = useReservationsStore();
@@ -183,8 +196,70 @@ export default function VoyageDetailScreen() {
       return;
     }
     hapticMedium();
+    // New flow (post-payment integration): open the method sheet first.
+    // The reservation is only created after the payment 'succeeded'
+    // event fires from the status modal (see handlePaymentSuccess).
+    setPaymentSheetVisible(true);
+  };
+
+  const handlePaymentConfirm = async (input: {
+    method: PaymentMethod;
+    payerPhone?: string;
+  }) => {
+    setPaymentSheetVisible(false);
+    if (!supabaseProfileId) {
+      toast.error('Connecte-toi pour payer.', { title: 'Session expirée' });
+      return;
+    }
+    setIsBooking(true);
+    const idempotencyKey = generateIdempotencyKey();
+    const result = await initiatePayment({
+      amount: totalPrice,
+      currency: 'XAF',
+      method: input.method,
+      relatedType: 'trajet_reservation',
+      // No reservation row exists yet — we link by trajet id. The reservation
+      // row is created on payment success and the inverse lookup uses
+      // `payments.related_id = trajetId + status='succeeded'`.
+      relatedId: voyage.id,
+      idempotencyKey,
+      payerPhone: input.payerPhone,
+    });
+    setIsBooking(false);
+
+    if ('error' in result) {
+      toast.error(result.error, { title: 'Paiement impossible', durationMs: 5000 });
+      return;
+    }
+
+    // For PayPal we'd open the redirectUrl in expo-web-browser here.
+    // (Wired in Phase 3 once PayPal credentials are configured.)
+    setActivePaymentId(result.paymentId);
+    setPaymentStatusVisible(true);
+
+    // If the Edge Function already returned a terminal status (e.g. the
+    // mock-mode dev path returns 'succeeded' immediately), short-circuit
+    // the reservation creation right away.
+    if (isSuccessStatus(result.status)) {
+      void performBooking();
+    }
+  };
+
+  const handlePaymentSuccess = (_payment: Payment) => {
     hapticSuccess();
-    performBooking();
+    void performBooking();
+  };
+
+  const handlePaymentFailure = (payment: Payment) => {
+    toast.error(payment.errorMessage || 'Le paiement a échoué.', {
+      title: 'Paiement échoué',
+      durationMs: 5000,
+    });
+  };
+
+  const handleClosePaymentStatus = () => {
+    setPaymentStatusVisible(false);
+    setActivePaymentId(null);
   };
 
   return (
@@ -723,6 +798,22 @@ export default function VoyageDetailScreen() {
           </View>
         </View>
       </SafeAreaView>
+
+      <PaymentMethodSheet
+        visible={paymentSheetVisible}
+        onClose={() => setPaymentSheetVisible(false)}
+        amount={totalPrice}
+        currency="XAF"
+        onConfirm={handlePaymentConfirm}
+      />
+
+      <PaymentStatusModal
+        visible={paymentStatusVisible}
+        paymentId={activePaymentId}
+        onClose={handleClosePaymentStatus}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
+      />
     </View>
   );
 }

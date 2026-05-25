@@ -98,10 +98,24 @@ jest.mock('./src/lib/supabase', () => {
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
+    maybeSingle: jest.fn().mockReturnThis(),
     then: jest.fn(),
   }));
+  const mockChannel = {
+    on: jest.fn().mockReturnThis(),
+    subscribe: jest.fn().mockReturnThis(),
+    unsubscribe: jest.fn(),
+  };
   return {
-    supabase: { from: mockFrom },
+    supabase: {
+      from: mockFrom,
+      // Edge Functions (used by payments-initiate, send-push, etc.)
+      functions: { invoke: jest.fn() },
+      // Realtime channels (used by payments status subscription and
+      // useSupabaseSubscription hook).
+      channel: jest.fn(() => mockChannel),
+      removeChannel: jest.fn(),
+    },
     setClerkTokenProvider: jest.fn(),
   };
 });
