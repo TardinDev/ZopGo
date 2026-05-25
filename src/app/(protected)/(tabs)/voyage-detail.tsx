@@ -29,7 +29,7 @@ import {
   isSuccessStatus,
 } from '../../../lib/payments';
 import { PaymentMethodSheet, PaymentStatusModal } from '../../../components/payments';
-import type { PaymentMethod, Payment } from '../../../types';
+import type { PaymentMethod, Payment, PaymentStatus } from '../../../types';
 
 const PAGE_BG = '#F1F3F7';
 
@@ -94,6 +94,10 @@ export default function VoyageDetailScreen() {
   const [paymentSheetVisible, setPaymentSheetVisible] = useState(false);
   const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
   const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
+  const [initialPaymentStatus, setInitialPaymentStatus] = useState<PaymentStatus | undefined>(
+    undefined
+  );
+  const [initialPaymentMessage, setInitialPaymentMessage] = useState<string | undefined>(undefined);
 
   const { user, supabaseProfileId } = useAuthStore();
   const { bookTrajet } = useReservationsStore();
@@ -224,6 +228,8 @@ export default function VoyageDetailScreen() {
       relatedId: voyage.id,
       idempotencyKey,
       payerPhone: input.payerPhone,
+      // Fallback for the Edge Function when JWT auth doesn't resolve.
+      payerProfileId: supabaseProfileId ?? undefined,
     });
     setIsBooking(false);
 
@@ -235,10 +241,12 @@ export default function VoyageDetailScreen() {
     // For PayPal we'd open the redirectUrl in expo-web-browser here.
     // (Wired in Phase 3 once PayPal credentials are configured.)
     setActivePaymentId(result.paymentId);
+    setInitialPaymentStatus(result.status);
+    setInitialPaymentMessage(result.message);
     setPaymentStatusVisible(true);
 
     // If the Edge Function already returned a terminal status (e.g. the
-    // mock-mode dev path returns 'succeeded' immediately), short-circuit
+    // auto-succeed test mode returns 'succeeded' immediately), short-circuit
     // the reservation creation right away.
     if (isSuccessStatus(result.status)) {
       void performBooking();
@@ -810,6 +818,8 @@ export default function VoyageDetailScreen() {
       <PaymentStatusModal
         visible={paymentStatusVisible}
         paymentId={activePaymentId}
+        initialStatus={initialPaymentStatus}
+        initialMessage={initialPaymentMessage}
         onClose={handleClosePaymentStatus}
         onSuccess={handlePaymentSuccess}
         onFailure={handlePaymentFailure}

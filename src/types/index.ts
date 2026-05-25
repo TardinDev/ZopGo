@@ -378,6 +378,13 @@ export interface InitiatePaymentParams {
   payerPhone?: string;
   /** Client-generated UUID. Re-using the same key returns the existing payment. */
   idempotencyKey: string;
+  /**
+   * Optional fallback for the Edge Function when the Clerk JWT → profiles
+   * mapping doesn't resolve (e.g. profile upsert race). Pass the local
+   * `supabaseProfileId` from authStore. Test-phase only — Phase 2/3 will
+   * tighten this back to JWT-only auth.
+   */
+  payerProfileId?: string;
 }
 
 export interface InitiatePaymentResult {

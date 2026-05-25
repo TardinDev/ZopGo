@@ -133,6 +133,32 @@ describe('initiatePayment — server response handling', () => {
     });
   });
 
+  it('forwards payerProfileId to the Edge Function as a JWT-resolution fallback', async () => {
+    (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+      data: { paymentId: 'p-2', status: 'succeeded' },
+      error: null,
+    });
+
+    await initiatePayment({
+      amount: 12000,
+      currency: 'XAF',
+      method: 'airtel_money',
+      relatedType: 'hebergement_reservation',
+      relatedId: 'heb-9',
+      idempotencyKey: 'k-7',
+      payerPhone: '+241066000000',
+      payerProfileId: 'prof-abc',
+    });
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('payments-initiate', {
+      body: expect.objectContaining({
+        relatedType: 'hebergement_reservation',
+        relatedId: 'heb-9',
+        payerProfileId: 'prof-abc',
+      }),
+    });
+  });
+
   it('returns the error message when the Edge Function fails', async () => {
     (supabase.functions.invoke as jest.Mock).mockResolvedValue({
       data: null,

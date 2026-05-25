@@ -19,6 +19,13 @@ import { toast } from '../../../stores/toastStore';
 import { ImageCarousel } from '../../../components/ui';
 import { validateHebergementBooking } from '../../../lib/bookingValidation';
 import {
+  generateIdempotencyKey,
+  initiatePayment,
+  isSuccessStatus,
+} from '../../../lib/payments';
+import { PaymentMethodSheet, PaymentStatusModal } from '../../../components/payments';
+import type { PaymentMethod, Payment, PaymentStatus } from '../../../types';
+import {
   formatPriceFr,
   getHebergementAvailability,
   parseImagesParam,
@@ -83,6 +90,16 @@ export default function HebergementDetailScreen() {
   const params = useLocalSearchParams();
   const [nights, setNights] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
+  // Payment flow state: open the method sheet first, then the status
+  // modal while the provider settles. On 'succeeded' we create the
+  // reservation via the existing bookHebergement path.
+  const [paymentSheetVisible, setPaymentSheetVisible] = useState(false);
+  const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
+  const [activePaymentId, setActivePaymentId] = useState<string | null>(null);
+  const [initialPaymentStatus, setInitialPaymentStatus] = useState<PaymentStatus | undefined>(
+    undefined
+  );
+  const [initialPaymentMessage, setInitialPaymentMessage] = useState<string | undefined>(undefined);
 
   const { user, supabaseProfileId } = useAuthStore();
   const { bookHebergement } = useReservationsStore();
@@ -183,8 +200,68 @@ export default function HebergementDetailScreen() {
       return;
     }
     hapticMedium();
+    // New flow (post-payment integration): open the method sheet first.
+    // The reservation row is created only after the payment succeeds.
+    setPaymentSheetVisible(true);
+  };
+
+  const handlePaymentConfirm = async (input: {
+    method: PaymentMethod;
+    payerPhone?: string;
+  }) => {
+    setPaymentSheetVisible(false);
+    if (!supabaseProfileId) {
+      toast.error('Connecte-toi pour payer.', { title: 'Session expirée' });
+      return;
+    }
+    setIsBooking(true);
+    const idempotencyKey = generateIdempotencyKey();
+    const result = await initiatePayment({
+      amount: totalPrice,
+      currency: 'XAF',
+      method: input.method,
+      relatedType: 'hebergement_reservation',
+      // No reservation row exists yet — we link by hebergement id. The
+      // reservation row is created on payment success.
+      relatedId: hebergement.supabaseId,
+      idempotencyKey,
+      payerPhone: input.payerPhone,
+      // Fallback for the Edge Function when JWT auth doesn't resolve.
+      payerProfileId: supabaseProfileId ?? undefined,
+    });
+    setIsBooking(false);
+
+    if ('error' in result) {
+      toast.error(result.error, { title: 'Paiement impossible', durationMs: 5000 });
+      return;
+    }
+
+    // PayPal would open redirectUrl in expo-web-browser (Phase 3).
+    setActivePaymentId(result.paymentId);
+    setInitialPaymentStatus(result.status);
+    setInitialPaymentMessage(result.message);
+    setPaymentStatusVisible(true);
+
+    if (isSuccessStatus(result.status)) {
+      void performBooking();
+    }
+  };
+
+  const handlePaymentSuccess = (_payment: Payment) => {
     hapticSuccess();
-    performBooking();
+    void performBooking();
+  };
+
+  const handlePaymentFailure = (payment: Payment) => {
+    toast.error(payment.errorMessage || 'Le paiement a échoué.', {
+      title: 'Paiement échoué',
+      durationMs: 5000,
+    });
+  };
+
+  const handleClosePaymentStatus = () => {
+    setPaymentStatusVisible(false);
+    setActivePaymentId(null);
   };
 
   const locationText = [hebergement.location, hebergement.adresse].filter(Boolean).join(' · ');
@@ -666,6 +743,24 @@ export default function HebergementDetailScreen() {
 
         <SafeAreaView edges={['bottom']} />
       </View>
+
+      <PaymentMethodSheet
+        visible={paymentSheetVisible}
+        onClose={() => setPaymentSheetVisible(false)}
+        amount={totalPrice}
+        currency="XAF"
+        onConfirm={handlePaymentConfirm}
+      />
+
+      <PaymentStatusModal
+        visible={paymentStatusVisible}
+        paymentId={activePaymentId}
+        initialStatus={initialPaymentStatus}
+        initialMessage={initialPaymentMessage}
+        onClose={handleClosePaymentStatus}
+        onSuccess={handlePaymentSuccess}
+        onFailure={handlePaymentFailure}
+      />
     </View>
   );
 }
