@@ -68,6 +68,8 @@ export async function initiatePayment(
       paymentId: result.paymentId,
       status: result.status,
       redirectUrl: result.redirectUrl ?? null,
+      receiptEmail: result.receiptEmail ?? null,
+      providerRef: result.providerRef ?? null,
       message: result.message,
     };
   } catch (err) {
@@ -98,6 +100,8 @@ function rowToPayment(row: Record<string, unknown>): Payment {
     errorCode: (row.error_code as string) ?? null,
     errorMessage: (row.error_message as string) ?? null,
     payerPhone: (row.payer_phone as string) ?? null,
+    receiptEmail: (row.receipt_email as string) ?? null,
+    receiptSentAt: (row.receipt_sent_at as string) ?? null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
     completedAt: (row.completed_at as string) ?? null,

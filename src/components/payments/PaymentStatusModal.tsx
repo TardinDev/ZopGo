@@ -33,6 +33,7 @@ function STATUS_META(status: PaymentStatus) {
         color: COLORS.success,
         bg: '#D1FAE5',
         icon: 'checkmark-circle' as const,
+        receiptHint: true as const,
       };
     case 'failed':
       return {
@@ -135,6 +136,16 @@ export function PaymentStatusModal({
             {payment?.errorMessage || initialMessage || meta.body}
           </Text>
 
+          {/* Receipt confirmation (succeeded path only). */}
+          {status === 'succeeded' && payment?.receiptEmail && (
+            <View style={styles.receiptBadge}>
+              <Ionicons name="mail-outline" size={14} color="#10B981" />
+              <Text style={styles.receiptText}>
+                Reçu envoyé à <Text style={styles.receiptEmail}>{payment.receiptEmail}</Text>
+              </Text>
+            </View>
+          )}
+
           {terminal && (
             <TouchableOpacity
               onPress={onClose}
@@ -207,4 +218,16 @@ const styles = StyleSheet.create({
   },
   ctaText: { color: 'white', fontSize: 14, fontWeight: '700', letterSpacing: 0.3 },
   help: { marginTop: 14, fontSize: 12, color: '#9CA3AF', textAlign: 'center' },
+  receiptBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 14,
+    gap: 6,
+  },
+  receiptText: { fontSize: 12, color: '#065F46' },
+  receiptEmail: { fontWeight: '700', color: '#0F172A' },
 });

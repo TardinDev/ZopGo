@@ -361,6 +361,8 @@ export interface Payment {
   errorCode: string | null;
   errorMessage: string | null;
   payerPhone: string | null;
+  receiptEmail: string | null;
+  receiptSentAt: string | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
@@ -383,6 +385,10 @@ export interface InitiatePaymentResult {
   status: PaymentStatus;
   /** PayPal approval URL (open in in-app browser) — null for mobile money. */
   redirectUrl?: string | null;
+  /** Email address the receipt was (or will be) sent to. */
+  receiptEmail?: string | null;
+  /** Provider transaction ref. */
+  providerRef?: string | null;
   /** Human-friendly message to show in the status modal. */
   message?: string;
 }

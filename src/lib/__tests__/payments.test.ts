@@ -120,6 +120,8 @@ describe('initiatePayment — server response handling', () => {
       paymentId: 'p-1',
       status: 'processing',
       redirectUrl: null,
+      receiptEmail: null,
+      providerRef: null,
       message: 'Composez le code USSD…',
     });
     expect(supabase.functions.invoke).toHaveBeenCalledWith('payments-initiate', {
@@ -206,6 +208,8 @@ describe('fetchPayment', () => {
       error_code: null,
       error_message: null,
       payer_phone: '+241066000000',
+      receipt_email: 'pierre@example.com',
+      receipt_sent_at: '2026-03-15T10:01:00Z',
       created_at: '2026-03-15T10:00:00Z',
       updated_at: '2026-03-15T10:01:00Z',
       completed_at: '2026-03-15T10:01:00Z',
@@ -223,6 +227,8 @@ describe('fetchPayment', () => {
       method: 'airtel_money',
       status: 'succeeded',
       relatedId: 'res-1',
+      receiptEmail: 'pierre@example.com',
+      receiptSentAt: '2026-03-15T10:01:00Z',
     });
   });
 
