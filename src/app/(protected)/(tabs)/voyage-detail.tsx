@@ -1,16 +1,15 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSequence,
   withSpring,
 } from 'react-native-reanimated';
-import { COLORS, LAYOUT } from '../../../constants';
+import { COLORS } from '../../../constants';
 import { SPRING_CONFIG } from '../../../constants/animations';
 import { hapticSelection, hapticSuccess, hapticMedium } from '../../../utils/haptics';
 import { useAuthStore } from '../../../stores/authStore';
@@ -18,25 +17,101 @@ import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
 import { validateTrajetBooking } from '../../../lib/bookingValidation';
 
+const PAGE_BG = '#F1F3F7';
+
 function getAvailabilityStyle(count: number) {
   if (count <= 0) return { color: COLORS.error, label: 'Complet' };
   if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
   return { color: COLORS.success, label: `${count} places` };
 }
 
-function formatDate(iso: string): string {
+function formatTime(iso: string): string {
   if (!iso) return '';
   try {
     const d = new Date(iso);
-    const day = d.getDate().toString().padStart(2, '0');
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${day}/${month}/${year} à ${hours}h${minutes}`;
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
   } catch {
     return '';
   }
+}
+
+function formatLongDate(iso: string): string {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  } catch {
+    return '';
+  }
+}
+
+function cityCode(name: string): string {
+  return (
+    (name || '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .slice(0, 3) || '---'
+  );
+}
+
+function formatPriceFr(value: number): string {
+  return value.toLocaleString('fr-FR').replace(/,/g, ' ');
+}
+
+function Perforation({ pageColor }: { pageColor: string }) {
+  return (
+    <View style={{ height: 22, position: 'relative', justifyContent: 'center' }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: -11,
+          top: 0,
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: pageColor,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          right: -11,
+          top: 0,
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: pageColor,
+        }}
+      />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 18,
+        }}>
+        {Array.from({ length: 26 }).map((_, i) => (
+          <View
+            key={i}
+            style={{
+              flex: 1,
+              height: 1.5,
+              marginRight: 4,
+              borderRadius: 0.75,
+              backgroundColor: '#D1D5DB',
+            }}
+          />
+        ))}
+      </View>
+    </View>
+  );
 }
 
 export default function VoyageDetailScreen() {
@@ -91,8 +166,11 @@ export default function VoyageDetailScreen() {
   const unitPrice = parseInt(voyage.price.replace(/[^0-9]/g, '')) || 0;
   const totalPrice = unitPrice * passengers;
   const availability = getAvailabilityStyle(voyage.availableSeats);
-  const dateLabel = formatDate(voyage.date);
-  const vehicleSpecs = [voyage.marque, voyage.modele, voyage.couleur].filter(Boolean).join(' · ');
+  const dateLabel = formatLongDate(voyage.date);
+  const timeLabel = formatTime(voyage.date);
+  const vehicleSpecs = [voyage.marque, voyage.modele, voyage.couleur].filter(Boolean).join(' ');
+  const fromCode = cityCode(voyage.from);
+  const toCode = cityCode(voyage.to);
 
   const validation = validateTrajetBooking({
     supabaseProfileId,
@@ -148,245 +226,541 @@ export default function VoyageDetailScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-      {/* Hero header */}
-      <LinearGradient
-        colors={COLORS.gradients.header as [string, string]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ paddingBottom: 36 }}>
-        <SafeAreaView edges={['top']}>
-          <View className="flex-row items-center justify-between px-6 pb-2 pt-2">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Retour"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <Ionicons name="arrow-back" size={22} color="white" />
-              </View>
-            </TouchableOpacity>
-            <Text className="text-base font-semibold text-white" accessibilityRole="header">
-              Détails du voyage
-            </Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Ajouter aux favoris"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <Ionicons name="heart-outline" size={22} color="white" />
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Route hero */}
-          <View className="mx-6 mt-4 rounded-3xl bg-white/15 px-5 py-5">
-            <View className="mb-2 flex-row items-center">
-              <Text style={{ fontSize: 36, marginRight: 8 }}>{voyage.icon}</Text>
-              <View className="rounded-full bg-white/25 px-3 py-1">
-                <Text className="text-xs font-semibold text-white">{voyage.type}</Text>
-              </View>
-            </View>
-
-            <View className="mt-1">
-              <Text className="text-xs font-medium uppercase text-white/70">De</Text>
-              <Text className="mt-0.5 text-2xl font-bold text-white" numberOfLines={1}>
-                {voyage.from}
-              </Text>
-            </View>
-
-            <View className="my-2 ml-1 h-5 w-px bg-white/40" />
-
-            <View>
-              <Text className="text-xs font-medium uppercase text-white/70">Vers</Text>
-              <Text className="mt-0.5 text-2xl font-bold text-white" numberOfLines={1}>
-                {voyage.to}
-              </Text>
-            </View>
-
-            {dateLabel ? (
-              <View className="mt-4 flex-row items-center border-t border-white/15 pt-3">
-                <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.85)" />
-                <Text className="ml-2 text-sm text-white/85">{dateLabel}</Text>
-              </View>
-            ) : null}
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-
-      <ScrollView
-        className="-mt-6 flex-1"
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}>
-        {/* Driver card */}
-        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
-          <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Conducteur
-          </Text>
-          <View className="flex-row items-center">
-            {voyage.driverAvatar ? (
-              <Image
-                source={{ uri: voyage.driverAvatar }}
-                style={{ width: 56, height: 56, borderRadius: 28 }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 28,
-                  backgroundColor: '#EFF6FF',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <Ionicons name="person" size={28} color={COLORS.primary} />
-              </View>
-            )}
-            <View className="ml-4 flex-1">
-              <Text className="text-lg font-bold text-gray-900">{voyage.driver}</Text>
-              <View className="mt-1 flex-row items-center">
-                {voyage.driverRating > 0 ? (
-                  <>
-                    <Ionicons name="star" size={14} color={COLORS.star} />
-                    <Text className="ml-1 text-sm font-semibold text-gray-700">
-                      {voyage.driverRating.toFixed(1)}
-                    </Text>
-                  </>
-                ) : (
-                  <Text className="text-sm text-gray-500">Nouveau chauffeur</Text>
-                )}
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Vehicle card */}
-        {(vehicleSpecs || voyage.type) && (
-          <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
-            <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Véhicule
-            </Text>
-            <View className="flex-row items-center">
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  backgroundColor: '#EFF6FF',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <MaterialCommunityIcons name="car-side" size={24} color={COLORS.primary} />
-              </View>
-              <View className="ml-3 flex-1">
-                <Text className="text-base font-semibold text-gray-900">{voyage.type}</Text>
-                {vehicleSpecs ? (
-                  <Text className="mt-0.5 text-sm text-gray-500">{vehicleSpecs}</Text>
-                ) : null}
-              </View>
-            </View>
-            <View className="mt-4 flex-row items-center justify-between border-t border-gray-100 pt-3">
-              <Text className="text-sm text-gray-500">Places disponibles</Text>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: availability.color }}>
-                {availability.label}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Counter card */}
-        <View className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Prix par personne
-              </Text>
-              <Text className="mt-1 text-xl font-bold" style={{ color: COLORS.primary }}>
-                {voyage.price}
-              </Text>
-            </View>
-            <View className="flex-row items-center">
-              <TouchableOpacity
-                onPress={() => {
-                  if (passengers > 1) {
-                    hapticSelection();
-                    animateCounter();
-                    setPassengers(passengers - 1);
-                  }
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Réduire le nombre de passagers"
-                className="h-11 w-11 items-center justify-center rounded-full bg-gray-100">
-                <Ionicons name="remove" size={22} color={COLORS.gray[600]} />
-              </TouchableOpacity>
-              <Animated.Text
-                className="mx-5 text-xl font-bold text-gray-900"
-                style={counterAnimatedStyle}>
-                {passengers}
-              </Animated.Text>
-              <TouchableOpacity
-                onPress={() => {
-                  if (passengers < voyage.availableSeats) {
-                    hapticSelection();
-                    animateCounter();
-                    setPassengers(passengers + 1);
-                  }
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Augmenter le nombre de passagers"
-                className="h-11 w-11 items-center justify-center rounded-full"
-                style={{ backgroundColor: COLORS.primary }}>
-                <Ionicons name="add" size={22} color="white" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Total + CTA */}
+    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        {/* Floating controls */}
         <View
-          className="rounded-3xl bg-white p-5"
-          style={{ ...LAYOUT.shadows.large, borderLeftWidth: 4, borderLeftColor: COLORS.primary }}>
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-base font-semibold text-gray-700">Total</Text>
-            <Animated.Text
-              className="text-2xl font-bold"
-              style={[totalAnimatedStyle, { color: COLORS.primary }]}>
-              {totalPrice} Fcfa
-            </Animated.Text>
-          </View>
-
-          {!validation.ok && (
-            <View className="mb-3 flex-row items-start rounded-2xl bg-red-50 px-3 py-2.5">
-              <Ionicons name="information-circle" size={18} color="#B91C1C" />
-              <Text className="ml-2 flex-1 text-xs text-red-900">{validation.message}</Text>
-            </View>
-          )}
-
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 6,
+          }}>
           <TouchableOpacity
-            onPress={handleBooking}
-            disabled={isBooking || !validation.ok}
+            onPress={() => router.back()}
             accessibilityRole="button"
-            accessibilityLabel={
-              !validation.ok
-                ? 'Réservation indisponible'
-                : `Réserver ${passengers} place${passengers > 1 ? 's' : ''} pour ${totalPrice} Fcfa`
-            }
-            accessibilityState={{ disabled: isBooking || !validation.ok }}
-            className="items-center rounded-2xl py-4"
+            accessibilityLabel="Retour"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             style={{
-              backgroundColor: COLORS.primary,
-              opacity: isBooking || !validation.ok ? 0.5 : 1,
+              height: 40,
+              width: 40,
+              borderRadius: 20,
+              borderCurve: 'continuous',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'white',
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
             }}>
-            {isBooking ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-base font-bold text-white">
-                {!validation.ok && validation.reason === 'sold_out' ? 'Complet' : 'Réserver maintenant'}
-              </Text>
-            )}
+            <Ionicons name="chevron-back" size={22} color="#111827" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Ajouter aux favoris"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={{
+              height: 40,
+              width: 40,
+              borderRadius: 20,
+              borderCurve: 'continuous',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'white',
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
+            }}>
+            <Ionicons name="heart-outline" size={22} color="#111827" />
           </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        <View
+          style={{
+            flex: 1,
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: 12,
+          }}>
+          {/* Boarding pass card */}
+          <View
+            style={{
+              backgroundColor: 'white',
+              borderRadius: 22,
+              borderCurve: 'continuous',
+              overflow: 'hidden',
+              boxShadow: '0 6px 20px rgba(15, 23, 42, 0.08)',
+            }}>
+            {/* Brand strip */}
+            <View
+              style={{
+                backgroundColor: COLORS.primary,
+                paddingHorizontal: 18,
+                paddingVertical: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '800',
+                  color: 'white',
+                  letterSpacing: 1.5,
+                }}>
+                ZOPGO PASS
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontSize: 14, marginRight: 6 }}>{voyage.icon}</Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '700',
+                    color: 'rgba(255,255,255,0.95)',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                  }}>
+                  {voyage.type}
+                </Text>
+              </View>
+            </View>
+
+            {/* Top section: route */}
+            <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginBottom: 4,
+                }}>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: '700',
+                    color: '#9CA3AF',
+                    letterSpacing: 1,
+                  }}>
+                  DÉPART
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: '700',
+                    color: '#9CA3AF',
+                    letterSpacing: 1,
+                  }}>
+                  ARRIVÉE
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text
+                  selectable
+                  style={{
+                    fontSize: 34,
+                    fontWeight: '800',
+                    color: '#0F172A',
+                    fontVariant: ['tabular-nums'],
+                    letterSpacing: 1,
+                  }}>
+                  {fromCode}
+                </Text>
+                <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 10 }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      width: '100%',
+                    }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
+                    <View
+                      style={{
+                        marginHorizontal: 4,
+                        height: 24,
+                        width: 24,
+                        borderRadius: 12,
+                        backgroundColor: '#EFF6FF',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Ionicons name="arrow-forward" size={14} color={COLORS.primary} />
+                    </View>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
+                  </View>
+                </View>
+                <Text
+                  selectable
+                  style={{
+                    fontSize: 34,
+                    fontWeight: '800',
+                    color: '#0F172A',
+                    fontVariant: ['tabular-nums'],
+                    letterSpacing: 1,
+                  }}>
+                  {toCode}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginTop: 6,
+                }}>
+                <Text
+                  selectable
+                  numberOfLines={1}
+                  style={{ flex: 1, fontSize: 13, color: '#6B7280' }}>
+                  {voyage.from}
+                </Text>
+                <Text
+                  selectable
+                  numberOfLines={1}
+                  style={{ flex: 1, fontSize: 13, color: '#6B7280', textAlign: 'right' }}>
+                  {voyage.to}
+                </Text>
+              </View>
+
+              {/* Trip meta: date / time / places */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  marginTop: 18,
+                  paddingTop: 14,
+                  borderTopWidth: 1,
+                  borderTopColor: '#F3F4F6',
+                }}>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: '#9CA3AF',
+                      letterSpacing: 1,
+                    }}>
+                    DATE
+                  </Text>
+                  <Text
+                    style={{
+                      marginTop: 2,
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: '#0F172A',
+                    }}>
+                    {dateLabel || '—'}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: '#9CA3AF',
+                      letterSpacing: 1,
+                    }}>
+                    HEURE
+                  </Text>
+                  <Text
+                    style={{
+                      marginTop: 2,
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: '#0F172A',
+                      fontVariant: ['tabular-nums'],
+                    }}>
+                    {timeLabel || '—'}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      color: '#9CA3AF',
+                      letterSpacing: 1,
+                    }}>
+                    PLACES
+                  </Text>
+                  <Text
+                    style={{
+                      marginTop: 2,
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: availability.color,
+                    }}>
+                    {availability.label}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <Perforation pageColor={PAGE_BG} />
+
+            {/* Bottom section: driver */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 20,
+                paddingTop: 14,
+                paddingBottom: 18,
+              }}>
+              {voyage.driverAvatar ? (
+                <Image
+                  source={{ uri: voyage.driverAvatar }}
+                  style={{ width: 48, height: 48, borderRadius: 24 }}
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: '#EFF6FF',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <Ionicons name="person" size={24} color={COLORS.primary} />
+                </View>
+              )}
+              <View style={{ flex: 1, marginLeft: 14 }}>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontWeight: '700',
+                    color: '#9CA3AF',
+                    letterSpacing: 1,
+                  }}>
+                  CONDUCTEUR
+                </Text>
+                <Text
+                  selectable
+                  numberOfLines={1}
+                  style={{ marginTop: 2, fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
+                  {voyage.driver}
+                </Text>
+                {vehicleSpecs ? (
+                  <Text
+                    selectable
+                    numberOfLines={1}
+                    style={{ marginTop: 2, fontSize: 12, color: '#6B7280' }}>
+                    {vehicleSpecs}
+                  </Text>
+                ) : null}
+              </View>
+              {voyage.driverRating > 0 ? (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#FEF3C7',
+                    borderRadius: 10,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                  }}>
+                  <Ionicons name="star" size={12} color={COLORS.star} />
+                  <Text
+                    style={{
+                      marginLeft: 3,
+                      fontSize: 12,
+                      fontWeight: '700',
+                      color: '#92400E',
+                      fontVariant: ['tabular-nums'],
+                    }}>
+                    {voyage.driverRating.toFixed(1)}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>NOUVEAU</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Spacer */}
+          <View style={{ flex: 1 }} />
+
+          {/* Booking bar (flat, not in a card) */}
+          <View style={{ paddingHorizontal: 4 }}>
+            {/* Counter */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 14,
+              }}>
+              <View>
+                <Text
+                  style={{ fontSize: 11, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 }}>
+                  PASSAGERS
+                </Text>
+                <Text
+                  selectable
+                  style={{
+                    marginTop: 2,
+                    fontSize: 13,
+                    color: '#6B7280',
+                    fontVariant: ['tabular-nums'],
+                  }}>
+                  {voyage.price} / personne
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: 'white',
+                  borderRadius: 999,
+                  borderCurve: 'continuous',
+                  paddingHorizontal: 4,
+                  paddingVertical: 4,
+                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (passengers > 1) {
+                      hapticSelection();
+                      animateCounter();
+                      setPassengers(passengers - 1);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Réduire le nombre de passagers"
+                  style={{
+                    height: 36,
+                    width: 36,
+                    borderRadius: 18,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#F3F4F6',
+                  }}>
+                  <Ionicons name="remove" size={18} color="#374151" />
+                </TouchableOpacity>
+                <Animated.Text
+                  style={[
+                    counterAnimatedStyle,
+                    {
+                      marginHorizontal: 16,
+                      fontSize: 17,
+                      fontWeight: '700',
+                      color: '#0F172A',
+                      fontVariant: ['tabular-nums'],
+                      minWidth: 18,
+                      textAlign: 'center',
+                    },
+                  ]}>
+                  {passengers}
+                </Animated.Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (passengers < voyage.availableSeats) {
+                      hapticSelection();
+                      animateCounter();
+                      setPassengers(passengers + 1);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Augmenter le nombre de passagers"
+                  style={{
+                    height: 36,
+                    width: 36,
+                    borderRadius: 18,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: COLORS.primary,
+                  }}>
+                  <Ionicons name="add" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Total */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+              }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>Total</Text>
+              <Animated.Text
+                selectable
+                style={[
+                  totalAnimatedStyle,
+                  {
+                    fontSize: 26,
+                    fontWeight: '800',
+                    color: '#0F172A',
+                    fontVariant: ['tabular-nums'],
+                  },
+                ]}>
+                {formatPriceFr(totalPrice)} Fcfa
+              </Animated.Text>
+            </View>
+
+            {!validation.ok && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  backgroundColor: '#FEF2F2',
+                  borderRadius: 12,
+                  borderCurve: 'continuous',
+                  padding: 10,
+                  marginBottom: 12,
+                }}>
+                <Ionicons name="information-circle" size={16} color="#B91C1C" />
+                <Text style={{ flex: 1, marginLeft: 6, fontSize: 12, color: '#7F1D1D' }}>
+                  {validation.message}
+                </Text>
+              </View>
+            )}
+
+            {/* CTA */}
+            <TouchableOpacity
+              onPress={handleBooking}
+              disabled={isBooking || !validation.ok}
+              accessibilityRole="button"
+              accessibilityLabel={
+                !validation.ok
+                  ? 'Réservation indisponible'
+                  : `Réserver ${passengers} place${passengers > 1 ? 's' : ''} pour ${totalPrice} Fcfa`
+              }
+              accessibilityState={{ disabled: isBooking || !validation.ok }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 18,
+                borderCurve: 'continuous',
+                paddingVertical: 16,
+                backgroundColor: COLORS.primary,
+                opacity: isBooking || !validation.ok ? 0.5 : 1,
+                boxShadow: '0 6px 14px rgba(33, 98, 254, 0.28)',
+              }}>
+              {isBooking ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: '700',
+                      color: 'white',
+                      marginRight: 6,
+                      letterSpacing: 0.3,
+                    }}>
+                    {!validation.ok && validation.reason === 'sold_out'
+                      ? 'Complet'
+                      : 'Réserver maintenant'}
+                  </Text>
+                  {validation.ok && <Ionicons name="arrow-forward" size={18} color="white" />}
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
