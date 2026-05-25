@@ -18,33 +18,15 @@ import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
 import { ImageCarousel } from '../../../components/ui';
 import { validateHebergementBooking } from '../../../lib/bookingValidation';
+import {
+  formatPriceFr,
+  getHebergementAvailability,
+  parseImagesParam,
+} from '../../../utils/detailFormatters';
 
 const HEBERGEUR_COLOR = '#8B5CF6';
 const HEBERGEUR_TINT = '#F3E8FF';
 const PAGE_BG = '#F1F3F7';
-
-function getAvailabilityStyle(count: number) {
-  if (count <= 0) return { color: COLORS.error, label: 'Complet' };
-  if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
-  return { color: COLORS.success, label: `${count} dispo.` };
-}
-
-function parseImagesParam(raw: unknown): string[] {
-  if (typeof raw !== 'string' || !raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed.filter((u): u is string => typeof u === 'string' && u.length > 0);
-    }
-  } catch {
-    if (raw.startsWith('http')) return [raw];
-  }
-  return [];
-}
-
-function formatPriceFr(value: number): string {
-  return value.toLocaleString('fr-FR').replace(/,/g, ' ');
-}
 
 function Perforation({ pageColor }: { pageColor: string }) {
   return (
@@ -150,7 +132,7 @@ export default function HebergementDetailScreen() {
   };
 
   const totalPrice = hebergement.prixParNuit * nights;
-  const availability = getAvailabilityStyle(hebergement.disponibilite);
+  const availability = getHebergementAvailability(hebergement.disponibilite);
 
   const validation = validateHebergementBooking({
     supabaseProfileId,

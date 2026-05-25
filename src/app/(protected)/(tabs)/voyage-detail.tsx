@@ -16,53 +16,15 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
 import { validateTrajetBooking } from '../../../lib/bookingValidation';
+import {
+  cityCode,
+  formatLongDate,
+  formatPriceFr,
+  formatTime,
+  getVoyageAvailability,
+} from '../../../utils/detailFormatters';
 
 const PAGE_BG = '#F1F3F7';
-
-function getAvailabilityStyle(count: number) {
-  if (count <= 0) return { color: COLORS.error, label: 'Complet' };
-  if (count <= 2) return { color: COLORS.warning, label: `Plus que ${count} !` };
-  return { color: COLORS.success, label: `${count} places` };
-}
-
-function formatTime(iso: string): string {
-  if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    const h = d.getHours().toString().padStart(2, '0');
-    const m = d.getMinutes().toString().padStart(2, '0');
-    return `${h}:${m}`;
-  } catch {
-    return '';
-  }
-}
-
-function formatLongDate(iso: string): string {
-  if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
-  } catch {
-    return '';
-  }
-}
-
-function cityCode(name: string): string {
-  return (
-    (name || '')
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .toUpperCase()
-      .replace(/[^A-Z]/g, '')
-      .slice(0, 3) || '---'
-  );
-}
-
-function formatPriceFr(value: number): string {
-  return value.toLocaleString('fr-FR').replace(/,/g, ' ');
-}
 
 function Perforation({ pageColor }: { pageColor: string }) {
   return (
@@ -165,7 +127,7 @@ export default function VoyageDetailScreen() {
 
   const unitPrice = parseInt(voyage.price.replace(/[^0-9]/g, '')) || 0;
   const totalPrice = unitPrice * passengers;
-  const availability = getAvailabilityStyle(voyage.availableSeats);
+  const availability = getVoyageAvailability(voyage.availableSeats);
   const dateLabel = formatLongDate(voyage.date);
   const timeLabel = formatTime(voyage.date);
   const vehicleSpecs = [voyage.marque, voyage.modele, voyage.couleur].filter(Boolean).join(' ');
