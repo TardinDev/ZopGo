@@ -48,10 +48,18 @@ describe('setupProfile', () => {
     expect(profile.disponible).toBe(true);
   });
 
-  it('creates chauffeur profile with default vehicle (moto)', () => {
+  it('creates chauffeur profile with default vehicle (voiture)', () => {
     useAuthStore.getState().setupProfile('chauffeur', 'Pierre', 'pierre@test.com');
     const profile = useAuthStore.getState().user!.profile as ChauffeurProfile;
-    expect(profile.vehicule.type).toBe('moto');
+    expect(profile.vehicule.type).toBe('voiture');
+  });
+
+  it('accepts bus as chauffeur vehicle type', () => {
+    useAuthStore.getState().setupProfile('chauffeur', 'Sam', 'sam@test.com', 'bus');
+    const profile = useAuthStore.getState().user!.profile as ChauffeurProfile;
+    expect(profile.vehicule.type).toBe('bus');
+    expect(profile.vehicule.label).toBe('Bus');
+    expect(profile.vehicule.icon).toBe('🚌');
   });
 
   it('creates hebergeur profile with accommodation', () => {
@@ -391,7 +399,15 @@ describe('chauffeurToLivreur', () => {
 
 describe('VEHICLE_TYPES', () => {
   it('has all vehicle types', () => {
-    expect(Object.keys(VEHICLE_TYPES)).toEqual(['velo', 'moto', 'voiture', 'camionnette']);
+    expect(Object.keys(VEHICLE_TYPES)).toEqual(['velo', 'moto', 'voiture', 'camionnette', 'bus']);
+  });
+
+  it('exposes Bus with the right icon', () => {
+    expect(VEHICLE_TYPES.bus).toEqual({ type: 'bus', label: 'Bus', icon: '🚌' });
+  });
+
+  it('still exposes moto (kept for livraisons + legacy chauffeur profiles)', () => {
+    expect(VEHICLE_TYPES.moto.type).toBe('moto');
   });
 });
 

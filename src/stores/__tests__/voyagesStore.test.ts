@@ -36,7 +36,15 @@ describe('voyagesStore', () => {
 
   describe('transportTypes', () => {
     it('contains expected types', () => {
-      expect(transportTypes).toEqual(['All', 'Moto', 'Voiture', 'Camionnette']);
+      expect(transportTypes).toEqual(['All', 'Voiture', 'Camionnette', 'Bus']);
+    });
+
+    it('excludes Moto (livraisons-only mode)', () => {
+      expect(transportTypes).not.toContain('Moto');
+    });
+
+    it('includes Bus', () => {
+      expect(transportTypes).toContain('Bus');
     });
   });
 
@@ -91,12 +99,34 @@ describe('voyagesStore', () => {
       expect(useVoyagesStore.getState().isLoading).toBe(false);
     });
 
-    it('handles unknown vehicle type gracefully', async () => {
+    it('maps bus vehicule to "Bus" label and 🚌 icon', async () => {
       (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
         {
           id: 'uuid-bus',
           chauffeur_id: 'cf-bus',
           vehicule: 'bus',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Port-Gentil',
+          prix: 5000,
+          profiles: null,
+          places_disponibles: 30,
+          date: null,
+        },
+      ]);
+
+      await useVoyagesStore.getState().loadVoyages();
+      const trajet = useVoyagesStore.getState().trajets[0];
+      expect(trajet.type).toBe('Bus');
+      expect(trajet.icon).toBe('🚌');
+      expect(trajet.date).toBeUndefined();
+    });
+
+    it('handles unknown vehicle type gracefully', async () => {
+      (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
+        {
+          id: 'uuid-unknown',
+          chauffeur_id: 'cf-x',
+          vehicule: 'avion',
           ville_depart: 'A',
           ville_arrivee: 'B',
           prix: 5000,
@@ -108,9 +138,29 @@ describe('voyagesStore', () => {
 
       await useVoyagesStore.getState().loadVoyages();
       const trajet = useVoyagesStore.getState().trajets[0];
-      expect(trajet.type).toBe('bus');
+      expect(trajet.type).toBe('avion');
       expect(trajet.icon).toBe('🚗');
-      expect(trajet.date).toBeUndefined();
+    });
+
+    it('still maps legacy moto trajets (backward compat for old DB rows)', async () => {
+      (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
+        {
+          id: 'uuid-legacy',
+          chauffeur_id: 'cf-legacy',
+          vehicule: 'moto',
+          ville_depart: 'A',
+          ville_arrivee: 'B',
+          prix: 3000,
+          profiles: null,
+          places_disponibles: 1,
+          date: null,
+        },
+      ]);
+
+      await useVoyagesStore.getState().loadVoyages();
+      const trajet = useVoyagesStore.getState().trajets[0];
+      expect(trajet.type).toBe('Moto');
+      expect(trajet.icon).toBe('🏍️');
     });
 
     it('sets error message and clears loading on API failure', async () => {
@@ -154,8 +204,8 @@ describe('voyagesStore', () => {
 
   describe('setSelectedType', () => {
     it('updates selected type', () => {
-      useVoyagesStore.getState().setSelectedType('Moto');
-      expect(useVoyagesStore.getState().selectedType).toBe('Moto');
+      useVoyagesStore.getState().setSelectedType('Bus');
+      expect(useVoyagesStore.getState().selectedType).toBe('Bus');
     });
   });
 
@@ -192,7 +242,7 @@ describe('voyagesStore', () => {
 
   describe('resetFilters', () => {
     it('resets all filters to defaults', () => {
-      useVoyagesStore.getState().setSelectedType('Moto');
+      useVoyagesStore.getState().setSelectedType('Bus');
       useVoyagesStore.getState().setFromCity('Libreville');
       useVoyagesStore.getState().setToCity('Franceville');
       useVoyagesStore.getState().resetFilters();
@@ -203,7 +253,7 @@ describe('voyagesStore', () => {
     });
 
     it('does not clear trajets', () => {
-      useVoyagesStore.setState({ trajets: [{ id: 'uuid-x', type: 'Moto', from: 'A', to: 'B', price: '1000', icon: '🏍️' }] });
+      useVoyagesStore.setState({ trajets: [{ id: 'uuid-x', type: 'Bus', from: 'A', to: 'B', price: '1000', icon: '🚌' }] });
       useVoyagesStore.getState().resetFilters();
       expect(useVoyagesStore.getState().trajets).toHaveLength(1);
     });

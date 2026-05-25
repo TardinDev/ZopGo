@@ -214,7 +214,9 @@ export interface Trajet {
 // Types pour l'authentification et les rôles
 export type UserRole = 'client' | 'chauffeur' | 'hebergeur';
 
-export type VehicleType = 'moto' | 'velo' | 'voiture' | 'camionnette';
+// 'moto' is still valid for livraisons (livreur profiles, personal-vehicle
+// list). For passenger voyages, only voiture/camionnette/bus are exposed.
+export type VehicleType = 'moto' | 'velo' | 'voiture' | 'camionnette' | 'bus';
 
 export interface VehicleInfo {
   type: VehicleType;

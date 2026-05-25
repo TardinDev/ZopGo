@@ -25,6 +25,7 @@ const VEHICLE_TYPE_OPTIONS: { type: VehicleType; label: string; icon: string }[]
   { type: 'moto', label: 'Moto', icon: '🏍️' },
   { type: 'voiture', label: 'Voiture', icon: '🚗' },
   { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
+  { type: 'bus', label: 'Bus', icon: '🚌' },
 ];
 
 export default function VehiclesEditScreen() {

@@ -18,7 +18,7 @@ import {
 
 const VOYAGE_LOADING_MESSAGES = [
   'On ratisse le Gabon...',
-  'Les motos s\'échauffent...',
+  'Les chauffeurs préparent leurs trajets...',
   'On cherche les meilleurs trajets...',
   'Presque prêt...',
 ];
@@ -140,7 +140,7 @@ export default function VoyagesTab() {
               Trouvez votre voyage
             </Text>
             <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-              Motos, voitures, camionnettes
+              Voitures, camionnettes, bus
             </Text>
           </Animated.View>
 

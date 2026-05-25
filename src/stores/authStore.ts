@@ -30,6 +30,7 @@ export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   moto: { type: 'moto', label: 'Moto', icon: '🏍️' },
   voiture: { type: 'voiture', label: 'Voiture', icon: '🚗' },
   camionnette: { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
+  bus: { type: 'bus', label: 'Bus', icon: '🚌' },
 };
 
 export const ACCOMMODATION_TYPES: Record<AccommodationType, AccommodationInfo> = {
@@ -87,7 +88,7 @@ const createClientProfile = (name: string, email: string): UserInfo => ({
 const createChauffeurProfile = (
   name: string,
   email: string,
-  vehicleType: VehicleType = 'moto'
+  vehicleType: VehicleType = 'voiture'
 ): ChauffeurProfile => ({
   name,
   email,

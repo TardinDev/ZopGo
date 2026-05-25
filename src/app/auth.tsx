@@ -63,7 +63,7 @@ export default function AuthScreen() {
     name: '',
   });
   const [selectedRole, setSelectedRole] = useState<UserRole>('client');
-  const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('moto');
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('voiture');
   const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationType>('hotel');
   const [showTransition, setShowTransition] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole>('client');

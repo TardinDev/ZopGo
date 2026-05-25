@@ -3,19 +3,24 @@ import { fetchAllAvailableTrajets } from '../lib/supabaseTrajets';
 import type { Voyage } from '../types';
 import type { DepartureWindow, VoyageSort } from '../lib/voyagesFilters';
 
+// moto stays mapped so legacy trajets in the DB still display with the right
+// label/icon, but it is intentionally absent from `transportTypes` because
+// chauffeurs no longer create moto trajets — moto is a livraisons-only mode.
 const VEHICLE_LABEL: Record<string, string> = {
   moto: 'Moto',
   voiture: 'Voiture',
   camionnette: 'Camionnette',
+  bus: 'Bus',
 };
 
 const VEHICLE_ICON: Record<string, string> = {
   moto: '🏍️',
   voiture: '🚗',
   camionnette: '🚐',
+  bus: '🚌',
 };
 
-export const transportTypes = ['All', 'Moto', 'Voiture', 'Camionnette'];
+export const transportTypes = ['All', 'Voiture', 'Camionnette', 'Bus'];
 
 interface VoyagesState {
   trajets: Voyage[];
