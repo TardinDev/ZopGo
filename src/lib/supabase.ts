@@ -4,6 +4,18 @@ import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 import { logError } from '../utils/errorHandler';
 
+// Web static export (app.json `web.output: "static"`) pre-renders routes in
+// Node where `window` is undefined. AsyncStorage's web impl reaches for
+// `window.localStorage` during Supabase auth init and crashes the dev
+// server. Provide a no-op storage when we're not in a browser/RN runtime.
+const isBrowserOrNative = typeof window !== 'undefined';
+const noopStorage = {
+  getItem: async () => null,
+  setItem: async () => {},
+  removeItem: async () => {},
+};
+const authStorage = isBrowserOrNative ? AsyncStorage : noopStorage;
+
 // En dev: utilise process.env, en prod: utilise Constants.expoConfig.extra
 const supabaseUrl =
   process.env.EXPO_PUBLIC_SUPABASE_URL ||
@@ -33,7 +45,7 @@ let warnedTpaRejection = false;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: authStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

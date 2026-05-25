@@ -142,20 +142,17 @@ export default function OnboardingScreen() {
 
           {/* Main Button */}
           <Animated.View style={pulseStyle}>
-            <TouchableOpacity onPress={handleNext} activeOpacity={0.85}>
-              <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.nextButton}
-              >
-                <Text style={[styles.nextText, styles.nextTextWhite]}>
-                  {isLastStep ? 'Commencer' : 'Suivant'}
-                </Text>
-                <View style={[styles.nextIconCircle, styles.nextIconCircleWhite]}>
-                  <Ionicons name="arrow-forward" size={20} color={COLORS.primary} />
-                </View>
-              </LinearGradient>
+            <TouchableOpacity
+              onPress={handleNext}
+              activeOpacity={0.85}
+              style={styles.nextButton}
+            >
+              <Text style={[styles.nextText, styles.nextTextWhite]}>
+                {isLastStep ? 'Commencer' : 'Suivant'}
+              </Text>
+              <View style={[styles.nextIconCircle, styles.nextIconCircleWhite]}>
+                <Ionicons name="arrow-forward" size={20} color={COLORS.primary} />
+              </View>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -282,6 +279,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 22,
     borderCurve: 'continuous',
+    backgroundColor: COLORS.primary,
     boxShadow: '0 6px 18px rgba(0, 0, 0, 0.30)',
   },
   nextText: {
