@@ -8,7 +8,8 @@
  *   4. Redirect vers la liste
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Create, useForm, useSelect } from "@refinedev/antd";
 import {
     Form,
@@ -55,6 +56,19 @@ interface FormValues {
 export function AdminMessageCreate() {
     const { data: identity } = useGetIdentity<AdminIdentity>();
     const [pushFeedback, setPushFeedback] = useState<string | null>(null);
+
+    // Allow the UserShow "Envoyer un message" shortcut to pre-fill the
+    // target. When ?target_user_id=… is present, default target_type='user'
+    // and stash the id as the Select's initialValue.
+    const [searchParams] = useSearchParams();
+    const prefilledTargetUserId = searchParams.get("target_user_id");
+    const initialValues = useMemo(
+        () =>
+            prefilledTargetUserId
+                ? { target_type: "user", target_user_id: prefilledTargetUserId }
+                : { target_type: "all" },
+        [prefilledTargetUserId]
+    );
 
     const { formProps, saveButtonProps, form, onFinish, redirect } =
         useForm<DbAdminMessage>({
@@ -144,7 +158,7 @@ export function AdminMessageCreate() {
                 onFinish={(values) => handleFinish(values as FormValues)}
                 layout="vertical"
                 style={{ maxWidth: 720 }}
-                initialValues={{ target_type: "all" }}
+                initialValues={initialValues}
             >
                 <Form.Item
                     label="Titre"

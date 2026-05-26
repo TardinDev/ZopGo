@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { sanitizeInput } from '../utils/validation';
 import type { NotificationPreferences, UserRole } from '../types';
 
-const VALID_ROLES: UserRole[] = ['client', 'chauffeur', 'hebergeur'];
+const VALID_ROLES: UserRole[] = ['client', 'chauffeur', 'hebergeur', 'agence'];
 
 export interface SupabaseProfile {
   id: string;
@@ -25,6 +25,9 @@ export interface SupabaseProfile {
   member_since: string;
   push_token: string | null;
   notification_preferences: NotificationPreferences | null;
+  // Agency fields (migration 027). NULL for non-agence accounts.
+  agency_name: string | null;
+  agency_logo_url: string | null;
 }
 
 // Returns the effective roles array for a profile: prefers the multi-role
@@ -139,7 +142,9 @@ export async function updateProfile(
     // The *active* role. Needed by the in-app mode switcher
     // (authStore.switchRole) so the next cold start reads the
     // up-to-date role from Supabase as well as from Clerk metadata.
-    role: 'client' | 'chauffeur' | 'hebergeur';
+    role: 'client' | 'chauffeur' | 'hebergeur' | 'agence';
+    agency_name: string;
+    agency_logo_url: string;
   }>
 ): Promise<boolean> {
   const sanitizedUpdates = { ...updates };

@@ -45,6 +45,11 @@ export interface DbProfile {
     deleted_at: string | null;
     created_at: string;
     updated_at: string;
+    // Agency fields (migration 027). NULL for non-agence accounts. The DB
+    // column lets the admin see the agency identity at a glance from the
+    // users list / trajets list without an extra JOIN.
+    agency_name: string | null;
+    agency_logo_url: string | null;
 }
 
 // ─── Vehicles ────────────────────────────────────────────
@@ -247,6 +252,24 @@ export interface DbAdminMessageRead {
     message_id: string;
     user_id: string;
     read_at: string;
+}
+
+// ─── Agency invitations (migration 028) ──────────────────
+// Single-use codes issued by admin so travel agencies can sign up as
+// role='agence' in the mobile app. The atomic validate+claim happens via
+// the SECURITY DEFINER function `claim_agency_code` — admin only reads/
+// writes this table directly.
+export interface DbAgencyInvitation {
+    id: string;
+    code: string;
+    agency_name: string;
+    used_at: string | null;
+    used_by: string | null;
+    expires_at: string | null;
+    created_at: string;
+    created_by: string | null;
+    // Joined when listing — handy to display "claimed by X" in the table.
+    used_by_profile?: DbProfile;
 }
 
 // ─── Notifications ───────────────────────────────────────

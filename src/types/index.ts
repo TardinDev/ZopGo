@@ -15,6 +15,12 @@ export interface Voyage {
   marque?: string;
   modele?: string;
   couleur?: string;
+  // Populated when the publishing profile has role='agence' (migration 027).
+  // VoyageCard renders the agency logo + name in place of the individual
+  // chauffeur avatar in that case.
+  isAgence?: boolean;
+  agencyName?: string;
+  agencyLogoUrl?: string | null;
 }
 
 // Types pour les hébergements
@@ -59,7 +65,7 @@ export interface MenuItem {
   icon: string;
   title: string;
   subtitle: string;
-  roles?: ('client' | 'chauffeur' | 'hebergeur')[];
+  roles?: ('client' | 'chauffeur' | 'hebergeur' | 'agence')[];
 }
 
 // Types pour les statistiques
@@ -212,17 +218,45 @@ export interface Trajet {
 }
 
 // Types pour l'authentification et les rôles
-export type UserRole = 'client' | 'chauffeur' | 'hebergeur';
+// 'agence' is a GATED role: only granted via a single-use invitation code
+// claimed at signup (see supabase/migrations/028 + supabaseAgencyInvitations).
+// All other roles are granted to every account by default (migration 024).
+export type UserRole = 'client' | 'chauffeur' | 'hebergeur' | 'agence';
 
-// 'moto' is still valid for livraisons (livreur profiles, personal-vehicle
-// list). For passenger voyages, only voiture/camionnette/bus are exposed.
-export type VehicleType = 'moto' | 'velo' | 'voiture' | 'camionnette' | 'bus';
+// 'moto' / 'velo' stay valid for livraisons (livreur profiles, personal-vehicle
+// list). For passenger voyages, the transporteur form exposes
+// taxi/voiture/bus/train/avion/bateau. 'camionnette' is kept solely so legacy
+// trajets in the DB still resolve to a label/icon — it is no longer offered.
+export type VehicleType =
+  | 'moto'
+  | 'velo'
+  | 'taxi'
+  | 'voiture'
+  | 'camionnette'
+  | 'bus'
+  | 'train'
+  | 'avion'
+  | 'bateau';
 
 export interface VehicleInfo {
   type: VehicleType;
   label: string;
   icon: string;
 }
+
+// Categories an account is allowed to publish trajets in.
+// Individual chauffeur → taxi / voiture only.
+// Agence              → bus / train / avion / bateau only.
+export const CHAUFFEUR_ALLOWED_VEHICLES: ReadonlyArray<VehicleType> = [
+  'taxi',
+  'voiture',
+];
+export const AGENCE_ALLOWED_VEHICLES: ReadonlyArray<VehicleType> = [
+  'bus',
+  'train',
+  'avion',
+  'bateau',
+];
 
 // Types pour les hébergeurs
 export type AccommodationType = 'hotel' | 'auberge' | 'appartement' | 'maison' | 'chambre';
@@ -238,6 +272,14 @@ export interface ChauffeurProfile extends UserInfo {
   vehicule: VehicleInfo;
   disponible: boolean;
   distance?: number; // Distance par rapport au client (calculée dynamiquement)
+}
+
+// Profil agence (étend ChauffeurProfile : une agence publie aussi des trajets,
+// mais avec une identité marquée — nom de l'agence + logo affichés sur les
+// VoyageCard à la place de l'avatar individuel).
+export interface AgencyProfile extends ChauffeurProfile {
+  agencyName: string;
+  agencyLogoUrl: string | null;
 }
 
 // Profil hébergeur (étend UserInfo avec infos spécifiques)
@@ -410,5 +452,5 @@ export interface AuthUser {
   id: string;
   role: UserRole;
   roles?: UserRole[];
-  profile: UserInfo | ChauffeurProfile | HebergeurProfile;
+  profile: UserInfo | ChauffeurProfile | HebergeurProfile | AgencyProfile;
 }

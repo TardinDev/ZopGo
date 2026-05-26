@@ -25,6 +25,7 @@ import {
     CalendarOutlined,
     MessageOutlined,
     NotificationOutlined,
+    KeyOutlined,
 } from "@ant-design/icons";
 import { useAuth, useUser } from "@clerk/clerk-react";
 
@@ -50,6 +51,8 @@ import { UserEdit } from "@/pages/users/edit";
 import { AdminMessageList } from "@/pages/admin-messages/list";
 import { AdminMessageCreate } from "@/pages/admin-messages/create";
 import { AdminMessageShow } from "@/pages/admin-messages/show";
+import { AgencyInvitationList } from "@/pages/agency-invitations/list";
+import { AgencyInvitationCreate } from "@/pages/agency-invitations/create";
 import { TrajetList } from "@/pages/trajets/list";
 import { LivraisonList } from "@/pages/livraisons/list";
 import { HebergementList } from "@/pages/hebergements/list";
@@ -182,6 +185,15 @@ function AppContent() {
                     },
                 },
                 {
+                    name: "agency_invitations",
+                    list: "/agency-invitations",
+                    create: "/agency-invitations/create",
+                    meta: {
+                        label: "Codes agence",
+                        icon: <KeyOutlined />,
+                    },
+                },
+                {
                     name: "notifications",
                     list: "/notifications",
                     meta: {
@@ -290,6 +302,12 @@ function AppContent() {
                         <Route index element={<AdminMessageList />} />
                         <Route path="create" element={<AdminMessageCreate />} />
                         <Route path="show/:id" element={<AdminMessageShow />} />
+                    </Route>
+
+                    {/* Agency invitation codes (gated signup for travel agencies) */}
+                    <Route path="/agency-invitations">
+                        <Route index element={<AgencyInvitationList />} />
+                        <Route path="create" element={<AgencyInvitationCreate />} />
                     </Route>
 
                     {/* Système */}

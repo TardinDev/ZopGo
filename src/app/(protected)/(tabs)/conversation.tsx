@@ -116,7 +116,7 @@ export default function ConversationScreen() {
         villeArrivee: reservation.villeArrivee,
       });
       if (ok) {
-        toast.success('Le chauffeur a été prévenu.', { title: 'Réservation annulée' });
+        toast.success('Le transporteur a été prévenu.', { title: 'Réservation annulée' });
         setReservation({ ...reservation, status: 'annulee' });
       } else {
         toast.error(

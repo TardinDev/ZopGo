@@ -6,6 +6,7 @@ import {
   UserRole,
   ChauffeurProfile,
   HebergeurProfile,
+  AgencyProfile,
   UserInfo,
   VehicleType,
   VehicleInfo,
@@ -28,9 +29,14 @@ import { generateAvatarPlaceholder } from '../lib/supabaseAvatar';
 export const VEHICLE_TYPES: Record<VehicleType, VehicleInfo> = {
   velo: { type: 'velo', label: 'Vélo', icon: '🚲' },
   moto: { type: 'moto', label: 'Moto', icon: '🏍️' },
-  voiture: { type: 'voiture', label: 'Voiture', icon: '🚗' },
+  taxi: { type: 'taxi', label: 'Taxi', icon: '🚕' },
+  voiture: { type: 'voiture', label: 'Voiture', icon: '🚙' },
+  // Kept for legacy DB rows only — not surfaced in any picker.
   camionnette: { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
   bus: { type: 'bus', label: 'Bus', icon: '🚌' },
+  train: { type: 'train', label: 'Train', icon: '🚆' },
+  avion: { type: 'avion', label: 'Avion', icon: '✈️' },
+  bateau: { type: 'bateau', label: 'Bateaux', icon: '🚢' },
 };
 
 export const ACCOMMODATION_TYPES: Record<AccommodationType, AccommodationInfo> = {
@@ -76,8 +82,21 @@ interface AuthState {
    * in HomeHeader / settings-screen.
    */
   switchRole: (newRole: UserRole) => boolean;
+  /**
+   * Promote the current user to role='agence' by claiming an invitation code.
+   * Calls the SECURITY DEFINER `claim_agency_code` RPC server-side, which
+   * atomically marks the code as used and updates the profiles row. On
+   * success, mirrors the new role + agency fields into local state and
+   * appends 'agence' to the user's roles[] array.
+   *
+   * Returns the raw ClaimResult so the caller (auth screen) can show a
+   * descriptive error if the code is invalid/used/expired. Requires
+   * `supabaseProfileId` to be set — the caller must wait for the initial
+   * profile sync from `setupProfile` to complete before invoking this.
+   */
+  promoteToAgence: (code: string) => Promise<import('../lib/supabaseAgencyInvitations').ClaimResult>;
   logout: () => void;
-  updateProfile: (profile: Partial<UserInfo | ChauffeurProfile | HebergeurProfile>) => void;
+  updateProfile: (profile: Partial<UserInfo | ChauffeurProfile | HebergeurProfile | AgencyProfile>) => void;
   setDisponible: (disponible: boolean) => void;
   loadNotificationPreferences: (clerkId: string) => Promise<void>;
   setNotificationPreferences: (prefs: NotificationPreferences) => void;
@@ -177,21 +196,38 @@ export const useAuthStore = create<AuthState>()(
                 const effectiveRoles = getEffectiveRoles(existing);
                 set((state) => {
                   if (!state.user) return state;
+                  // If the server says role='agence' (e.g. the user claimed
+                  // an invitation code on a previous session), trust the DB
+                  // over the optimistic local role from this setupProfile
+                  // call. Also surface agency_name / agency_logo_url so the
+                  // tab bar + voyage cards render the agency identity.
+                  const serverRole =
+                    existing.role === 'agence' ? 'agence' : state.user.role;
+                  const baseProfile = {
+                    ...state.user.profile,
+                    avatar: existing.avatar || state.user.profile.avatar,
+                    address: existing.address || '',
+                    emergencyContact: existing.emergency_contact || '',
+                    rating: existing.rating,
+                    totalTrips: existing.total_trips,
+                    totalDeliveries: existing.total_deliveries,
+                    memberSince: new Date(existing.member_since).getFullYear().toString(),
+                  };
+                  const nextProfile =
+                    existing.role === 'agence'
+                      ? {
+                          ...baseProfile,
+                          agencyName: existing.agency_name ?? '',
+                          agencyLogoUrl: existing.agency_logo_url ?? null,
+                        }
+                      : baseProfile;
                   return {
                     supabaseProfileId: existing.id,
                     user: {
                       ...state.user,
+                      role: serverRole,
                       roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
-                      profile: {
-                        ...state.user.profile,
-                        avatar: existing.avatar || state.user.profile.avatar,
-                        address: existing.address || '',
-                        emergencyContact: existing.emergency_contact || '',
-                        rating: existing.rating,
-                        totalTrips: existing.total_trips,
-                        totalDeliveries: existing.total_deliveries,
-                        memberSince: new Date(existing.member_since).getFullYear().toString(),
-                      },
+                      profile: nextProfile as typeof state.user.profile,
                     },
                   };
                 });
@@ -248,6 +284,46 @@ export const useAuthStore = create<AuthState>()(
           updateSupabaseProfile(clerkId, { role: newRole });
         }
         return true;
+      },
+
+      promoteToAgence: async (code) => {
+        const { user, supabaseProfileId } = get();
+        const { claimAgencyCode } = await import('../lib/supabaseAgencyInvitations');
+
+        if (!user || !supabaseProfileId) {
+          return {
+            ok: false,
+            reason: 'profile_missing',
+            message: 'Compte non encore synchronisé. Réessaie dans un instant.',
+          };
+        }
+
+        const result = await claimAgencyCode(code, supabaseProfileId);
+        if (!result.ok) return result;
+
+        // Mirror the server-side promotion into local state so the UI
+        // (tabs, role pill, trajet form) reflects 'agence' immediately
+        // without waiting for the next profile refetch.
+        set((state) => {
+          if (!state.user) return state;
+          const nextRoles = Array.from(
+            new Set([...(state.user.roles ?? []), 'agence' as UserRole])
+          );
+          return {
+            user: {
+              ...state.user,
+              role: 'agence',
+              roles: nextRoles,
+              profile: {
+                ...state.user.profile,
+                agencyName: result.agencyName,
+                agencyLogoUrl: null,
+              } as AgencyProfile,
+            },
+          };
+        });
+
+        return result;
       },
 
       logout: () => {
@@ -360,6 +436,12 @@ export const isHebergeur = (
   return user?.role === 'hebergeur';
 };
 
+export const isAgence = (
+  user: AuthUser | null
+): user is AuthUser & { profile: AgencyProfile } => {
+  return user?.role === 'agence';
+};
+
 export const chauffeurToLivreur = (user: AuthUser): Livreur => {
   const profile = user.profile as ChauffeurProfile;
   return {
@@ -369,7 +451,7 @@ export const chauffeurToLivreur = (user: AuthUser): Livreur => {
     etoiles: profile.rating,
     disponible: profile.disponible,
     photo: profile.avatar,
-    commentaires: ['Nouveau chauffeur', 'Inscrit récemment'],
+    commentaires: ['Nouveau transporteur', 'Inscrit récemment'],
     distance: Math.random() * 3 + 0.5,
   };
 };

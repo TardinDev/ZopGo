@@ -140,6 +140,11 @@ export default function VoyageDetailScreen() {
     marque: String(params.marque || ''),
     modele: String(params.modele || ''),
     couleur: String(params.couleur || ''),
+    // Forwarded from the voyages list when the publishing profile has
+    // role='agence'. Strings since router params can't carry booleans.
+    isAgence: String(params.isAgence || '') === 'true',
+    agencyName: String(params.agencyName || ''),
+    agencyLogoUrl: String(params.agencyLogoUrl || ''),
   };
 
   const unitPrice = parseInt(voyage.price.replace(/[^0-9]/g, '')) || 0;
@@ -180,7 +185,7 @@ export default function VoyageDetailScreen() {
       });
 
       if (reservation) {
-        toast.success('Le chauffeur a été notifié. Réponse à venir bientôt.', {
+        toast.success('Le transporteur a été notifié. Réponse à venir bientôt.', {
           title: 'Demande envoyée',
         });
         router.back();
@@ -541,7 +546,10 @@ export default function VoyageDetailScreen() {
 
             <Perforation pageColor={PAGE_BG} />
 
-            {/* Bottom section: driver */}
+            {/* Bottom section: agency identity (when isAgence) or individual
+                chauffeur. Agency block trades the round avatar + star rating
+                for a squared logo + brand color tag — same hierarchy
+                (icon · name · meta · trust signal) but more "company". */}
             <View
               style={{
                 flexDirection: 'row',
@@ -550,73 +558,134 @@ export default function VoyageDetailScreen() {
                 paddingTop: 14,
                 paddingBottom: 18,
               }}>
-              {voyage.driverAvatar ? (
-                <Image
-                  source={{ uri: voyage.driverAvatar }}
-                  style={{ width: 48, height: 48, borderRadius: 24 }}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 24,
-                    backgroundColor: '#EFF6FF',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <Ionicons name="person" size={24} color={COLORS.primary} />
-                </View>
-              )}
-              <View style={{ flex: 1, marginLeft: 14 }}>
-                <Text
-                  style={{
-                    fontSize: 10,
-                    fontWeight: '700',
-                    color: '#9CA3AF',
-                    letterSpacing: 1,
-                  }}>
-                  CONDUCTEUR
-                </Text>
-                <Text
-                  selectable
-                  numberOfLines={1}
-                  style={{ marginTop: 2, fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
-                  {voyage.driver}
-                </Text>
-                {vehicleSpecs ? (
-                  <Text
-                    selectable
-                    numberOfLines={1}
-                    style={{ marginTop: 2, fontSize: 12, color: '#6B7280' }}>
-                    {vehicleSpecs}
-                  </Text>
-                ) : null}
-              </View>
-              {voyage.driverRating > 0 ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: '#FEF3C7',
-                    borderRadius: 10,
-                    paddingHorizontal: 8,
-                    paddingVertical: 5,
-                  }}>
-                  <Ionicons name="star" size={12} color={COLORS.star} />
-                  <Text
+              {voyage.isAgence ? (
+                <>
+                  {voyage.agencyLogoUrl ? (
+                    <Image
+                      source={{ uri: voyage.agencyLogoUrl }}
+                      style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: 'white' }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 10,
+                        backgroundColor: '#F0FDFA',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Ionicons name="business" size={24} color="#0D9488" />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text
+                      style={{ fontSize: 10, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 }}>
+                      AGENCE
+                    </Text>
+                    <Text
+                      selectable
+                      numberOfLines={1}
+                      style={{ marginTop: 2, fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
+                      {voyage.agencyName || voyage.driver}
+                    </Text>
+                    <Text style={{ marginTop: 2, fontSize: 12, color: '#6B7280' }}>
+                      Vendeur officiel · Partenaire ZopGo
+                    </Text>
+                  </View>
+                  <View
                     style={{
-                      marginLeft: 3,
-                      fontSize: 12,
-                      fontWeight: '700',
-                      color: '#92400E',
-                      fontVariant: ['tabular-nums'],
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(13, 148, 136, 0.12)',
+                      borderRadius: 10,
+                      paddingHorizontal: 8,
+                      paddingVertical: 5,
                     }}>
-                    {voyage.driverRating.toFixed(1)}
-                  </Text>
-                </View>
+                    <Ionicons name="checkmark-circle" size={12} color="#0D9488" />
+                    <Text
+                      style={{
+                        marginLeft: 3,
+                        fontSize: 11,
+                        fontWeight: '700',
+                        color: '#0D9488',
+                        letterSpacing: 0.3,
+                      }}>
+                      VÉRIFIÉ
+                    </Text>
+                  </View>
+                </>
               ) : (
-                <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>NOUVEAU</Text>
+                <>
+                  {voyage.driverAvatar ? (
+                    <Image
+                      source={{ uri: voyage.driverAvatar }}
+                      style={{ width: 48, height: 48, borderRadius: 24 }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 24,
+                        backgroundColor: '#EFF6FF',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Ionicons name="person" size={24} color={COLORS.primary} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: '700',
+                        color: '#9CA3AF',
+                        letterSpacing: 1,
+                      }}>
+                      CONDUCTEUR
+                    </Text>
+                    <Text
+                      selectable
+                      numberOfLines={1}
+                      style={{ marginTop: 2, fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
+                      {voyage.driver}
+                    </Text>
+                    {vehicleSpecs ? (
+                      <Text
+                        selectable
+                        numberOfLines={1}
+                        style={{ marginTop: 2, fontSize: 12, color: '#6B7280' }}>
+                        {vehicleSpecs}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {voyage.driverRating > 0 ? (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#FEF3C7',
+                        borderRadius: 10,
+                        paddingHorizontal: 8,
+                        paddingVertical: 5,
+                      }}>
+                      <Ionicons name="star" size={12} color={COLORS.star} />
+                      <Text
+                        style={{
+                          marginLeft: 3,
+                          fontSize: 12,
+                          fontWeight: '700',
+                          color: '#92400E',
+                          fontVariant: ['tabular-nums'],
+                        }}>
+                        {voyage.driverRating.toFixed(1)}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', fontWeight: '600' }}>NOUVEAU</Text>
+                  )}
+                </>
               )}
             </View>
           </View>

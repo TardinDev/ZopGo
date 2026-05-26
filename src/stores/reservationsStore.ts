@@ -279,8 +279,8 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
 
       const routeLabel = villeDepart && villeArrivee ? `${villeDepart} → ${villeArrivee}` : '';
       const pushBody = routeLabel
-        ? `Le chauffeur a refusé votre réservation — ${routeLabel}`
-        : 'Le chauffeur a refusé votre réservation';
+        ? `Le transporteur a refusé votre réservation — ${routeLabel}`
+        : 'Le transporteur a refusé votre réservation';
 
       void sendPushIfAllowed({
         recipientProfileId: clientId,
@@ -288,7 +288,7 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
         type: 'reservation_refusee',
         title: 'Réservation refusée',
         body: pushBody,
-        message: 'Le chauffeur a refusé votre réservation',
+        message: 'Le transporteur a refusé votre réservation',
         icon: 'close-circle',
         iconColor: '#EF4444',
         iconBg: '#FEE2E2',

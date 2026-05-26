@@ -5,10 +5,12 @@ import type { UserRole } from '../../types';
 import { COLORS } from '../../constants';
 
 const HEBERGEUR_COLOR = '#8B5CF6';
+const AGENCE_COLOR = '#0D9488';
 const ROLE_META: Record<UserRole, { label: string; icon: string; color: string; tint: string }> = {
   client: { label: 'Client', icon: '👤', color: COLORS.primary, tint: '#EFF6FF' },
   chauffeur: { label: 'Transporteur', icon: '🚗', color: COLORS.primary, tint: '#EFF6FF' },
   hebergeur: { label: 'Hébergeur', icon: '🏨', color: HEBERGEUR_COLOR, tint: '#F3E8FF' },
+  agence: { label: 'Agence', icon: '🏢', color: AGENCE_COLOR, tint: '#CCFBF1' },
 };
 
 interface LogoutSheetProps {

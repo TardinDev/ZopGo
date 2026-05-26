@@ -148,23 +148,46 @@ export function UserList() {
                         <FilterDropdown {...props}>
                             <Select
                                 placeholder="Filtrer par rôle"
-                                style={{ width: 160 }}
+                                style={{ width: 180 }}
                                 allowClear
-                                options={[
-                                    { value: "client", label: "Client" },
-                                    { value: "chauffeur", label: "Chauffeur" },
-                                ]}
+                                options={Object.entries(USER_ROLE_LABELS).map(
+                                    ([value, label]) => ({ value, label })
+                                )}
                             />
                         </FilterDropdown>
                     )}
-                    render={(role: string) => (
-                        <Tag
-                            color={role === "chauffeur" ? "blue" : "green"}
-                            style={{ borderRadius: 6, fontWeight: 500 }}
-                        >
-                            {USER_ROLE_LABELS[role] ?? role}
-                        </Tag>
-                    )}
+                    render={(role: string, record) => {
+                        const color =
+                            role === "agence"
+                                ? "cyan"
+                                : role === "hebergeur"
+                                ? "purple"
+                                : role === "chauffeur"
+                                ? "blue"
+                                : "green";
+                        return (
+                            <Space direction="vertical" size={2}>
+                                <Tag color={color} style={{ borderRadius: 6, fontWeight: 500 }}>
+                                    {USER_ROLE_LABELS[role] ?? role}
+                                </Tag>
+                                {role === "agence" && record.agency_name && (
+                                    <span
+                                        style={{
+                                            fontSize: 11,
+                                            color: DARK.textSecondary,
+                                            maxWidth: 140,
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                        title={record.agency_name}
+                                    >
+                                        {record.agency_name}
+                                    </span>
+                                )}
+                            </Space>
+                        );
+                    }}
                 />
 
                 {/* Rating */}
@@ -197,7 +220,12 @@ export function UserList() {
                     width={80}
                     align="center"
                     render={(disponible: boolean, record) => {
-                        if (record.role !== "chauffeur") return <span style={{ color: DARK.textMuted }}>—</span>;
+                        // Disponibilité applies to anyone who publishes (chauffeur
+                        // individuel + agence). Clients/hébergeurs don't surface
+                        // a disponible flag in the mobile app.
+                        if (record.role !== "chauffeur" && record.role !== "agence") {
+                            return <span style={{ color: DARK.textMuted }}>—</span>;
+                        }
                         return (
                             <Badge
                                 status={disponible ? "success" : "default"}

@@ -154,8 +154,9 @@ export const HEBERGEMENT_STATUS_LABELS: Record<string, string> = {
 
 export const USER_ROLE_LABELS: Record<string, string> = {
     client: "Client",
-    chauffeur: "Chauffeur",
+    chauffeur: "Transporteur",
     hebergeur: "Hébergeur",
+    agence: "Agence",
 };
 
 export const ADMIN_MESSAGE_TARGET_LABELS: Record<string, string> = {

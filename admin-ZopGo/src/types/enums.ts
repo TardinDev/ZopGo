@@ -2,7 +2,7 @@
  * ZopGo Admin — Enums alignés avec les contraintes DB (migrations 001-017)
  */
 
-export type UserRole = "client" | "chauffeur" | "hebergeur";
+export type UserRole = "client" | "chauffeur" | "hebergeur" | "agence";
 
 export type AdminRole = "admin";
 
@@ -48,4 +48,4 @@ export type AuditAction = "INSERT" | "UPDATE" | "DELETE";
 
 export type AdminMessageTargetType = "user" | "role" | "all";
 
-export type NotificationRecipientRole = "client" | "chauffeur" | "hebergeur" | "all";
+export type NotificationRecipientRole = "client" | "chauffeur" | "hebergeur" | "agence" | "all";

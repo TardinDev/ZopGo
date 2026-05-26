@@ -23,10 +23,10 @@ function res(overrides: Partial<Reservation>): Reservation {
 
 describe('status label mapping', () => {
   const cases: { status: Reservation['status']; label: string }[] = [
-    { status: 'en_attente', label: 'En attente du chauffeur' },
+    { status: 'en_attente', label: 'En attente du transporteur' },
     { status: 'acceptee', label: 'Réservation acceptée' },
-    { status: 'en_route', label: 'Chauffeur en route' },
-    { status: 'arrivee', label: 'Le chauffeur est arrivé' },
+    { status: 'en_route', label: 'Transporteur en route' },
+    { status: 'arrivee', label: 'Le transporteur est arrivé' },
     { status: 'terminee', label: 'Course terminée' },
     { status: 'refusee', label: 'Réservation refusée' },
     { status: 'annulee', label: 'Réservation annulée' },
@@ -156,6 +156,6 @@ describe('chauffeur view — no client CTAs', () => {
         isClient={false}
       />
     );
-    expect(getByText('Chauffeur en route')).toBeTruthy();
+    expect(getByText('Transporteur en route')).toBeTruthy();
   });
 });

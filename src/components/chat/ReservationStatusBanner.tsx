@@ -22,7 +22,7 @@ interface StatusVisual {
 
 const STATUS: Record<string, StatusVisual> = {
   en_attente: {
-    label: 'En attente du chauffeur',
+    label: 'En attente du transporteur',
     icon: 'clock-outline',
     bg: '#FEF3C7',
     fg: '#92400E',
@@ -34,13 +34,13 @@ const STATUS: Record<string, StatusVisual> = {
     fg: '#065F46',
   },
   en_route: {
-    label: 'Chauffeur en route',
+    label: 'Transporteur en route',
     icon: 'navigation-variant',
     bg: '#DBEAFE',
     fg: '#1E40AF',
   },
   arrivee: {
-    label: 'Le chauffeur est arrivé',
+    label: 'Le transporteur est arrivé',
     icon: 'map-marker-check',
     bg: '#D1FAE5',
     fg: '#065F46',
@@ -86,7 +86,7 @@ export function ReservationStatusBanner({
     if (!onCancel) return;
     Alert.alert(
       'Annuler la réservation',
-      'Es-tu sûr de vouloir annuler cette demande ? Le chauffeur sera prévenu.',
+      'Es-tu sûr de vouloir annuler cette demande ? Le transporteur sera prévenu.',
       [
         { text: 'Non', style: 'cancel' },
         { text: 'Annuler la résa', style: 'destructive', onPress: onCancel },

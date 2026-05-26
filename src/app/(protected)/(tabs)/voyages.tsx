@@ -18,7 +18,7 @@ import {
 
 const VOYAGE_LOADING_MESSAGES = [
   'On ratisse le Gabon...',
-  'Les chauffeurs préparent leurs trajets...',
+  'Les transporteurs préparent leurs trajets...',
   'On cherche les meilleurs trajets...',
   'Presque prêt...',
 ];
@@ -121,6 +121,11 @@ export default function VoyagesTab() {
           marque: voyage.marque || '',
           modele: voyage.modele || '',
           couleur: voyage.couleur || '',
+          // Forward agency identity so voyage-detail can swap the
+          // chauffeur block for the agency-branded one.
+          isAgence: voyage.isAgence ? 'true' : '',
+          agencyName: voyage.agencyName || '',
+          agencyLogoUrl: voyage.agencyLogoUrl || '',
         },
       });
     },
@@ -207,7 +212,7 @@ export default function VoyagesTab() {
               <Animated.View entering={FadeIn.duration(300)}>
                 <EmptyResults
                   icon="car-sport-outline"
-                  message="Les chauffeurs dorment encore..."
+                  message="Les transporteurs dorment encore..."
                   subMessage="Essaie une autre ville ou un autre type de véhicule"
                   actionLabel="Voir tous les voyages"
                   onAction={resetFilters}

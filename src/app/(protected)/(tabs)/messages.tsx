@@ -206,7 +206,7 @@ export default function MessagesTab() {
           {
             text: 'Accepter',
             onPress: async () => {
-              const chauffeurName = user.profile?.name || 'Chauffeur';
+              const chauffeurName = user.profile?.name || 'Transporteur';
               const ok = await acceptReservation({
                 reservationId,
                 clientId,
@@ -311,12 +311,12 @@ export default function MessagesTab() {
           onAction: () =>
             openConversation(
               data.chauffeurId,
-              data.chauffeurName || 'Chauffeur',
+              data.chauffeurName || 'Transporteur',
               '',
               data.reservationId,
               label
             ),
-          actionLabel: 'Écrire au chauffeur',
+          actionLabel: 'Écrire au transporteur',
         };
       }
 
@@ -328,7 +328,7 @@ export default function MessagesTab() {
           onAction: () =>
             openConversation(
               data.chauffeurId,
-              data.chauffeurName || 'Chauffeur',
+              data.chauffeurName || 'Transporteur',
               '',
               data.reservationId,
               label
@@ -480,7 +480,7 @@ export default function MessagesTab() {
                 <EmptyState
                   icon="chatbubbles-outline"
                   title="Pas encore de messages"
-                  description="Tes échanges avec chauffeurs et hébergeurs apparaitront ici."
+                  description="Tes échanges avec transporteurs et hébergeurs apparaitront ici."
                   iconSize={56}
                 />
               }

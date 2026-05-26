@@ -16,9 +16,14 @@ export default function TabLayout() {
   const { navigateToTab } = useTabAnimation();
   const { user } = useAuthStore();
 
-  // Si l'utilisateur est un chauffeur ou hébergeur, on masque certains tabs
+  // Si l'utilisateur est un chauffeur, agence ou hébergeur, on masque certains tabs.
+  // L'agence publie aussi des trajets — elle voit donc le même onglet "Mes trajets"
+  // que le chauffeur individuel (mais le formulaire à l'intérieur filtre les véhicules
+  // par rôle via CHAUFFEUR_ALLOWED_VEHICLES / AGENCE_ALLOWED_VEHICLES).
   const isChauffeur = user?.role === 'chauffeur';
   const isHebergeur = user?.role === 'hebergeur';
+  const isAgence = user?.role === 'agence';
+  const isTransporteurLike = isChauffeur || isAgence;
 
   return (
     <Tabs
@@ -124,8 +129,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="trajets"
         options={{
-          title: 'Mes trajets',
-          href: isChauffeur ? undefined : null, // Visible uniquement pour les chauffeurs
+          title: isAgence ? 'Mes lignes' : 'Mes trajets',
+          href: isTransporteurLike ? undefined : null, // Visible pour chauffeurs et agences
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'map-marker-path' : 'map-marker-outline'}
@@ -155,7 +160,7 @@ export default function TabLayout() {
         name="voyages"
         options={{
           title: 'Voyages',
-          href: (isChauffeur || isHebergeur) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
+          href: (isChauffeur || isHebergeur || isAgence) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'car-side' : 'car-outline'}
@@ -170,7 +175,7 @@ export default function TabLayout() {
         name="livraisons"
         options={{
           title: 'Livraisons',
-          href: (isChauffeur || isHebergeur) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
+          href: (isChauffeur || isHebergeur || isAgence) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'package-variant' : 'package-variant-closed'}
@@ -185,7 +190,7 @@ export default function TabLayout() {
         name="location"
         options={{
           title: 'Location',
-          href: (isChauffeur || isHebergeur) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
+          href: (isChauffeur || isHebergeur || isAgence) ? null : undefined, // Masqué pour chauffeurs et hébergeurs
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name="car-key"
@@ -236,7 +241,7 @@ export default function TabLayout() {
         name="hebergements"
         options={{
           title: 'Hébergements',
-          href: (isChauffeur || isHebergeur) ? null : undefined, // Visible uniquement pour les clients
+          href: (isChauffeur || isHebergeur || isAgence) ? null : undefined, // Visible uniquement pour les clients
           tabBarIcon: ({ color, focused }) => (
             <MaterialCommunityIcons
               name={focused ? 'bed' : 'bed-outline'}

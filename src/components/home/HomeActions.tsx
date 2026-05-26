@@ -30,6 +30,7 @@ export function HomeActions() {
   const { user } = useAuthStore();
   const isChauffeur = user?.role === 'chauffeur';
   const isHebergeur = user?.role === 'hebergeur';
+  const isAgence = user?.role === 'agence';
 
   const clientCards: ActionCard[] = [
     {
@@ -136,7 +137,15 @@ export function HomeActions() {
     },
   ];
 
-  const cards = isHebergeur ? hebergeurCards : isChauffeur ? chauffeurCards : clientCards;
+  // Agences see the same home actions as individual transporteurs (publishing
+  // trajets, viewing reservations) — the form inside "Mes lignes" handles
+  // the bus/train/avion/bateau restriction. A future task can carve out a
+  // dedicated agence dashboard if the flows diverge enough.
+  const cards = isHebergeur
+    ? hebergeurCards
+    : isChauffeur || isAgence
+    ? chauffeurCards
+    : clientCards;
 
   return (
     <ScrollView

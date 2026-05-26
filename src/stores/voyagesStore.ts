@@ -3,21 +3,32 @@ import { fetchAllAvailableTrajets } from '../lib/supabaseTrajets';
 import type { Voyage } from '../types';
 import type { DepartureWindow, VoyageSort } from '../lib/voyagesFilters';
 
-// moto stays mapped so legacy trajets in the DB still display with the right
-// label/icon, but it is intentionally absent from `transportTypes` because
-// chauffeurs no longer create moto trajets — moto is a livraisons-only mode.
+// moto/camionnette stay mapped so legacy trajets in the DB still display
+// with the right label/icon, but they are intentionally absent from
+// `transportTypes` because the transporteur form no longer creates them.
+// Labels here drive both the display string on VoyageCard and the equality
+// check against TypeFilter chips (selectedType === v.type) — keep them
+// aligned with the chip labels in TypeFilter.tsx.
 const VEHICLE_LABEL: Record<string, string> = {
   moto: 'Moto',
+  taxi: 'Taxi',
   voiture: 'Voiture',
   camionnette: 'Camionnette',
   bus: 'Bus',
+  train: 'Train',
+  avion: 'Avion',
+  bateau: 'Bateaux',
 };
 
 const VEHICLE_ICON: Record<string, string> = {
   moto: '🏍️',
-  voiture: '🚗',
+  taxi: '🚕',
+  voiture: '🚙',
   camionnette: '🚐',
   bus: '🚌',
+  train: '🚆',
+  avion: '✈️',
+  bateau: '🚢',
 };
 
 export const transportTypes = ['All', 'Taxi', 'Voiture', 'Bus', 'Train', 'Avion', 'Bateaux'];
@@ -59,23 +70,29 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await fetchAllAvailableTrajets();
-      const mapped: Voyage[] = data.map((t) => ({
-        id: t.id,
-        type: VEHICLE_LABEL[t.vehicule] || t.vehicule,
-        from: t.ville_depart,
-        to: t.ville_arrivee,
-        price: `${t.prix} FCFA`,
-        icon: VEHICLE_ICON[t.vehicule] || '🚗',
-        chauffeurName: t.profiles?.name,
-        chauffeurAvatar: t.profiles?.avatar,
-        chauffeurRating: t.profiles?.rating,
-        chauffeurProfileId: t.chauffeur_id,
-        placesDisponibles: t.places_disponibles,
-        date: t.date || undefined,
-        marque: t.marque || undefined,
-        modele: t.modele || undefined,
-        couleur: t.couleur || undefined,
-      }));
+      const mapped: Voyage[] = data.map((t) => {
+        const isAgence = t.profiles?.role === 'agence';
+        return {
+          id: t.id,
+          type: VEHICLE_LABEL[t.vehicule] || t.vehicule,
+          from: t.ville_depart,
+          to: t.ville_arrivee,
+          price: `${t.prix} FCFA`,
+          icon: VEHICLE_ICON[t.vehicule] || '🚗',
+          chauffeurName: t.profiles?.name,
+          chauffeurAvatar: t.profiles?.avatar,
+          chauffeurRating: t.profiles?.rating,
+          chauffeurProfileId: t.chauffeur_id,
+          placesDisponibles: t.places_disponibles,
+          date: t.date || undefined,
+          marque: t.marque || undefined,
+          modele: t.modele || undefined,
+          couleur: t.couleur || undefined,
+          isAgence,
+          agencyName: isAgence ? t.profiles?.agency_name || undefined : undefined,
+          agencyLogoUrl: isAgence ? t.profiles?.agency_logo_url ?? null : undefined,
+        };
+      });
       set({ trajets: mapped, error: null });
     } catch (err) {
       console.warn('[loadVoyages] FAILED', err instanceof Error ? err.message : err);

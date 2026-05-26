@@ -84,6 +84,14 @@ describe('voyagesStore', () => {
         chauffeurProfileId: 'chauff-1',
         placesDisponibles: 2,
         date: '2026-03-15',
+        marque: undefined,
+        modele: undefined,
+        couleur: undefined,
+        // Agency fields default to falsy when the publishing profile is a
+        // regular chauffeur (no role='agence' in the joined profiles row).
+        isAgence: false,
+        agencyName: undefined,
+        agencyLogoUrl: undefined,
       });
     });
 
@@ -130,7 +138,7 @@ describe('voyagesStore', () => {
         {
           id: 'uuid-unknown',
           chauffeur_id: 'cf-x',
-          vehicule: 'avion',
+          vehicule: 'helicoptere',
           ville_depart: 'A',
           ville_arrivee: 'B',
           prix: 5000,
@@ -142,7 +150,9 @@ describe('voyagesStore', () => {
 
       await useVoyagesStore.getState().loadVoyages();
       const trajet = useVoyagesStore.getState().trajets[0];
-      expect(trajet.type).toBe('avion');
+      // Unknown vehicule values fall back to the raw string + a generic icon
+      // so the listing is never silently dropped from the client UI.
+      expect(trajet.type).toBe('helicoptere');
       expect(trajet.icon).toBe('🚗');
     });
 
@@ -165,6 +175,37 @@ describe('voyagesStore', () => {
       const trajet = useVoyagesStore.getState().trajets[0];
       expect(trajet.type).toBe('Moto');
       expect(trajet.icon).toBe('🏍️');
+    });
+
+    it('surfaces agency identity (logo + name) when the publishing profile has role=agence', async () => {
+      (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
+        {
+          id: 'uuid-agency',
+          chauffeur_id: 'cf-agency-1',
+          vehicule: 'avion',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Paris',
+          prix: 450000,
+          profiles: {
+            name: 'Air ZopGo SA',
+            avatar: 'placeholder.png',
+            rating: 4.8,
+            role: 'agence',
+            agency_name: 'Air ZopGo',
+            agency_logo_url: 'https://cdn.example/airzopgo.png',
+          },
+          places_disponibles: 120,
+          date: null,
+        },
+      ]);
+
+      await useVoyagesStore.getState().loadVoyages();
+      const trajet = useVoyagesStore.getState().trajets[0];
+      expect(trajet.isAgence).toBe(true);
+      expect(trajet.agencyName).toBe('Air ZopGo');
+      expect(trajet.agencyLogoUrl).toBe('https://cdn.example/airzopgo.png');
+      expect(trajet.type).toBe('Avion');
+      expect(trajet.icon).toBe('✈️');
     });
 
     it('sets error message and clears loading on API failure', async () => {

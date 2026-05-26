@@ -8,7 +8,7 @@ export const faqData: FAQItem[] = [
   {
     question: 'Comment commander un transport ?',
     answer:
-      "Depuis l'onglet Voyages, recherchez un trajet en indiquant votre ville de départ et d'arrivée. Vous verrez la liste des chauffeurs disponibles avec leurs tarifs. Sélectionnez celui qui vous convient et confirmez votre réservation.",
+      "Depuis l'onglet Voyages, recherchez un trajet en indiquant votre ville de départ et d'arrivée. Vous verrez la liste des transporteurs disponibles avec leurs tarifs. Sélectionnez celui qui vous convient et confirmez votre réservation.",
     category: 'transport',
   },
   {
@@ -60,9 +60,9 @@ export const faqData: FAQItem[] = [
     category: 'securite',
   },
   {
-    question: "Comment devenir chauffeur ou hébergeur sur ZopGo ?",
+    question: "Comment devenir transporteur ou hébergeur sur ZopGo ?",
     answer:
-      "Lors de votre inscription, choisissez le rôle \"Chauffeur\" ou \"Hébergeur\". Vous aurez accès à un tableau de bord dédié pour gérer vos trajets ou logements. Vous pouvez aussi nous contacter pour changer de rôle.",
+      "Lors de votre inscription, choisissez le rôle \"Transporteur\" ou \"Hébergeur\". Vous aurez accès à un tableau de bord dédié pour gérer vos trajets ou logements. Vous pouvez aussi nous contacter pour changer de rôle.",
     category: 'compte',
   },
 ];

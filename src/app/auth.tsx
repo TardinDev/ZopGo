@@ -42,12 +42,15 @@ const SPLASH_IMAGE = require('../../assets/zopgo_wallpaper_android_20x9_1080x240
 const ACCENT = COLORS.primary;
 const GOLD = '#E8A832';
 const VIOLET = '#8B5CF6';
+// Agence brand color — a deep teal that reads as "transport company" without
+// fighting the other role accents (blue=client, gold=transporteur, violet=hebergeur).
+const TEAL = '#0D9488';
 
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
   const { user: clerkUser } = useUser();
-  const { setupProfile } = useAuthStore();
+  const { setupProfile, promoteToAgence, supabaseProfileId } = useAuthStore();
 
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +70,12 @@ export default function AuthScreen() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('client');
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleType>('voiture');
   const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationType>('hotel');
+  // Agency invitation flow: code typed at signup + the agency name returned by
+  // the validate-and-claim RPC. The actual claim is deferred until the local
+  // profile finishes syncing (we need supabaseProfileId from authStore).
+  const [agencyCode, setAgencyCode] = useState('');
+  const [pendingAgencyClaim, setPendingAgencyClaim] = useState<string | null>(null);
+  const [agencyClaimError, setAgencyClaimError] = useState<string | null>(null);
   const [showTransition, setShowTransition] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole>('client');
   const [isRoleSwitch, setIsRoleSwitch] = useState(false);
@@ -85,6 +94,38 @@ export default function AuthScreen() {
     const t = setTimeout(() => setAuthErrorMsg(null), 5000);
     return () => clearTimeout(t);
   }, [authErrorMsg]);
+
+  // Agency promotion runs as a chaser after the base profile syncs.
+  // `setupProfile` is fire-and-forget so we wait for supabaseProfileId to
+  // appear, then call the SECURITY DEFINER claim function. On success the
+  // store updates role → 'agence' locally and the transition animation
+  // (or the protected layout) routes the user into the agence experience.
+  useEffect(() => {
+    if (!pendingAgencyClaim || !supabaseProfileId) return;
+    const code = pendingAgencyClaim;
+    setPendingAgencyClaim(null);
+    (async () => {
+      const result = await promoteToAgence(code);
+      if (result.ok) {
+        // Persist the promotion in Clerk metadata so cold-starts hydrate
+        // with role='agence' immediately rather than briefly flashing the
+        // chauffeur tabs while waiting for the Supabase profile sync.
+        if (clerkUser) {
+          clerkUser
+            .update({ unsafeMetadata: { ...(clerkUser.unsafeMetadata || {}), role: 'agence' } })
+            .catch((err: unknown) => {
+              if (__DEV__) console.warn('[promoteToAgence] Clerk metadata update failed', err);
+            });
+        }
+      } else {
+        setAgencyClaimError(result.message);
+        Alert.alert(
+          'Code agence invalide',
+          `${result.message}\n\nTon compte est créé en tant que transporteur — tu peux réessayer plus tard depuis ton profil.`
+        );
+      }
+    })();
+  }, [pendingAgencyClaim, supabaseProfileId, promoteToAgence, clerkUser]);
 
   const nameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
@@ -115,12 +156,19 @@ export default function AuthScreen() {
   useEffect(() => {
     if (!clerkUser || !showTransition || isRoleSwitch) return;
 
+    // 'agence' starts life as a 'chauffeur' profile both in Clerk metadata
+    // and in the local store; the promoteToAgence chaser flips it to
+    // 'agence' once the invitation code is claimed server-side. This keeps
+    // the DB in a valid state if the code claim fails (user simply stays
+    // a regular transporteur instead of dangling as an "unclaimed agence").
+    const baseRole: UserRole = selectedRole === 'agence' ? 'chauffeur' : selectedRole;
+
     // Sauvegarder le rôle choisi dans Clerk metadata (idempotent)
     clerkUser.update({
       unsafeMetadata: {
-        role: selectedRole,
-        vehicleType: selectedRole === 'chauffeur' ? selectedVehicle : undefined,
-        accommodationType: selectedRole === 'hebergeur' ? selectedAccommodation : undefined,
+        role: baseRole,
+        vehicleType: baseRole === 'chauffeur' ? selectedVehicle : undefined,
+        accommodationType: baseRole === 'hebergeur' ? selectedAccommodation : undefined,
       },
     }).catch((err: unknown) => { if (__DEV__) console.error('Failed to save Clerk metadata:', err); });
 
@@ -129,8 +177,8 @@ export default function AuthScreen() {
     if (hasSetupProfile.current) return;
     hasSetupProfile.current = true;
 
-    const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
-    const accommodationType = selectedRole === 'hebergeur' ? selectedAccommodation : undefined;
+    const vehicleType = baseRole === 'chauffeur' ? selectedVehicle : undefined;
+    const accommodationType = baseRole === 'hebergeur' ? selectedAccommodation : undefined;
     const name =
       clerkUser.fullName ||
       clerkUser.firstName ||
@@ -139,7 +187,13 @@ export default function AuthScreen() {
       'Utilisateur';
     const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
 
-    setupProfile(selectedRole, name, email, vehicleType, clerkUser.id, accommodationType);
+    setupProfile(baseRole, name, email, vehicleType, clerkUser.id, accommodationType);
+
+    // Defer the agency claim until supabaseProfileId is set by setupProfile's
+    // background sync — the useEffect watching pendingAgencyClaim picks it up.
+    if (selectedRole === 'agence' && agencyCode.trim()) {
+      setPendingAgencyClaim(agencyCode.trim());
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clerkUser, showTransition, isRoleSwitch]);
 
@@ -204,6 +258,14 @@ export default function AuthScreen() {
     if (!isLogin && formData.password !== formData.confirmPassword) {
       notifyError();
       Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      return;
+    }
+    if (!isLogin && selectedRole === 'agence' && !agencyCode.trim()) {
+      notifyError();
+      Alert.alert(
+        'Code requis',
+        "Le rôle Agence nécessite un code d'invitation. Si tu n'en as pas, choisis un autre rôle ou contacte ZopGo."
+      );
       return;
     }
     if (Platform.OS === 'ios') {
@@ -298,10 +360,19 @@ export default function AuthScreen() {
         // (ne pas attendre le useEffect clerkUser qui a une race condition)
         const userId = result.createdUserId || Date.now().toString();
         const name = formData.name || formData.email.split('@')[0] || 'Utilisateur';
-        const vehicleType = selectedRole === 'chauffeur' ? selectedVehicle : undefined;
-        const accommodationType = selectedRole === 'hebergeur' ? selectedAccommodation : undefined;
+        // Agence flow: create the profile as 'chauffeur' first; the
+        // promoteToAgence chaser (triggered by the pendingAgencyClaim
+        // useEffect once supabaseProfileId is ready) flips role + adds the
+        // agency name once the invitation code is validated server-side.
+        const baseRole: UserRole = selectedRole === 'agence' ? 'chauffeur' : selectedRole;
+        const vehicleType = baseRole === 'chauffeur' ? selectedVehicle : undefined;
+        const accommodationType = baseRole === 'hebergeur' ? selectedAccommodation : undefined;
         hasSetupProfile.current = true;
-        setupProfile(selectedRole, name, formData.email, vehicleType, userId, accommodationType);
+        setupProfile(baseRole, name, formData.email, vehicleType, userId, accommodationType);
+
+        if (selectedRole === 'agence' && agencyCode.trim()) {
+          setPendingAgencyClaim(agencyCode.trim());
+        }
 
         // Le metadata Clerk sera sauvegardé par le useEffect quand clerkUser sera disponible
 
@@ -477,7 +548,9 @@ export default function AuthScreen() {
     router.replace('/(protected)/(tabs)');
   };
 
-  const vehicleOptions = Object.values(VEHICLE_TYPES);
+  // 'camionnette' is retained in VEHICLE_TYPES for legacy DB rows but is no
+  // longer offered at signup — filter it out of the visible options.
+  const vehicleOptions = Object.values(VEHICLE_TYPES).filter((v) => v.type !== 'camionnette');
   const accommodationOptions = Object.values(ACCOMMODATION_TYPES);
 
   const codeDigits = verificationCode.split('');
@@ -968,6 +1041,8 @@ export default function AuthScreen() {
                           ? GOLD
                           : selectedRole === 'hebergeur'
                           ? VIOLET
+                          : selectedRole === 'agence'
+                          ? TEAL
                           : ACCENT,
                     },
                   ]}>
@@ -1039,8 +1114,63 @@ export default function AuthScreen() {
                         Hébergeur
                       </Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => handleRoleChange('agence')}
+                      style={[
+                        styles.rolePill,
+                        selectedRole === 'agence' ? styles.rolePillActiveAgence : styles.rolePillInactive,
+                      ]}>
+                      <Ionicons
+                        name="business"
+                        size={16}
+                        color={selectedRole === 'agence' ? TEAL : COLORS.gray[400]}
+                      />
+                      <Text
+                        style={[
+                          styles.rolePillText,
+                          selectedRole === 'agence' ? styles.rolePillTextActiveAgence : styles.rolePillTextInactive,
+                        ]}>
+                        Agence
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
+
+                {/* Champ code d'invitation agence */}
+                {selectedRole === 'agence' && !isLogin && (
+                  <View style={styles.agencyCodeSection}>
+                    <Text style={styles.sectionLabel}>Code d&apos;invitation agence</Text>
+                    <View
+                      style={[
+                        styles.inputContainer,
+                        focusedField === 'agencyCode' && styles.inputFocused,
+                        agencyClaimError && styles.inputError,
+                      ]}>
+                      <Ionicons name="key" size={16} color={TEAL} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="ZOPGO-AGENCE-XXXX"
+                        placeholderTextColor={COLORS.gray[400]}
+                        value={agencyCode}
+                        onChangeText={(t) => {
+                          setAgencyCode(t.toUpperCase());
+                          if (agencyClaimError) setAgencyClaimError(null);
+                        }}
+                        onFocus={() => setFocusedField('agencyCode')}
+                        onBlur={() => setFocusedField(null)}
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                      />
+                    </View>
+                    <Text style={styles.agencyCodeHint}>
+                      Le code t&apos;a été remis par ZopGo lors de la signature du partenariat. Il ne peut servir qu&apos;une seule fois.
+                    </Text>
+                    {agencyClaimError && (
+                      <Text style={styles.agencyCodeError}>{agencyClaimError}</Text>
+                    )}
+                  </View>
+                )}
 
                 {/* Sélecteur de véhicule (chauffeur) */}
                 {selectedRole === 'chauffeur' && (
@@ -1539,8 +1669,31 @@ const styles = StyleSheet.create({
   rolePillTextActiveHebergeur: {
     color: VIOLET,
   },
+  rolePillActiveAgence: {
+    borderColor: TEAL,
+    backgroundColor: 'rgba(13, 148, 136, 0.15)',
+    boxShadow: `0 2px 6px ${TEAL}26`,
+  },
+  rolePillTextActiveAgence: {
+    color: TEAL,
+  },
   rolePillTextInactive: {
     color: COLORS.gray[500],
+  },
+  agencyCodeSection: {
+    marginBottom: 10,
+  },
+  agencyCodeHint: {
+    marginTop: 6,
+    fontSize: 11,
+    color: COLORS.gray[500],
+    lineHeight: 15,
+  },
+  agencyCodeError: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#DC2626',
   },
   vehicleSection: {
     marginBottom: 10,
@@ -1636,6 +1789,9 @@ const styles = StyleSheet.create({
     borderColor: ACCENT,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     boxShadow: `0 0 8px ${ACCENT}26`,
+  },
+  inputError: {
+    borderColor: '#DC2626',
   },
   input: {
     flex: 1,

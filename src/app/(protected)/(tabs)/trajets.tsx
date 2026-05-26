@@ -16,7 +16,11 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
 import { computeChauffeurStats } from '../../../lib/chauffeurStats';
-import { VehicleType } from '../../../types';
+import {
+  VehicleType,
+  CHAUFFEUR_ALLOWED_VEHICLES,
+  AGENCE_ALLOWED_VEHICLES,
+} from '../../../types';
 
 const MARQUES: PickerOption[] = [
   'Toyota', 'Nissan', 'Mitsubishi', 'Hyundai', 'Kia', 'Suzuki', 'Honda',
@@ -41,14 +45,34 @@ function formatDateForDisplay(date: Date): string {
   return `${day}/${month}/${year} a ${hours}h${minutes}`;
 }
 
-const VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [
-  { type: 'voiture', label: 'Voiture', icon: '🚗' },
-  { type: 'camionnette', label: 'Camionnette', icon: '🚚' },
-  { type: 'bus', label: 'Bus', icon: '🚌' },
+// Mirrors the 6 categories exposed in the client-side TypeFilter — emojis
+// and labels intentionally identical so a published trajet renders with the
+// same icon the voyager filtered for. The visible subset for a given
+// transporteur is filtered by role at render time (individual = taxi/voiture,
+// agence = bus/train/avion/bateau) via CHAUFFEUR_ALLOWED_VEHICLES /
+// AGENCE_ALLOWED_VEHICLES from src/types.
+const ALL_VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [
+  { type: 'taxi',    label: 'Taxi',    icon: '🚕' },
+  { type: 'voiture', label: 'Voiture', icon: '🚙' },
+  { type: 'bus',     label: 'Bus',     icon: '🚌' },
+  { type: 'train',   label: 'Train',   icon: '🚆' },
+  { type: 'avion',   label: 'Avion',   icon: '✈️' },
+  { type: 'bateau',  label: 'Bateaux', icon: '🚢' },
 ];
 
 export default function TrajetsTab() {
   const { user, supabaseProfileId } = useAuthStore();
+  const isAgence = user?.role === 'agence';
+
+  // Whitelist the vehicle picker by role. Individual transporteurs can only
+  // publish taxi/voiture; agences are the only ones that can list bus/train/
+  // avion/bateau (because operating those requires a real company behind the
+  // sale of tickets — gated by an invitation code at signup).
+  const VEHICLE_OPTIONS = useMemo(() => {
+    const allowed = isAgence ? AGENCE_ALLOWED_VEHICLES : CHAUFFEUR_ALLOWED_VEHICLES;
+    return ALL_VEHICLE_OPTIONS.filter((opt) => allowed.includes(opt.type));
+  }, [isAgence]);
+
   const { trajets, formData, addTrajet, removeTrajet, markEffectue, updateForm, loadTrajets } = useTrajetsStore();
   const {
     chauffeurReservations,
@@ -72,6 +96,17 @@ export default function TrajetsTab() {
   useEffect(() => {
     shouldShowCoachMark('trajet').then(setCoachVisible);
   }, []);
+
+  // When the user's role changes (e.g. just promoted to agence) the
+  // currently-selected vehicle in the draft form may no longer be allowed —
+  // snap it to the first option in the new allowed set so the chip row is
+  // never rendered with nothing selected.
+  useEffect(() => {
+    const allowed = VEHICLE_OPTIONS.map((v) => v.type);
+    if (allowed.length > 0 && !allowed.includes(formData.vehicule as VehicleType)) {
+      updateForm('vehicule', allowed[0]);
+    }
+  }, [VEHICLE_OPTIONS, formData.vehicule, updateForm]);
 
   const dismissCoach = () => {
     setCoachVisible(false);
@@ -115,7 +150,7 @@ export default function TrajetsTab() {
       if (!supabaseProfileId) return;
       const r = chauffeurReservations.find((x) => x.id === reservationId);
       if (!r) return;
-      const chauffeurName = user?.profile?.name || 'Chauffeur';
+      const chauffeurName = user?.profile?.name || 'Transporteur';
       setBusyReservationId(reservationId);
       try {
         if (action === 'start') {
@@ -203,10 +238,12 @@ export default function TrajetsTab() {
           {/* Header */}
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
             <Text style={{ fontSize: 28, fontWeight: 'bold', color: 'white' }}>
-              Mes trajets
+              {isAgence ? 'Mes lignes' : 'Mes trajets'}
             </Text>
             <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>
-              Proposez des trajets aux voyageurs
+              {isAgence
+                ? 'Publiez vos lignes (bus, train, avion, bateaux) pour les voyageurs'
+                : 'Proposez des trajets aux voyageurs'}
             </Text>
           </View>
 
@@ -351,31 +388,56 @@ export default function TrajetsTab() {
               <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 8 }}>
                 Type de véhicule
               </Text>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-                {VEHICLE_OPTIONS.map((v) => (
-                  <TouchableOpacity
-                    key={v.type}
-                    onPress={() => updateForm('vehicule', v.type)}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 10,
-                      borderRadius: 12,
-                      backgroundColor: formData.vehicule === v.type ? COLORS.primary : COLORS.gray[100],
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ fontSize: 18 }}>{v.icon}</Text>
-                    <Text style={{
-                      fontSize: 12,
-                      fontWeight: '600',
-                      color: formData.vehicule === v.type ? 'white' : '#6B7280',
-                      marginTop: 2,
-                    }}>
-                      {v.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 10, paddingVertical: 2, paddingRight: 4 }}
+                style={{ marginBottom: 12, marginHorizontal: -2 }}
+              >
+                {VEHICLE_OPTIONS.map((v) => {
+                  const isActive = formData.vehicule === v.type;
+                  return (
+                    <TouchableOpacity
+                      key={v.type}
+                      activeOpacity={0.85}
+                      onPress={() => updateForm('vehicule', v.type)}
+                      accessibilityRole="button"
+                      accessibilityLabel={v.label}
+                      accessibilityState={{ selected: isActive }}
+                      style={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 16,
+                        borderWidth: 2,
+                        borderColor: isActive ? COLORS.primary : 'transparent',
+                        backgroundColor: isActive ? '#EEF4FF' : COLORS.gray[100],
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingHorizontal: 4,
+                        gap: 2,
+                        transform: isActive ? [{ scale: 1.04 }] : undefined,
+                      }}
+                    >
+                      <Text style={{
+                        fontSize: Platform.OS === 'ios' ? 26 : 24,
+                        lineHeight: Platform.OS === 'ios' ? 30 : 28,
+                      }}>
+                        {v.icon}
+                      </Text>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '700',
+                          color: isActive ? COLORS.primary : COLORS.gray[600],
+                        }}
+                      >
+                        {v.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
               {/* Marque et Modèle - côte à côte */}
               <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>

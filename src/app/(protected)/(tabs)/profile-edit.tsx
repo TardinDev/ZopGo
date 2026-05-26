@@ -19,15 +19,18 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '../../../constants';
 import { useAuthStore } from '../../../stores/authStore';
-import type { NotificationPreferences } from '../../../types';
+import type { AgencyProfile, NotificationPreferences } from '../../../types';
 import { uploadAvatar, generateAvatarPlaceholder } from '../../../lib/supabaseAvatar';
+import { uploadAgencyLogo, setAgencyLogoUrl } from '../../../lib/supabaseAgencyLogo';
 
 export default function ProfileEditScreen() {
   const router = useRouter();
-  const { user, updateProfile, notificationPreferences, setNotificationPreferences, clerkId } =
+  const { user, updateProfile, notificationPreferences, setNotificationPreferences, clerkId, supabaseProfileId } =
     useAuthStore();
 
   const profile = user?.profile;
+  const isAgence = user?.role === 'agence';
+  const agencyProfile = isAgence ? (profile as AgencyProfile) : null;
 
   const [formData, setFormData] = useState({
     name: profile?.name || '',
@@ -39,6 +42,8 @@ export default function ProfileEditScreen() {
 
   const [avatarUri, setAvatarUri] = useState<string>(profile?.avatar || '');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [logoUri, setLogoUri] = useState<string | null>(agencyProfile?.agencyLogoUrl ?? null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<NotificationPreferences>(notificationPreferences);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -95,6 +100,63 @@ export default function ProfileEditScreen() {
     } catch (error) {
       setIsUploadingAvatar(false);
       Alert.alert('Erreur', "Une erreur s'est produite lors de la sélection de l'image.");
+    }
+  };
+
+  const pickLogo = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission refusée',
+          "Nous avons besoin d'accéder à la galerie pour importer ton logo."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        // Square crop matches the round VoyageCard chip and the boarding-pass
+        // header treatment on voyage-detail.
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+      });
+      if (result.canceled || !result.assets[0]) return;
+
+      if (!supabaseProfileId || !clerkId) {
+        Alert.alert(
+          'Profil non synchronisé',
+          'Ton compte est encore en cours de synchronisation. Réessaie dans un instant.'
+        );
+        return;
+      }
+
+      const imageUri = result.assets[0].uri;
+      setLogoUri(imageUri);
+      setIsUploadingLogo(true);
+      const publicUrl = await uploadAgencyLogo(supabaseProfileId, imageUri);
+      if (!publicUrl) {
+        Alert.alert('Erreur', "Impossible d'envoyer le logo. Réessaie.");
+        setLogoUri(agencyProfile?.agencyLogoUrl ?? null);
+        setIsUploadingLogo(false);
+        return;
+      }
+
+      const persisted = await setAgencyLogoUrl(clerkId, publicUrl);
+      if (!persisted) {
+        Alert.alert(
+          'Logo envoyé mais non sauvegardé',
+          'Réessaie depuis ton profil. Si le problème persiste, contacte ZopGo.'
+        );
+      } else {
+        updateProfile({ agencyLogoUrl: publicUrl } as Partial<AgencyProfile>);
+        setLogoUri(publicUrl);
+      }
+      setIsUploadingLogo(false);
+    } catch {
+      setIsUploadingLogo(false);
+      Alert.alert('Erreur', "Une erreur s'est produite lors de l'import du logo.");
     }
   };
 
@@ -195,6 +257,83 @@ export default function ProfileEditScreen() {
             <Text className="mt-4 text-base font-semibold text-gray-800">{profile?.name}</Text>
             <Text className="text-sm text-gray-500">Appuyez sur l&apos;icône pour changer</Text>
           </View>
+
+          {/* Agency logo — only for role='agence'. The logo appears on every
+              VoyageCard the agency publishes, so this is the most important
+              setting for an agence account. */}
+          {isAgence && (
+            <View
+              style={{
+                marginBottom: 24,
+                backgroundColor: 'white',
+                borderRadius: 16,
+                padding: 24,
+              }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 4 }}>
+                Logo de l&apos;agence
+              </Text>
+              <Text style={{ fontSize: 13, color: COLORS.gray[500], marginBottom: 16 }}>
+                Ce logo apparaît sur tous les trajets que ton agence publie.
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={{
+                    width: 88,
+                    height: 88,
+                    borderRadius: 16,
+                    backgroundColor: '#F0FDFA',
+                    borderWidth: 2,
+                    borderColor: '#CCFBF1',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}>
+                  {logoUri ? (
+                    <Image source={{ uri: logoUri }} style={{ width: 88, height: 88 }} />
+                  ) : (
+                    <Ionicons name="business" size={36} color="#0D9488" />
+                  )}
+                  {isUploadingLogo && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <ActivityIndicator color="white" />
+                    </View>
+                  )}
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A' }}>
+                    {agencyProfile?.agencyName || 'Mon agence'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={pickLogo}
+                    disabled={isUploadingLogo}
+                    style={{
+                      marginTop: 8,
+                      alignSelf: 'flex-start',
+                      backgroundColor: '#0D9488',
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 10,
+                      opacity: isUploadingLogo ? 0.6 : 1,
+                    }}
+                    activeOpacity={0.85}>
+                    <Text style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>
+                      {logoUri ? 'Changer le logo' : 'Importer un logo'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Personal Information */}
           <View className="mb-6 rounded-2xl bg-white p-6 shadow-sm">

@@ -246,7 +246,7 @@ describe('Flow 1 — Chauffeur publishes trajet → Client voyages list', () => 
         from: 'Libreville',
         to: 'Franceville',
         price: '15000 FCFA',
-        icon: '🚗',
+        icon: '🚙',
         chauffeurName: 'Pierre',
         chauffeurAvatar: 'pierre.jpg',
         chauffeurRating: 4.7,

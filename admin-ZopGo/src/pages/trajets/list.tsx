@@ -17,7 +17,13 @@ export function TrajetList() {
     const { tableProps } = useTable<DbTrajet>({
         resource: "trajets",
         sorters: { initial: [{ field: "created_at", order: "desc" }] },
-        meta: { select: "*, chauffeur:chauffeur_id(id, name, avatar)" },
+        // Pull the publisher's role + agency identity so the table can
+        // surface an "AGENCE" badge instead of treating every trajet as a
+        // pseudonymous individual chauffeur.
+        meta: {
+            select:
+                "*, chauffeur:chauffeur_id(id, name, avatar, role, agency_name, agency_logo_url)",
+        },
     });
 
     return (
@@ -49,16 +55,42 @@ export function TrajetList() {
                 />
 
                 <Table.Column<DbTrajet>
-                    title="Chauffeur"
-                    width={180}
-                    render={(_, r) => (
-                        <Space>
-                            <Avatar size={28} src={r.chauffeur?.avatar}>
-                                {r.chauffeur?.name?.[0] ?? "?"}
-                            </Avatar>
-                            <Text>{r.chauffeur?.name ?? "—"}</Text>
-                        </Space>
-                    )}
+                    title="Publié par"
+                    width={220}
+                    render={(_, r) => {
+                        const isAgence = r.chauffeur?.role === "agence";
+                        const displayName = isAgence
+                            ? r.chauffeur?.agency_name ?? r.chauffeur?.name ?? "—"
+                            : r.chauffeur?.name ?? "—";
+                        const avatarSrc = isAgence
+                            ? r.chauffeur?.agency_logo_url ?? undefined
+                            : r.chauffeur?.avatar;
+                        return (
+                            <Space>
+                                <Avatar
+                                    size={28}
+                                    src={avatarSrc}
+                                    shape={isAgence ? "square" : "circle"}
+                                    style={isAgence ? { borderRadius: 6 } : undefined}
+                                >
+                                    {displayName?.[0] ?? "?"}
+                                </Avatar>
+                                <Space direction="vertical" size={1}>
+                                    <Text style={{ fontSize: 13, fontWeight: isAgence ? 600 : 400 }}>
+                                        {displayName}
+                                    </Text>
+                                    {isAgence && (
+                                        <Tag
+                                            color="cyan"
+                                            style={{ fontSize: 10, lineHeight: "14px", margin: 0 }}
+                                        >
+                                            AGENCE
+                                        </Tag>
+                                    )}
+                                </Space>
+                            </Space>
+                        );
+                    }}
                 />
 
                 <Table.Column<DbTrajet>

@@ -3,9 +3,15 @@
  */
 
 import { Tag } from "antd";
-import { STATUS_COLORS, TRIP_STATUS_LABELS, DELIVERY_STATUS_LABELS, TRAJET_STATUS_LABELS } from "@/config/constants";
+import {
+    STATUS_COLORS,
+    TRIP_STATUS_LABELS,
+    DELIVERY_STATUS_LABELS,
+    TRAJET_STATUS_LABELS,
+    RESERVATION_STATUS_LABELS,
+} from "@/config/constants";
 
-type StatusType = "trip" | "delivery" | "trajet";
+type StatusType = "trip" | "delivery" | "trajet" | "reservation";
 
 interface StatusTagProps {
     status: string;
@@ -16,6 +22,7 @@ const LABELS_MAP: Record<StatusType, Record<string, string>> = {
     trip: TRIP_STATUS_LABELS,
     delivery: DELIVERY_STATUS_LABELS,
     trajet: TRAJET_STATUS_LABELS,
+    reservation: RESERVATION_STATUS_LABELS,
 };
 
 export function StatusTag({ status, type = "trip" }: StatusTagProps) {

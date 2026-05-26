@@ -151,8 +151,8 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
           type: 'trajet_annule',
           title: 'Trajet annulé',
           body: routeLabel
-            ? `Le chauffeur a annulé le trajet ${routeLabel}`
-            : 'Le chauffeur a annulé un trajet que vous aviez réservé',
+            ? `Le transporteur a annulé le trajet ${routeLabel}`
+            : 'Le transporteur a annulé un trajet que vous aviez réservé',
           icon: 'close-circle',
           iconColor: '#EF4444',
           iconBg: '#FEE2E2',
@@ -196,8 +196,8 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
             type: 'trajet_termine',
             title: 'Trajet terminé',
             body: routeLabel
-              ? `${routeLabel} — Laissez un avis à votre chauffeur`
-              : 'Laissez un avis à votre chauffeur',
+              ? `${routeLabel} — Laissez un avis à votre transporteur`
+              : 'Laissez un avis à votre transporteur',
             icon: 'checkmark-done-circle',
             iconColor: '#10B981',
             iconBg: '#D1FAE5',

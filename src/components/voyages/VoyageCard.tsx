@@ -66,8 +66,24 @@ export function VoyageCard({ voyage, onPress, index = 0 }: VoyageCardProps) {
               {voyage.type} • {voyage.price}
             </Text>
 
-            {/* Creator info */}
-            {voyage.chauffeurName && (
+            {/* Creator info — agency identity wins over individual chauffeur
+                avatar when the trajet is published by an agence. */}
+            {voyage.isAgence && voyage.agencyName ? (
+              <View style={styles.creatorRow}>
+                {voyage.agencyLogoUrl ? (
+                  <Image source={{ uri: voyage.agencyLogoUrl }} style={styles.agencyLogo} />
+                ) : (
+                  <View style={[styles.agencyLogo, styles.agencyLogoPlaceholder]}>
+                    <Ionicons name="business" size={14} color={COLORS.primary} />
+                  </View>
+                )}
+                <Text style={styles.agencyName} numberOfLines={1}>{voyage.agencyName}</Text>
+                <View style={styles.agencyBadge}>
+                  <Ionicons name="checkmark-circle" size={12} color="#0D9488" />
+                  <Text style={styles.agencyBadgeText}>Agence</Text>
+                </View>
+              </View>
+            ) : voyage.chauffeurName ? (
               <View style={styles.creatorRow}>
                 {voyage.chauffeurAvatar ? (
                   <Image source={{ uri: voyage.chauffeurAvatar }} style={styles.avatar} />
@@ -84,7 +100,7 @@ export function VoyageCard({ voyage, onPress, index = 0 }: VoyageCardProps) {
                   </View>
                 )}
               </View>
-            )}
+            ) : null}
 
             {/* Meta info */}
             <View style={styles.metaRow}>
@@ -189,4 +205,38 @@ const styles = StyleSheet.create({
   },
   availabilityText: { fontSize: 12, fontWeight: '700' },
   icon: { fontSize: 32 },
+  agencyLogo: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'white',
+  },
+  agencyLogoPlaceholder: {
+    backgroundColor: '#EEF4FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  agencyName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.gray[800],
+    marginLeft: 8,
+    flexShrink: 1,
+  },
+  agencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginLeft: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(13, 148, 136, 0.12)',
+  },
+  agencyBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0D9488',
+    letterSpacing: 0.3,
+  },
 });

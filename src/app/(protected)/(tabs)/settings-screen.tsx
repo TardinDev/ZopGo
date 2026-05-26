@@ -8,7 +8,7 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import { COLORS } from '../../../constants';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore } from '../../../stores/authStore';
-import { LogoutSheet, ModeTransition } from '../../../components/ui';
+import { LogoutSheet, ModeTransition, AgencyClaimSheet } from '../../../components/ui';
 import {
   getPushPermissionStatus,
   requestPushPermission,
@@ -21,10 +21,11 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user: clerkUser } = useUser();
-  const { user, logout, switchRole } = useAuthStore();
+  const { user, logout, switchRole, promoteToAgence } = useAuthStore();
   const { generalSettings, updateGeneralSettings } = useSettingsStore();
   const [isDeleting, setIsDeleting] = useState(false);
   const [logoutSheetVisible, setLogoutSheetVisible] = useState(false);
+  const [agencyClaimVisible, setAgencyClaimVisible] = useState(false);
   const [transitionRole, setTransitionRole] = useState<UserRole | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [requestingPush, setRequestingPush] = useState(false);
@@ -75,7 +76,34 @@ export default function SettingsScreen() {
     ? [user.role]
     : []) as UserRole[];
 
+  const isAlreadyAgence = availableRoles.includes('agence');
+
   const openLogoutSheet = () => setLogoutSheetVisible(true);
+
+  const handleClaimAgency = useCallback(
+    async (code: string) => {
+      const result = await promoteToAgence(code);
+      if (result.ok) {
+        // Persist to Clerk metadata so cold-restart resolves role='agence'
+        // without flashing the chauffeur tabs first.
+        if (clerkUser) {
+          clerkUser
+            .update({
+              unsafeMetadata: { ...(clerkUser.unsafeMetadata ?? {}), role: 'agence' },
+            })
+            .catch((err) => {
+              if (__DEV__) console.warn('agence claim Clerk persist failed:', err);
+            });
+        }
+        toast.success('Bienvenue dans la team Agence ZopGo !', {
+          title: result.agencyName,
+        });
+        return { ok: true as const, agencyName: result.agencyName };
+      }
+      return { ok: false as const, message: result.message };
+    },
+    [promoteToAgence, clerkUser]
+  );
 
   const handleSwitchRole = useCallback(
     (newRole: UserRole) => {
@@ -338,7 +366,7 @@ export default function SettingsScreen() {
                   Partage de localisation
                 </Text>
                 <Text className="text-sm text-gray-500">
-                  Partager votre position avec les chauffeurs
+                  Partager votre position avec les transporteurs
                 </Text>
               </View>
             </View>
@@ -370,6 +398,47 @@ export default function SettingsScreen() {
             <Text className="text-base font-medium text-gray-800">ZopGo</Text>
           </View>
         </View>
+
+        {/* Become an agency — visible to any account that has NOT yet claimed
+            an agency invitation code. Tapping opens a sheet that calls the
+            same promoteToAgence flow used at signup, just from an existing
+            account. */}
+        {!isAlreadyAgence && (
+          <TouchableOpacity
+            onPress={() => setAgencyClaimVisible(true)}
+            activeOpacity={0.85}
+            style={{
+              marginBottom: 12,
+              backgroundColor: 'white',
+              borderRadius: 16,
+              padding: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
+            }}>
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: '#F0FDFA',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 12,
+              }}>
+              <Ionicons name="business" size={22} color="#0D9488" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
+                Je deviens une agence
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 12, color: COLORS.gray[500] }}>
+                Saisis ton code d&apos;invitation ZopGo (bus, train, avion, bateaux).
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
+          </TouchableOpacity>
+        )}
 
         {/* Logout / switch mode */}
         <TouchableOpacity
@@ -419,6 +488,12 @@ export default function SettingsScreen() {
         role={transitionRole ?? 'client'}
         onComplete={handleTransitionComplete}
         quick
+      />
+
+      <AgencyClaimSheet
+        visible={agencyClaimVisible}
+        onClose={() => setAgencyClaimVisible(false)}
+        onClaim={handleClaimAgency}
       />
     </SafeAreaView>
   );

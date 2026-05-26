@@ -84,7 +84,7 @@ export function GlobalRatingPrompt() {
       visible={!!pending}
       onClose={handleClose}
       onSubmit={handleSubmit}
-      userName={pending.chauffeurName || 'le chauffeur'}
+      userName={pending.chauffeurName || 'le transporteur'}
       tripType="voyage"
     />
   );

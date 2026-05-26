@@ -115,6 +115,8 @@ jest.mock('./src/lib/supabase', () => {
       // useSupabaseSubscription hook).
       channel: jest.fn(() => mockChannel),
       removeChannel: jest.fn(),
+      // RPC (used by claim_agency_code in supabaseAgencyInvitations).
+      rpc: jest.fn(),
     },
     setClerkTokenProvider: jest.fn(),
   };

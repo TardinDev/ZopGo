@@ -535,15 +535,38 @@ describe('chauffeurToLivreur', () => {
 
 describe('VEHICLE_TYPES', () => {
   it('has all vehicle types', () => {
-    expect(Object.keys(VEHICLE_TYPES)).toEqual(['velo', 'moto', 'voiture', 'camionnette', 'bus']);
+    // Order matters here — auth.tsx renders the picker via Object.values()
+    // and the order drives display order in signup.
+    expect(Object.keys(VEHICLE_TYPES)).toEqual([
+      'velo',
+      'moto',
+      'taxi',
+      'voiture',
+      'camionnette',
+      'bus',
+      'train',
+      'avion',
+      'bateau',
+    ]);
   });
 
   it('exposes Bus with the right icon', () => {
     expect(VEHICLE_TYPES.bus).toEqual({ type: 'bus', label: 'Bus', icon: '🚌' });
   });
 
+  it('exposes the new transport modes (taxi, train, avion, bateau)', () => {
+    expect(VEHICLE_TYPES.taxi).toEqual({ type: 'taxi', label: 'Taxi', icon: '🚕' });
+    expect(VEHICLE_TYPES.train).toEqual({ type: 'train', label: 'Train', icon: '🚆' });
+    expect(VEHICLE_TYPES.avion).toEqual({ type: 'avion', label: 'Avion', icon: '✈️' });
+    expect(VEHICLE_TYPES.bateau).toEqual({ type: 'bateau', label: 'Bateaux', icon: '🚢' });
+  });
+
   it('still exposes moto (kept for livraisons + legacy chauffeur profiles)', () => {
     expect(VEHICLE_TYPES.moto.type).toBe('moto');
+  });
+
+  it('still exposes camionnette for legacy DB rows even though it is no longer offered', () => {
+    expect(VEHICLE_TYPES.camionnette.type).toBe('camionnette');
   });
 });
 

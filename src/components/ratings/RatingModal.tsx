@@ -26,7 +26,7 @@ export function RatingModal({
   visible,
   onClose,
   onSubmit,
-  userName = 'le chauffeur',
+  userName = 'le transporteur',
   tripType = 'voyage',
 }: RatingModalProps) {
   const [rating, setRating] = useState(0);

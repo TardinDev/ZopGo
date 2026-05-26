@@ -79,6 +79,23 @@ const SUGGESTIONS: Record<UserRole, Suggestion[]> = {
       gradient: ['#EEF4FF', '#DBEAFE'],
     },
   ],
+  agence: [
+    {
+      text: 'Comment publier une nouvelle ligne ?',
+      icon: 'map-marker-path',
+      gradient: ['#ECFEFF', '#A5F3FC'],
+    },
+    {
+      text: 'Comment gérer mon logo et mes infos agence ?',
+      icon: 'office-building-outline',
+      gradient: ['#F0FDFA', '#99F6E4'],
+    },
+    {
+      text: 'Comment voir mes statistiques de vente ?',
+      icon: 'chart-line',
+      gradient: ['#ECFDF5', '#A7F3D0'],
+    },
+  ],
 };
 
 const WELCOME_TEXT: Record<UserRole, string> = {
@@ -88,12 +105,15 @@ const WELCOME_TEXT: Record<UserRole, string> = {
     'Je peux vous aider à gérer vos trajets, optimiser vos revenus et améliorer votre profil.',
   hebergeur:
     'Je peux vous aider à gérer vos annonces, optimiser vos tarifs et améliorer vos avis.',
+  agence:
+    'Je peux vous aider à publier vos lignes (bus, train, avion, bateaux), gérer vos vendeurs et suivre vos ventes.',
 };
 
 const ROLE_BADGE: Record<UserRole, { label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }> = {
   client: { label: 'Mode client', icon: 'account-outline' },
-  chauffeur: { label: 'Mode chauffeur', icon: 'steering' },
+  chauffeur: { label: 'Mode transporteur', icon: 'steering' },
   hebergeur: { label: 'Mode hébergeur', icon: 'bed-outline' },
+  agence: { label: 'Mode agence', icon: 'office-building-outline' },
 };
 
 function PulsingRing({ delay, size }: { delay: number; size: number }) {
