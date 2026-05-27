@@ -186,16 +186,16 @@ describe('validatePlaces', () => {
     expect(validatePlaces(1)).toBe(true);
   });
 
-  it('returns true for 8', () => {
-    expect(validatePlaces(8)).toBe(true);
+  it('returns true for 100', () => {
+    expect(validatePlaces(100)).toBe(true);
   });
 
   it('returns false for 0', () => {
     expect(validatePlaces(0)).toBe(false);
   });
 
-  it('returns false for 9', () => {
-    expect(validatePlaces(9)).toBe(false);
+  it('returns false for 101', () => {
+    expect(validatePlaces(101)).toBe(false);
   });
 
   it('returns false for float', () => {

@@ -31,7 +31,7 @@ const COULEURS: PickerOption[] = [
   'Blanc', 'Noir', 'Gris', 'Argent', 'Bleu', 'Rouge', 'Vert', 'Jaune', 'Orange', 'Marron', 'Beige',
 ].map((c) => ({ value: c, label: c }));
 
-const PLACES: PickerOption[] = Array.from({ length: 8 }, (_, i) => ({
+const PLACES: PickerOption[] = Array.from({ length: 100 }, (_, i) => ({
   value: String(i + 1),
   label: `${i + 1} place${i + 1 > 1 ? 's' : ''}`,
 }));
@@ -48,7 +48,7 @@ function formatDateForDisplay(date: Date): string {
 // Mirrors the 6 categories exposed in the client-side TypeFilter — emojis
 // and labels intentionally identical so a published trajet renders with the
 // same icon the voyager filtered for. The visible subset for a given
-// transporteur is filtered by role at render time (individual = taxi/voiture,
+// transporteur is filtered by role at render time (individual = taxi/voiture/bus,
 // agence = bus/train/avion/bateau) via CHAUFFEUR_ALLOWED_VEHICLES /
 // AGENCE_ALLOWED_VEHICLES from src/types.
 const ALL_VEHICLE_OPTIONS: { type: VehicleType; label: string; icon: string }[] = [

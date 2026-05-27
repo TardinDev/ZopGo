@@ -48,7 +48,7 @@ export const validatePrice = (price: number): boolean => {
 };
 
 export const validatePlaces = (n: number): boolean => {
-  return Number.isInteger(n) && n >= 1 && n <= 8;
+  return Number.isInteger(n) && n >= 1 && n <= 100;
 };
 
 /**

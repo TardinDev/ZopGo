@@ -245,11 +245,12 @@ export interface VehicleInfo {
 }
 
 // Categories an account is allowed to publish trajets in.
-// Individual chauffeur → taxi / voiture only.
-// Agence              → bus / train / avion / bateau only.
+// Individual chauffeur → taxi / voiture / bus (mini-bus, taxi-bus).
+// Agence              → bus / train / avion / bateau.
 export const CHAUFFEUR_ALLOWED_VEHICLES: ReadonlyArray<VehicleType> = [
   'taxi',
   'voiture',
+  'bus',
 ];
 export const AGENCE_ALLOWED_VEHICLES: ReadonlyArray<VehicleType> = [
   'bus',
