@@ -85,7 +85,7 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
           chauffeurProfileId: t.chauffeur_id,
           placesDisponibles: t.places_disponibles,
           date: t.date || undefined,
-          marque: t.marque || undefined,
+          immatriculation: t.immatriculation || undefined,
           modele: t.modele || undefined,
           couleur: t.couleur || undefined,
           isAgence,

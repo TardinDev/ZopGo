@@ -30,7 +30,7 @@ export function VoyageCard({ voyage, onPress, index = 0 }: VoyageCardProps) {
     ? new Date(voyage.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
     : null;
 
-  const vehicleDetails = [voyage.marque, voyage.modele, voyage.couleur]
+  const vehicleDetails = [voyage.immatriculation, voyage.modele, voyage.couleur]
     .filter(Boolean)
     .join(' · ') || null;
 

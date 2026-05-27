@@ -87,6 +87,7 @@ describe('supabaseTrajets', () => {
         prix: 15000,
         vehicule: 'voiture',
         places_disponibles: 4,
+        immatriculation: 'GA-123-AB',
       });
 
       expect(supabase.from).toHaveBeenCalledWith('trajets');
@@ -108,8 +109,23 @@ describe('supabaseTrajets', () => {
           prix: 15000,
           vehicule: 'voiture',
           places_disponibles: 4,
+          immatriculation: 'GA-123-AB',
         })
       ).rejects.toThrow('Insert error');
+    });
+
+    it('throws for missing immatriculation', async () => {
+      await expect(
+        insertTrajet({
+          chauffeur_id: 'c1',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Franceville',
+          prix: 15000,
+          vehicule: 'voiture',
+          places_disponibles: 4,
+        })
+      ).rejects.toThrow(/immatriculation/i);
+      expect(supabase.from).not.toHaveBeenCalled();
     });
 
     it('throws for invalid city', async () => {

@@ -137,7 +137,7 @@ export default function VoyageDetailScreen() {
     driverAvatar: String(params.chauffeurAvatar || ''),
     chauffeurProfileId: String(params.chauffeurProfileId || ''),
     date: String(params.date || ''),
-    marque: String(params.marque || ''),
+    immatriculation: String(params.immatriculation || ''),
     modele: String(params.modele || ''),
     couleur: String(params.couleur || ''),
     // Forwarded from the voyages list when the publishing profile has
@@ -152,7 +152,9 @@ export default function VoyageDetailScreen() {
   const availability = getVoyageAvailability(voyage.availableSeats);
   const dateLabel = formatLongDate(voyage.date);
   const timeLabel = formatTime(voyage.date);
-  const vehicleSpecs = [voyage.marque, voyage.modele, voyage.couleur].filter(Boolean).join(' ');
+  const vehicleSpecs = [voyage.immatriculation, voyage.modele, voyage.couleur]
+    .filter(Boolean)
+    .join(' · ');
   const fromCode = cityCode(voyage.from);
   const toCode = cityCode(voyage.to);
 

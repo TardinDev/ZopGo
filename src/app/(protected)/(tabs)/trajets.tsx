@@ -16,16 +16,12 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
 import { computeChauffeurStats } from '../../../lib/chauffeurStats';
+import { validateImmatriculation } from '../../../utils/validation';
 import {
   VehicleType,
   CHAUFFEUR_ALLOWED_VEHICLES,
   AGENCE_ALLOWED_VEHICLES,
 } from '../../../types';
-
-const MARQUES: PickerOption[] = [
-  'Toyota', 'Nissan', 'Mitsubishi', 'Hyundai', 'Kia', 'Suzuki', 'Honda',
-  'Mercedes', 'Peugeot', 'Renault', 'Ford', 'Volkswagen', 'BMW', 'Chevrolet', 'Isuzu',
-].map((m) => ({ value: m, label: m }));
 
 const COULEURS: PickerOption[] = [
   'Blanc', 'Noir', 'Gris', 'Argent', 'Bleu', 'Rouge', 'Vert', 'Jaune', 'Orange', 'Marron', 'Beige',
@@ -87,7 +83,6 @@ export default function TrajetsTab() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [showMarquePicker, setShowMarquePicker] = useState(false);
   const [showCouleurPicker, setShowCouleurPicker] = useState(false);
   const [showPlacesPicker, setShowPlacesPicker] = useState(false);
   const [confettiVisible, setConfettiVisible] = useState(false);
@@ -192,6 +187,13 @@ export default function TrajetsTab() {
   const handlePublish = async () => {
     if (!formData.villeDepart.trim() || !formData.villeArrivee.trim() || !formData.prix.trim()) {
       toast.error('Remplis la ville de départ, d\'arrivée et le prix.', { title: 'Champs requis' });
+      return;
+    }
+    if (!validateImmatriculation(formData.immatriculation)) {
+      toast.error(
+        "Saisis le numéro d'immatriculation de ton véhicule (ex: AB-123-CD).",
+        { title: 'Immatriculation requise' }
+      );
       return;
     }
     if (!user) return;
@@ -439,28 +441,30 @@ export default function TrajetsTab() {
                 })}
               </ScrollView>
 
-              {/* Marque et Modèle - côte à côte */}
+              {/* Immatriculation (obligatoire) et Modèle - côte à côte */}
               <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
-                    Marque
+                    Immatriculation <Text style={{ color: COLORS.error }}>*</Text>
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowMarquePicker(true)}
+                  <TextInput
                     style={{
                       backgroundColor: COLORS.gray[100],
                       borderRadius: 12,
                       paddingHorizontal: 16,
                       paddingVertical: 12,
-                    }}
-                  >
-                    <Text style={{
                       fontSize: 15,
-                      color: formData.marque ? COLORS.gray[800] : COLORS.gray[400],
-                    }}>
-                      {formData.marque || 'Choisir'}
-                    </Text>
-                  </TouchableOpacity>
+                      color: COLORS.gray[800],
+                      letterSpacing: 1,
+                    }}
+                    placeholder="AB-123-CD"
+                    placeholderTextColor={COLORS.gray[400]}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    maxLength={15}
+                    value={formData.immatriculation}
+                    onChangeText={(v) => updateForm('immatriculation', v.toUpperCase())}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.gray[500], marginBottom: 6 }}>
@@ -639,9 +643,9 @@ export default function TrajetsTab() {
                           <Text style={{ fontSize: 13, color: COLORS.gray[500], marginTop: 2 }}>
                             {trajet.placesDisponibles} place{trajet.placesDisponibles > 1 ? 's' : ''} · {trajet.date ? new Date(trajet.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Date non définie'}
                           </Text>
-                          {[trajet.marque, trajet.modele, trajet.couleur].filter(Boolean).length > 0 && (
+                          {[trajet.immatriculation, trajet.modele, trajet.couleur].filter(Boolean).length > 0 && (
                             <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 2 }}>
-                              {[trajet.marque, trajet.modele, trajet.couleur].filter(Boolean).join(' · ')}
+                              {[trajet.immatriculation, trajet.modele, trajet.couleur].filter(Boolean).join(' · ')}
                             </Text>
                           )}
                         </View>
@@ -698,15 +702,6 @@ export default function TrajetsTab() {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </LinearGradient>
-
-      <PickerModal
-        visible={showMarquePicker}
-        title="Marque du véhicule"
-        options={MARQUES}
-        selectedValue={formData.marque}
-        onSelect={(v) => updateForm('marque', v)}
-        onClose={() => setShowMarquePicker(false)}
-      />
 
       <PickerModal
         visible={showCouleurPicker}

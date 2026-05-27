@@ -12,7 +12,7 @@ export interface Voyage {
   chauffeurProfileId?: string;
   placesDisponibles?: number;
   date?: string;
-  marque?: string;
+  immatriculation?: string;
   modele?: string;
   couleur?: string;
   // Populated when the publishing profile has role='agence' (migration 027).
@@ -212,7 +212,7 @@ export interface Trajet {
   placesDisponibles: number;
   status: TrajetStatus;
   createdAt: string; // ISO string
-  marque?: string;
+  immatriculation?: string;
   modele?: string;
   couleur?: string;
 }

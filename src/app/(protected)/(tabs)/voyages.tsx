@@ -118,7 +118,7 @@ export default function VoyagesTab() {
           chauffeurProfileId: voyage.chauffeurProfileId || '',
           placesDisponibles: voyage.placesDisponibles?.toString() || '',
           date: voyage.date || '',
-          marque: voyage.marque || '',
+          immatriculation: voyage.immatriculation || '',
           modele: voyage.modele || '',
           couleur: voyage.couleur || '',
           // Forward agency identity so voyage-detail can swap the

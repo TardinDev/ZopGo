@@ -1,5 +1,11 @@
 import { supabase } from './supabase';
-import { sanitizeInput, validateCity, validatePrice, validatePlaces } from '../utils/validation';
+import {
+  sanitizeInput,
+  validateCity,
+  validatePrice,
+  validatePlaces,
+  validateImmatriculation,
+} from '../utils/validation';
 
 export interface SupabaseTrajet {
   id: string;
@@ -12,7 +18,7 @@ export interface SupabaseTrajet {
   places_disponibles: number;
   status: string;
   created_at: string;
-  marque: string | null;
+  immatriculation: string | null;
   modele: string | null;
   couleur: string | null;
   profiles?: {
@@ -48,7 +54,7 @@ export async function insertTrajet(trajet: {
   vehicule: string;
   date?: string;
   places_disponibles: number;
-  marque?: string;
+  immatriculation?: string;
   modele?: string;
   couleur?: string;
 }): Promise<SupabaseTrajet> {
@@ -64,12 +70,16 @@ export async function insertTrajet(trajet: {
     console.warn('[insertTrajet] FAILED: invalid places', trajet.places_disponibles);
     throw new Error('Nombre de places invalide.');
   }
+  if (!validateImmatriculation(trajet.immatriculation)) {
+    console.warn('[insertTrajet] FAILED: invalid immatriculation', trajet.immatriculation);
+    throw new Error("Numéro d'immatriculation invalide.");
+  }
 
   const sanitizedTrajet = {
     ...trajet,
     ville_depart: sanitizeInput(trajet.ville_depart),
     ville_arrivee: sanitizeInput(trajet.ville_arrivee),
-    marque: trajet.marque ? sanitizeInput(trajet.marque) : undefined,
+    immatriculation: trajet.immatriculation ? sanitizeInput(trajet.immatriculation).toUpperCase() : undefined,
     modele: trajet.modele ? sanitizeInput(trajet.modele) : undefined,
     couleur: trajet.couleur ? sanitizeInput(trajet.couleur) : undefined,
   };

@@ -51,6 +51,19 @@ export const validatePlaces = (n: number): boolean => {
   return Number.isInteger(n) && n >= 1 && n <= 100;
 };
 
+// Plate format isn't standardized across the region (Gabon, Cameroun, Congo all
+// differ — and visitors transit with foreign plates), so we don't lock to a
+// single regex. Require a non-empty alphanumeric string of plausible length
+// with at least one digit and one letter — strict enough to reject obvious
+// junk ("xxx", "1234"), loose enough not to reject valid foreign formats.
+export const validateImmatriculation = (plate: string | undefined | null): boolean => {
+  if (!plate) return false;
+  const trimmed = plate.trim().toUpperCase();
+  if (trimmed.length < 4 || trimmed.length > 15) return false;
+  if (!/^[A-Z0-9\s-]+$/.test(trimmed)) return false;
+  return /[A-Z]/.test(trimmed) && /[0-9]/.test(trimmed);
+};
+
 /**
  * Valide un email
  */

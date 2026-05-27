@@ -5,6 +5,7 @@ import {
   validateCity,
   validatePrice,
   validatePlaces,
+  validateImmatriculation,
   validateEmail,
   validatePhone,
   validateAmount,
@@ -204,6 +205,51 @@ describe('validatePlaces', () => {
 
   it('returns false for negative', () => {
     expect(validatePlaces(-1)).toBe(false);
+  });
+});
+
+// ─── validateImmatriculation ────────────────────────────────────────
+
+describe('validateImmatriculation', () => {
+  it('accepts a Gabon-style plate with dashes', () => {
+    expect(validateImmatriculation('GA-123-AB')).toBe(true);
+  });
+
+  it('accepts a plate with spaces', () => {
+    expect(validateImmatriculation('AB 123 CD')).toBe(true);
+  });
+
+  it('accepts lowercase input (normalized)', () => {
+    expect(validateImmatriculation('ga-123-ab')).toBe(true);
+  });
+
+  it('rejects empty string', () => {
+    expect(validateImmatriculation('')).toBe(false);
+  });
+
+  it('rejects null/undefined', () => {
+    expect(validateImmatriculation(null)).toBe(false);
+    expect(validateImmatriculation(undefined)).toBe(false);
+  });
+
+  it('rejects digits-only', () => {
+    expect(validateImmatriculation('123456')).toBe(false);
+  });
+
+  it('rejects letters-only', () => {
+    expect(validateImmatriculation('ABCDEF')).toBe(false);
+  });
+
+  it('rejects too short', () => {
+    expect(validateImmatriculation('A1')).toBe(false);
+  });
+
+  it('rejects too long', () => {
+    expect(validateImmatriculation('ABCDE-12345-FGHIJK')).toBe(false);
+  });
+
+  it('rejects illegal characters', () => {
+    expect(validateImmatriculation('AB@123#CD')).toBe(false);
   });
 });
 

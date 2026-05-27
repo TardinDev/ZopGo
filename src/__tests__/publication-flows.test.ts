@@ -40,7 +40,7 @@ interface FakeSupabaseTrajet {
   places_disponibles: number;
   status: string;
   created_at: string;
-  marque: string | null;
+  immatriculation: string | null;
   modele: string | null;
   couleur: string | null;
   profiles?: { name: string; avatar: string; rating: number } | null;
@@ -88,7 +88,7 @@ beforeEach(() => {
       vehicule: 'voiture',
       date: '',
       placesDisponibles: '1',
-      marque: '',
+      immatriculation: '',
       modele: '',
       couleur: '',
     },
@@ -137,7 +137,7 @@ beforeEach(() => {
       places_disponibles: payload.places_disponibles,
       status: 'en_attente', // default from migration 002
       created_at: new Date().toISOString(),
-      marque: payload.marque ?? null,
+      immatriculation: payload.immatriculation ?? null,
       modele: payload.modele ?? null,
       couleur: payload.couleur ?? null,
       profiles: FAKE_PROFILE,
@@ -193,7 +193,7 @@ describe('Flow 1 — Chauffeur publishes trajet → Client voyages list', () => 
     prix: string;
     vehicule: 'moto' | 'voiture' | 'camionnette';
     placesDisponibles: string;
-    marque: string;
+    immatriculation: string;
     modele: string;
     couleur: string;
   }> = {}) {
@@ -205,7 +205,7 @@ describe('Flow 1 — Chauffeur publishes trajet → Client voyages list', () => 
         vehicule: overrides.vehicule ?? 'voiture',
         date: '2026-06-01T10:00:00.000Z',
         placesDisponibles: overrides.placesDisponibles ?? '4',
-        marque: overrides.marque ?? 'Toyota',
+        immatriculation: overrides.immatriculation ?? 'GA-123-AB',
         modele: overrides.modele ?? 'Corolla',
         couleur: overrides.couleur ?? 'Blanc',
       },
@@ -228,7 +228,7 @@ describe('Flow 1 — Chauffeur publishes trajet → Client voyages list', () => 
         prix: 15000,
         vehicule: 'voiture',
         places_disponibles: 4,
-        marque: 'Toyota',
+        immatriculation: 'GA-123-AB',
         modele: 'Corolla',
         couleur: 'Blanc',
       })
@@ -252,7 +252,7 @@ describe('Flow 1 — Chauffeur publishes trajet → Client voyages list', () => 
         chauffeurRating: 4.7,
         chauffeurProfileId: 'supa_chauffeur_1',
         placesDisponibles: 4,
-        marque: 'Toyota',
+        immatriculation: 'GA-123-AB',
         modele: 'Corolla',
         couleur: 'Blanc',
       })
@@ -461,7 +461,7 @@ describe('Flow 3 — Push notifications on publication', () => {
         vehicule: 'voiture',
         date: '2026-07-01T08:00:00.000Z',
         placesDisponibles: '3',
-        marque: 'Toyota',
+        immatriculation: 'GA-456-CD',
         modele: 'Hilux',
         couleur: 'Noir',
       },
@@ -500,7 +500,7 @@ describe('Flow 3 — Push notifications on publication', () => {
         vehicule: 'moto',
         date: '',
         placesDisponibles: '1',
-        marque: '',
+        immatriculation: '',
         modele: '',
         couleur: '',
       },
@@ -521,7 +521,7 @@ describe('Flow 3 — Push notifications on publication', () => {
         vehicule: 'moto',
         date: '',
         placesDisponibles: '1',
-        marque: '',
+        immatriculation: '',
         modele: '',
         couleur: '',
       },

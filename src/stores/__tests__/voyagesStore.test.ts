@@ -84,7 +84,7 @@ describe('voyagesStore', () => {
         chauffeurProfileId: 'chauff-1',
         placesDisponibles: 2,
         date: '2026-03-15',
-        marque: undefined,
+        immatriculation: undefined,
         modele: undefined,
         couleur: undefined,
         // Agency fields default to falsy when the publishing profile is a

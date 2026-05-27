@@ -19,7 +19,7 @@ interface TrajetFormData {
   vehicule: VehicleType;
   date: string;
   placesDisponibles: string;
-  marque: string;
+  immatriculation: string;
   modele: string;
   couleur: string;
 }
@@ -31,7 +31,7 @@ const initialFormData: TrajetFormData = {
   vehicule: 'voiture',
   date: '',
   placesDisponibles: '1',
-  marque: '',
+  immatriculation: '',
   modele: '',
   couleur: '',
 };
@@ -68,7 +68,9 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
       placesDisponibles: parseInt(formData.placesDisponibles) || 1,
       status: 'en_attente',
       createdAt: new Date().toISOString(),
-      marque: formData.marque || undefined,
+      immatriculation: formData.immatriculation
+        ? formData.immatriculation.trim().toUpperCase()
+        : undefined,
       modele: formData.modele || undefined,
       couleur: formData.couleur || undefined,
     };
@@ -89,7 +91,7 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
         vehicule: formData.vehicule,
         date: formData.date || undefined,
         places_disponibles: parseInt(formData.placesDisponibles) || 1,
-        marque: formData.marque || undefined,
+        immatriculation: formData.immatriculation || undefined,
         modele: formData.modele || undefined,
         couleur: formData.couleur || undefined,
       });
@@ -241,7 +243,7 @@ export const useTrajetsStore = create<TrajetsState>((set, get) => ({
         placesDisponibles: t.places_disponibles,
         status: t.status as 'en_attente' | 'effectue',
         createdAt: t.created_at,
-        marque: t.marque || undefined,
+        immatriculation: t.immatriculation || undefined,
         modele: t.modele || undefined,
         couleur: t.couleur || undefined,
       }));
