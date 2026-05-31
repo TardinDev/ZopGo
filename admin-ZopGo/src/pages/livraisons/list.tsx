@@ -2,7 +2,7 @@
  * ZopGo Admin — Liste des livraisons
  */
 
-import { List, useTable, FilterDropdown } from "@refinedev/antd";
+import { List, useTable, FilterDropdown, ShowButton } from "@refinedev/antd";
 import { Table, Space, Select, Tag, Typography, Avatar } from "antd";
 import { ShoppingOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -118,6 +118,14 @@ export function LivraisonList() {
                     width={140}
                     sorter
                     render={(d) => dayjs(d).format("DD/MM/YY HH:mm")}
+                />
+
+                <Table.Column<DbLivraison>
+                    title="Actions"
+                    key="actions"
+                    width={80}
+                    fixed="right"
+                    render={(_, r) => <ShowButton hideText size="small" recordItemId={r.id} />}
                 />
             </Table>
         </List>

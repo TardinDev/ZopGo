@@ -2,8 +2,8 @@
  * ZopGo Admin — Liste des trajets inter-villes
  */
 
-import { List, useTable, FilterDropdown } from "@refinedev/antd";
-import { Table, Space, Input, Select, Tag, Typography, Avatar } from "antd";
+import { List, useTable, FilterDropdown, ShowButton } from "@refinedev/antd";
+import { Table, Space, Select, Tag, Typography, Avatar } from "antd";
 import { GlobalOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { StatusTag } from "@/components/common/StatusTag";
@@ -157,6 +157,14 @@ export function TrajetList() {
                     width={130}
                     sorter
                     render={(d) => dayjs(d).format("DD/MM/YY HH:mm")}
+                />
+
+                <Table.Column<DbTrajet>
+                    title="Actions"
+                    key="actions"
+                    width={80}
+                    fixed="right"
+                    render={(_, r) => <ShowButton hideText size="small" recordItemId={r.id} />}
                 />
             </Table>
         </List>

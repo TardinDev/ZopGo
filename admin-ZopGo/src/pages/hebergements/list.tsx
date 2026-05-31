@@ -2,7 +2,7 @@
  * ZopGo Admin — Liste des hébergements
  */
 
-import { List, useTable, FilterDropdown, ShowButton } from "@refinedev/antd";
+import { List, useTable, FilterDropdown, ShowButton, EditButton } from "@refinedev/antd";
 import { Table, Space, Select, Tag, Typography, Avatar, Image } from "antd";
 import { HomeOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -169,11 +169,12 @@ export function HebergementList() {
                 <Table.Column<DbHebergement>
                     title="Actions"
                     key="actions"
-                    width={80}
+                    width={100}
                     fixed="right"
                     render={(_, r) => (
                         <Space>
                             <ShowButton hideText size="small" recordItemId={r.id} />
+                            <EditButton hideText size="small" recordItemId={r.id} />
                         </Space>
                     )}
                 />

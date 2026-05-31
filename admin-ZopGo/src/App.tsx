@@ -54,10 +54,16 @@ import { AdminMessageShow } from "@/pages/admin-messages/show";
 import { AgencyInvitationList } from "@/pages/agency-invitations/list";
 import { AgencyInvitationCreate } from "@/pages/agency-invitations/create";
 import { TrajetList } from "@/pages/trajets/list";
+import { TrajetShow } from "@/pages/trajets/show";
 import { LivraisonList } from "@/pages/livraisons/list";
+import { LivraisonShow } from "@/pages/livraisons/show";
 import { HebergementList } from "@/pages/hebergements/list";
+import { HebergementShow } from "@/pages/hebergements/show";
+import { HebergementEdit } from "@/pages/hebergements/edit";
 import { ReservationList } from "@/pages/reservations/list";
+import { ReservationShow } from "@/pages/reservations/show";
 import { DirectMessageList } from "@/pages/direct-messages/list";
+import { DirectMessageShow } from "@/pages/direct-messages/show";
 import { NotificationList } from "@/pages/notifications/list";
 import { AuditLogList } from "@/pages/audit/list";
 import { SettingsPage } from "@/pages/settings";
@@ -269,32 +275,32 @@ function AppContent() {
                     {/* Trajets */}
                     <Route path="/trajets">
                         <Route index element={<TrajetList />} />
-                        <Route path="show/:id" element={<PlaceholderPage title="Détail trajet" />} />
+                        <Route path="show/:id" element={<TrajetShow />} />
                     </Route>
 
                     {/* Livraisons */}
                     <Route path="/livraisons">
                         <Route index element={<LivraisonList />} />
-                        <Route path="show/:id" element={<PlaceholderPage title="Détail livraison" />} />
+                        <Route path="show/:id" element={<LivraisonShow />} />
                     </Route>
 
                     {/* Hébergements */}
                     <Route path="/hebergements">
                         <Route index element={<HebergementList />} />
-                        <Route path="show/:id" element={<PlaceholderPage title="Détail hébergement" />} />
-                        <Route path="edit/:id" element={<PlaceholderPage title="Édition hébergement" />} />
+                        <Route path="show/:id" element={<HebergementShow />} />
+                        <Route path="edit/:id" element={<HebergementEdit />} />
                     </Route>
 
                     {/* Réservations */}
                     <Route path="/reservations">
                         <Route index element={<ReservationList />} />
-                        <Route path="show/:id" element={<PlaceholderPage title="Détail réservation" />} />
+                        <Route path="show/:id" element={<ReservationShow />} />
                     </Route>
 
                     {/* Direct messages (modération) */}
                     <Route path="/direct-messages">
                         <Route index element={<DirectMessageList />} />
-                        <Route path="show/:id" element={<PlaceholderPage title="Détail message" />} />
+                        <Route path="show/:id" element={<DirectMessageShow />} />
                     </Route>
 
                     {/* Admin messages (broadcast) */}
@@ -323,28 +329,6 @@ function AppContent() {
             <UnsavedChangesNotifier />
             <DocumentTitleHandler />
         </Refine>
-    );
-}
-
-/**
- * Placeholder for Phase 2+ pages
- */
-function PlaceholderPage({ title }: { title: string }) {
-    return (
-        <div
-            className="admin-content-area"
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 300,
-                color: DARK.textSecondary,
-            }}
-        >
-            <h2 style={{ color: DARK.textPrimary }}>{title}</h2>
-            <p>Cette section sera implémentée dans une prochaine phase.</p>
-        </div>
     );
 }
 

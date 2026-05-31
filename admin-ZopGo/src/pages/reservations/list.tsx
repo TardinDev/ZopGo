@@ -2,7 +2,7 @@
  * ZopGo Admin — Liste des réservations de trajets
  */
 
-import { List, useTable, FilterDropdown } from "@refinedev/antd";
+import { List, useTable, FilterDropdown, ShowButton } from "@refinedev/antd";
 import { Table, Space, Select, Tag, Typography, Avatar } from "antd";
 import dayjs from "dayjs";
 import { PriceDisplay } from "@/components/common/PriceDisplay";
@@ -106,6 +106,14 @@ export function ReservationList() {
                     width={140}
                     sorter
                     render={(d) => dayjs(d).format("DD/MM/YY HH:mm")}
+                />
+
+                <Table.Column<DbReservation>
+                    title="Actions"
+                    key="actions"
+                    width={80}
+                    fixed="right"
+                    render={(_, r) => <ShowButton hideText size="small" recordItemId={r.id} />}
                 />
             </Table>
         </List>

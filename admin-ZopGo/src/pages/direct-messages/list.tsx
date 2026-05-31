@@ -2,7 +2,7 @@
  * ZopGo Admin — Modération des messages directs entre utilisateurs
  */
 
-import { List, useTable } from "@refinedev/antd";
+import { List, useTable, ShowButton } from "@refinedev/antd";
 import { Table, Space, Tag, Typography, Avatar } from "antd";
 import dayjs from "dayjs";
 import { DARK } from "@/config/constants";
@@ -80,6 +80,18 @@ export function DirectMessageList() {
                     width={150}
                     sorter
                     render={(d) => dayjs(d).format("DD/MM/YY HH:mm")}
+                />
+
+                <Table.Column<DbDirectMessage>
+                    title="Actions"
+                    key="actions"
+                    width={90}
+                    fixed="right"
+                    render={(_, r) => (
+                        <ShowButton hideText size="small" recordItemId={r.id}>
+                            Voir
+                        </ShowButton>
+                    )}
                 />
             </Table>
         </List>
