@@ -52,13 +52,25 @@ export function DirectMessageList() {
                 <Table.Column<DbDirectMessage>
                     title="Message"
                     dataIndex="content"
-                    render={(c: string) => (
-                        <Paragraph
-                            ellipsis={{ rows: 2, expandable: true, symbol: "voir" }}
-                            style={{ margin: 0, fontSize: 13, color: DARK.textPrimary }}
-                        >
-                            {c}
-                        </Paragraph>
+                    render={(c: string, r) => (
+                        <Space direction="vertical" size={2}>
+                            {r.deleted_at && (
+                                <Tag color="red" style={{ margin: 0 }}>
+                                    Masqué
+                                </Tag>
+                            )}
+                            <Paragraph
+                                ellipsis={{ rows: 2, expandable: true, symbol: "voir" }}
+                                style={{
+                                    margin: 0,
+                                    fontSize: 13,
+                                    color: DARK.textPrimary,
+                                    opacity: r.deleted_at ? 0.55 : 1,
+                                }}
+                            >
+                                {c}
+                            </Paragraph>
+                        </Space>
                     )}
                 />
 

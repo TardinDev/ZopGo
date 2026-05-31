@@ -227,6 +227,10 @@ export interface DbDirectMessage {
     content: string;
     read: boolean;
     created_at: string;
+    // Modération (migration 030). `deleted_at` non-null = message masqué
+    // par l'admin → invisible dans l'app mobile (filtré par RLS).
+    deleted_at: string | null;
+    hidden_by_admin: boolean;
     sender?: DbProfile;
     receiver?: DbProfile;
 }
