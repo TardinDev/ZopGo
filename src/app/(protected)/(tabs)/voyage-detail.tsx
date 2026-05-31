@@ -306,22 +306,6 @@ export default function VoyageDetailScreen() {
             }}>
             <Ionicons name="chevron-back" size={22} color="#111827" />
           </TouchableOpacity>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Ajouter aux favoris"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={{
-              height: 40,
-              width: 40,
-              borderRadius: 20,
-              borderCurve: 'continuous',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'white',
-              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.08)',
-            }}>
-            <Ionicons name="heart-outline" size={22} color="#111827" />
-          </TouchableOpacity>
         </View>
 
         <View

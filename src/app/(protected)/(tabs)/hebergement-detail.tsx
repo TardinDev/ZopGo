@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView } from 'react-native';
 import { useMemo, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -305,21 +305,6 @@ export default function HebergementDetailScreen() {
               }}>
               <Ionicons name="chevron-back" size={22} color="#111827" />
             </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Ajouter aux favoris"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{
-                height: 40,
-                width: 40,
-                borderRadius: 20,
-                borderCurve: 'continuous',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255,255,255,0.95)',
-              }}>
-              <Ionicons name="heart-outline" size={22} color="#111827" />
-            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </View>
@@ -330,9 +315,12 @@ export default function HebergementDetailScreen() {
           flex: 1,
           paddingHorizontal: 16,
           paddingTop: 12,
-          paddingBottom: 12,
           marginTop: -28,
         }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 16 }}>
         {/* Room Key card (boarding pass style) */}
         <View
           style={{
@@ -427,7 +415,7 @@ export default function HebergementDetailScreen() {
                     color: '#9CA3AF',
                     letterSpacing: 1,
                   }}>
-                  TYPE
+                  PRIX / NUIT
                 </Text>
                 <Text
                   style={{
@@ -435,9 +423,9 @@ export default function HebergementDetailScreen() {
                     fontSize: 14,
                     fontWeight: '700',
                     color: '#0F172A',
-                    textTransform: 'capitalize',
+                    fontVariant: ['tabular-nums'],
                   }}>
-                  {hebergement.type || '—'}
+                  {formatPriceFr(hebergement.prixParNuit)} Fcfa
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -558,11 +546,37 @@ export default function HebergementDetailScreen() {
           </View>
         </View>
 
-        {/* Spacer */}
-        <View style={{ flex: 1 }} />
+        {/* À propos de ce logement */}
+        {hebergement.description ? (
+          <View
+            style={{
+              marginTop: 14,
+              backgroundColor: 'white',
+              borderRadius: 18,
+              borderCurve: 'continuous',
+              padding: 18,
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '700',
+                color: '#9CA3AF',
+                letterSpacing: 1,
+              }}>
+              À PROPOS DE CE LOGEMENT
+            </Text>
+            <Text
+              selectable
+              style={{ marginTop: 8, fontSize: 14, lineHeight: 21, color: '#374151' }}>
+              {hebergement.description}
+            </Text>
+          </View>
+        ) : null}
+        </ScrollView>
 
         {/* Booking bar */}
-        <View style={{ paddingHorizontal: 4 }}>
+        <View style={{ paddingHorizontal: 4, paddingTop: 12 }}>
           <View
             style={{
               flexDirection: 'row',
