@@ -7,6 +7,7 @@ interface SupabaseHebergementReservation {
   client_id: string;
   hebergeur_id: string;
   nombre_nuits: number;
+  nombre_voyageurs: number;
   prix_total: number;
   status: ReservationStatus;
   created_at: string;
@@ -23,6 +24,7 @@ function mapReservation(row: SupabaseHebergementReservation): HebergementReserva
     clientId: row.client_id,
     hebergeurId: row.hebergeur_id,
     nombreNuits: row.nombre_nuits,
+    nombreVoyageurs: row.nombre_voyageurs,
     prixTotal: row.prix_total,
     status: row.status,
     createdAt: row.created_at,
@@ -41,6 +43,7 @@ export async function insertHebergementReservation(params: {
   client_id: string;
   hebergeur_id: string;
   nombre_nuits: number;
+  nombre_voyageurs: number;
   prix_total: number;
 }): Promise<HebergementReservation | null> {
   const { data, error } = await supabase

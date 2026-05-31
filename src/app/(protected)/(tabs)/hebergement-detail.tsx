@@ -89,6 +89,7 @@ export default function HebergementDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [nights, setNights] = useState(1);
+  const [guests, setGuests] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
   // Payment flow state: open the method sheet first, then the status
   // modal while the provider settles. On 'succeeded' we create the
@@ -156,6 +157,8 @@ export default function HebergementDetailScreen() {
     hebergeurProfileId: hebergement.hebergeurProfileId,
     hebergementId: hebergement.supabaseId,
     availableUnits: hebergement.disponibilite,
+    capacite: hebergement.capacite,
+    requestedGuests: guests,
   });
 
   const performBooking = async () => {
@@ -172,6 +175,7 @@ export default function HebergementDetailScreen() {
         clientId: supabaseProfileId!,
         hebergeurId: hebergement.hebergeurProfileId,
         nombreNuits: nights,
+        nombreVoyageurs: guests,
         prixTotal: totalPrice,
         clientName,
         currentDisponibilite: hebergement.disponibilite,
@@ -577,6 +581,91 @@ export default function HebergementDetailScreen() {
 
         {/* Booking bar */}
         <View style={{ paddingHorizontal: 4, paddingTop: 12 }}>
+          {/* Voyageurs counter — borné par la capacité du logement */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 14,
+            }}>
+            <View>
+              <Text
+                style={{ fontSize: 11, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 }}>
+                VOYAGEURS
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 13, color: '#6B7280' }}>
+                {hebergement.capacite} max
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'white',
+                borderRadius: 999,
+                borderCurve: 'continuous',
+                paddingHorizontal: 4,
+                paddingVertical: 4,
+                boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+              }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (guests > 1) {
+                    hapticSelection();
+                    setGuests(guests - 1);
+                  }
+                }}
+                disabled={guests <= 1}
+                accessibilityRole="button"
+                accessibilityLabel="Réduire le nombre de voyageurs"
+                style={{
+                  height: 36,
+                  width: 36,
+                  borderRadius: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#F3F4F6',
+                  opacity: guests <= 1 ? 0.4 : 1,
+                }}>
+                <Ionicons name="remove" size={18} color="#374151" />
+              </TouchableOpacity>
+              <Text
+                style={{
+                  marginHorizontal: 16,
+                  fontSize: 17,
+                  fontWeight: '700',
+                  color: '#0F172A',
+                  fontVariant: ['tabular-nums'],
+                  minWidth: 18,
+                  textAlign: 'center',
+                }}>
+                {guests}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (guests < hebergement.capacite) {
+                    hapticSelection();
+                    setGuests(guests + 1);
+                  }
+                }}
+                disabled={guests >= hebergement.capacite}
+                accessibilityRole="button"
+                accessibilityLabel="Augmenter le nombre de voyageurs"
+                style={{
+                  height: 36,
+                  width: 36,
+                  borderRadius: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: HEBERGEUR_COLOR,
+                  opacity: guests >= hebergement.capacite ? 0.4 : 1,
+                }}>
+                <Ionicons name="add" size={18} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View
             style={{
               flexDirection: 'row',

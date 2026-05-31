@@ -209,6 +209,8 @@ export interface DbHebergementReservation {
     client_id: string;
     hebergeur_id: string;
     nombre_nuits: number;
+    // Migration 031 — nombre de voyageurs (borné par la capacité du logement).
+    nombre_voyageurs: number;
     prix_total: number;
     status: ReservationStatus;
     created_at: string;

@@ -27,6 +27,7 @@ const baseRow = {
   client_id: 'c-1',
   hebergeur_id: 'hb-1',
   nombre_nuits: 2,
+  nombre_voyageurs: 3,
   prix_total: 30000,
   status: 'en_attente' as const,
   created_at: '2026-01-01',
@@ -48,13 +49,16 @@ describe('insertHebergementReservation', () => {
       client_id: 'c-1',
       hebergeur_id: 'hb-1',
       nombre_nuits: 2,
+      nombre_voyageurs: 3,
       prix_total: 30000,
     });
 
     expect(out?.id).toBe('r-1');
     expect(out?.nombreNuits).toBe(2);
+    expect(out?.nombreVoyageurs).toBe(3);
     const payload = c.insert.mock.calls[0][0];
     expect(payload.status).toBe('en_attente');
+    expect(payload.nombre_voyageurs).toBe(3);
   });
 
   it('returns null on error', async () => {
@@ -66,6 +70,7 @@ describe('insertHebergementReservation', () => {
       client_id: 'c-1',
       hebergeur_id: 'hb-1',
       nombre_nuits: 1,
+      nombre_voyageurs: 1,
       prix_total: 15000,
     });
     expect(out).toBeNull();

@@ -95,11 +95,33 @@ describe('validateHebergementBooking', () => {
     hebergeurProfileId: 'host-uuid',
     hebergementId: 'hebergement-uuid',
     availableUnits: 2,
+    capacite: 4,
+    requestedGuests: 2,
   };
 
   it('returns ok=true when every precondition is met', () => {
     const result = validateHebergementBooking(base);
     expect(result.ok).toBe(true);
+  });
+
+  it('blocks with over_capacity when guests exceed the listing capacity', () => {
+    const result = validateHebergementBooking({ ...base, requestedGuests: 5 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe('over_capacity');
+      expect(result.message).toMatch(/4 voyageurs/);
+    }
+  });
+
+  it('allows booking exactly at capacity', () => {
+    const result = validateHebergementBooking({ ...base, requestedGuests: 4 });
+    expect(result.ok).toBe(true);
+  });
+
+  it('blocks with over_capacity when guests is below 1', () => {
+    const result = validateHebergementBooking({ ...base, requestedGuests: 0 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('over_capacity');
   });
 
   it('blocks with profile_not_synced when client has no Supabase profile', () => {

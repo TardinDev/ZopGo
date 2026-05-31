@@ -17,6 +17,10 @@ export interface HebergementBookingPreconditions {
   hebergeurProfileId: string;
   hebergementId: string;
   availableUnits: number;
+  /** Max guests the listing accommodates (hebergements.capacite). */
+  capacite: number;
+  /** Guests the client picked for this stay. */
+  requestedGuests: number;
 }
 
 export type BookingValidation =
@@ -27,7 +31,8 @@ export type BookingBlockReason =
   | 'profile_not_synced'
   | 'announcement_unavailable'
   | 'sold_out'
-  | 'not_enough_seats';
+  | 'not_enough_seats'
+  | 'over_capacity';
 
 export function validateTrajetBooking(p: TrajetBookingPreconditions): BookingValidation {
   if (!p.supabaseProfileId) {
@@ -85,6 +90,13 @@ export function validateHebergementBooking(p: HebergementBookingPreconditions): 
       ok: false,
       reason: 'sold_out',
       message: 'Ce logement est complet.',
+    };
+  }
+  if (p.requestedGuests < 1 || p.requestedGuests > p.capacite) {
+    return {
+      ok: false,
+      reason: 'over_capacity',
+      message: `Ce logement accueille jusqu'à ${p.capacite} voyageur${p.capacite > 1 ? 's' : ''}.`,
     };
   }
   return { ok: true };

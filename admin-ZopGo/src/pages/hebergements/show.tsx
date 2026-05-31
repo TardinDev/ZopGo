@@ -216,6 +216,12 @@ export function HebergementShow() {
                                 align="center"
                             />
                             <Table.Column
+                                title="Voyageurs"
+                                dataIndex="nombre_voyageurs"
+                                align="center"
+                                render={(v: number) => v ?? "—"}
+                            />
+                            <Table.Column
                                 title="Total"
                                 dataIndex="prix_total"
                                 render={(p: number) => <PriceDisplay amount={p} />}
