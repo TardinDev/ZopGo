@@ -66,6 +66,16 @@ export default function MesHebergementsTab() {
       toast.error('Remplis le nom, la ville et le prix par nuit.', { title: 'Champs requis' });
       return;
     }
+    if (formData.images.length === 0) {
+      toast.error('Ajoute au moins une photo de ton logement.', { title: 'Photo requise' });
+      return;
+    }
+    if (!formData.description.trim()) {
+      toast.error('Ajoute une description pour donner envie aux voyageurs.', {
+        title: 'Description requise',
+      });
+      return;
+    }
     if (!user) return;
     if (!supabaseProfileId) {
       toast.error('Profil pas encore connecté à la base. Reconnecte-toi puis réessaie.', {
@@ -75,19 +85,26 @@ export default function MesHebergementsTab() {
     }
 
     let imageUrls: string[] = [];
-    if (formData.images.length > 0) {
-      setIsUploading(true);
-      try {
-        const tempId = Date.now().toString();
-        const uploads = await Promise.all(
-          formData.images.map((uri) => uploadHebergementImage(tempId, uri))
-        );
-        imageUrls = uploads.filter((url): url is string => url !== null);
-      } catch {
-        // continue without images on error
-      } finally {
-        setIsUploading(false);
-      }
+    setIsUploading(true);
+    try {
+      const tempId = Date.now().toString();
+      const uploads = await Promise.all(
+        formData.images.map((uri) => uploadHebergementImage(tempId, uri))
+      );
+      imageUrls = uploads.filter((url): url is string => url !== null);
+    } catch {
+      // handled below via the empty-result guard
+    } finally {
+      setIsUploading(false);
+    }
+
+    // A photo is required, so refuse to publish a photoless listing if the
+    // upload silently failed (network/storage) rather than going live blank.
+    if (imageUrls.length === 0) {
+      toast.error("Échec de l'envoi des photos. Vérifie ta connexion et réessaie.", {
+        title: 'Photos non envoyées',
+      });
+      return;
     }
 
     try {

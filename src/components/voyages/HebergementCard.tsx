@@ -45,22 +45,37 @@ export function HebergementCard({ hebergement, onPress, index = 0 }: Hebergement
           <View style={styles.textContainer}>
             <Text style={styles.title}>{hebergement.name}</Text>
 
+            {hebergement.type ? (
+              <View style={styles.typeBadge}>
+                <Text style={styles.typeBadgeText}>{hebergement.type}</Text>
+              </View>
+            ) : null}
+
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={14} color={COLORS.gray[500]} />
               <Text style={styles.location}>{hebergement.location}</Text>
             </View>
 
-            {/* Creator info */}
+            {/* Host info — rating here makes clear it's the HOST's rating,
+                not a per-listing score. */}
             {hebergement.hebergeurName && (
               <View style={styles.creatorRow}>
-                {hebergement.hebergeurAvatar ? (
-                  <Image source={{ uri: hebergement.hebergeurAvatar }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Ionicons name="person" size={12} color={COLORS.gray[400]} />
+                <View style={styles.creatorLeft}>
+                  {hebergement.hebergeurAvatar ? (
+                    <Image source={{ uri: hebergement.hebergeurAvatar }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                      <Ionicons name="person" size={12} color={COLORS.gray[400]} />
+                    </View>
+                  )}
+                  <Text style={styles.creatorName} numberOfLines={1}>{hebergement.hebergeurName}</Text>
+                </View>
+                {hebergement.rating > 0 && (
+                  <View style={styles.ratingContainer}>
+                    <Ionicons name="star" size={14} color={COLORS.star} />
+                    <Text style={styles.rating}>{ratingDisplay}</Text>
                   </View>
                 )}
-                <Text style={styles.creatorName} numberOfLines={1}>{hebergement.hebergeurName}</Text>
               </View>
             )}
 
@@ -69,13 +84,9 @@ export function HebergementCard({ hebergement, onPress, index = 0 }: Hebergement
               {hebergement.capacite != null && (
                 <View style={styles.capacityBadge}>
                   <Ionicons name="people-outline" size={14} color={COLORS.gray[500]} />
-                  <Text style={styles.capacityText}>{hebergement.capacite}</Text>
+                  <Text style={styles.capacityText}>{hebergement.capacite} pers.</Text>
                 </View>
               )}
-              <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color={COLORS.star} />
-                <Text style={styles.rating}>{ratingDisplay}</Text>
-              </View>
             </View>
           </View>
           {hebergement.images && hebergement.images.length > 0 ? (
@@ -120,10 +131,30 @@ const styles = StyleSheet.create({
     color: COLORS.gray[500],
     marginLeft: 4,
   },
+  typeBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+  },
+  typeBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8B5CF6',
+  },
   creatorRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 6,
+  },
+  creatorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   avatar: {
     width: 22,
