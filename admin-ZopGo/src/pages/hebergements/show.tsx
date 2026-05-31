@@ -234,6 +234,19 @@ export function HebergementShow() {
                                 align="center"
                                 render={(v: number) => v ?? "—"}
                             />
+                            <Table.Column<DbHebergementReservation>
+                                title="Séjour"
+                                key="sejour"
+                                render={(_, r) =>
+                                    r.date_arrivee
+                                        ? `${dayjs(r.date_arrivee).format("DD/MM")} → ${
+                                              r.date_depart
+                                                  ? dayjs(r.date_depart).format("DD/MM")
+                                                  : "?"
+                                          }`
+                                        : "—"
+                                }
+                            />
                             <Table.Column
                                 title="Total"
                                 dataIndex="prix_total"

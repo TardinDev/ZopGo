@@ -213,6 +213,9 @@ export interface DbHebergementReservation {
     nombre_nuits: number;
     // Migration 031 — nombre de voyageurs (borné par la capacité du logement).
     nombre_voyageurs: number;
+    // Migration 033 — dates de séjour (check-in / check-out).
+    date_arrivee: string | null;
+    date_depart: string | null;
     prix_total: number;
     status: ReservationStatus;
     created_at: string;

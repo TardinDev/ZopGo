@@ -102,6 +102,8 @@ interface ReservationsState {
     hebergeurId: string;
     nombreNuits: number;
     nombreVoyageurs: number;
+    dateArrivee: string;
+    dateDepart: string;
     prixTotal: number;
     clientName: string;
     currentDisponibilite: number;
@@ -538,6 +540,8 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
     hebergeurId,
     nombreNuits,
     nombreVoyageurs,
+    dateArrivee,
+    dateDepart,
     prixTotal,
     clientName,
     currentDisponibilite,
@@ -552,6 +556,8 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
         hebergeur_id: hebergeurId,
         nombre_nuits: nombreNuits,
         nombre_voyageurs: nombreVoyageurs,
+        date_arrivee: dateArrivee,
+        date_depart: dateDepart,
         prix_total: prixTotal,
       });
 

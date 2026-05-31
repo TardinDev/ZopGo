@@ -28,6 +28,8 @@ const baseRow = {
   hebergeur_id: 'hb-1',
   nombre_nuits: 2,
   nombre_voyageurs: 3,
+  date_arrivee: '2026-06-12',
+  date_depart: '2026-06-14',
   prix_total: 30000,
   status: 'en_attente' as const,
   created_at: '2026-01-01',
@@ -50,15 +52,20 @@ describe('insertHebergementReservation', () => {
       hebergeur_id: 'hb-1',
       nombre_nuits: 2,
       nombre_voyageurs: 3,
+      date_arrivee: '2026-06-12',
+      date_depart: '2026-06-14',
       prix_total: 30000,
     });
 
     expect(out?.id).toBe('r-1');
     expect(out?.nombreNuits).toBe(2);
     expect(out?.nombreVoyageurs).toBe(3);
+    expect(out?.dateArrivee).toBe('2026-06-12');
+    expect(out?.dateDepart).toBe('2026-06-14');
     const payload = c.insert.mock.calls[0][0];
     expect(payload.status).toBe('en_attente');
     expect(payload.nombre_voyageurs).toBe(3);
+    expect(payload.date_arrivee).toBe('2026-06-12');
   });
 
   it('returns null on error', async () => {

@@ -6,8 +6,51 @@ import {
   getVoyageAvailability,
   getHebergementAvailability,
   parseImagesParam,
+  addDays,
+  toISODate,
+  computeStay,
+  formatDayMonthFr,
 } from '../detailFormatters';
 import { COLORS } from '../../constants';
+
+describe('stay date helpers', () => {
+  it('toISODate uses the LOCAL calendar date (no UTC shift)', () => {
+    // Build a local date; toISODate must echo its local Y-M-D, not a
+    // toISOString() value that could roll to the previous/next day.
+    const d = new Date(2026, 5, 12); // 12 June 2026, local midnight
+    expect(toISODate(d)).toBe('2026-06-12');
+  });
+
+  it('addDays returns a new date N days later without mutating the input', () => {
+    const d = new Date(2026, 5, 12);
+    const plus2 = addDays(d, 2);
+    expect(toISODate(plus2)).toBe('2026-06-14');
+    expect(toISODate(d)).toBe('2026-06-12'); // original untouched
+  });
+
+  it('addDays rolls over month boundaries', () => {
+    expect(toISODate(addDays(new Date(2026, 5, 29), 3))).toBe('2026-07-02');
+  });
+
+  it('computeStay returns arrivée + (arrivée + nights)', () => {
+    expect(computeStay(new Date(2026, 5, 12), 3)).toEqual({
+      dateArrivee: '2026-06-12',
+      dateDepart: '2026-06-15',
+    });
+  });
+
+  it('computeStay floors nights to at least 1 (départ strictly after arrivée)', () => {
+    expect(computeStay(new Date(2026, 5, 12), 0)).toEqual({
+      dateArrivee: '2026-06-12',
+      dateDepart: '2026-06-13',
+    });
+  });
+
+  it('formatDayMonthFr renders day + short French month, "" on bad input', () => {
+    expect(formatDayMonthFr(new Date(2026, 5, 12))).toBe('12 juin');
+    expect(formatDayMonthFr(new Date('nope'))).toBe('');
+  });
+});
 
 describe('cityCode', () => {
   it('returns first 3 letters uppercased', () => {

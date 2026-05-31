@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView, Platform } from 'react-native';
 import { useMemo, useState } from 'react';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,9 @@ import {
   formatPriceFr,
   getHebergementAvailability,
   parseImagesParam,
+  computeStay,
+  addDays,
+  formatDayMonthFr,
 } from '../../../utils/detailFormatters';
 import { resolveAmenities } from '../../../constants/amenities';
 
@@ -91,6 +95,8 @@ export default function HebergementDetailScreen() {
   const params = useLocalSearchParams();
   const [nights, setNights] = useState(1);
   const [guests, setGuests] = useState(1);
+  const [checkIn, setCheckIn] = useState<Date>(() => new Date());
+  const [showCheckInPicker, setShowCheckInPicker] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   // Payment flow state: open the method sheet first, then the status
   // modal while the provider settles. On 'succeeded' we create the
@@ -160,6 +166,8 @@ export default function HebergementDetailScreen() {
 
   const totalPrice = hebergement.prixParNuit * nights;
   const availability = getHebergementAvailability(hebergement.disponibilite);
+  const checkOutDate = useMemo(() => addDays(checkIn, Math.max(1, nights)), [checkIn, nights]);
+  const stay = useMemo(() => computeStay(checkIn, nights), [checkIn, nights]);
 
   const validation = validateHebergementBooking({
     supabaseProfileId,
@@ -185,6 +193,8 @@ export default function HebergementDetailScreen() {
         hebergeurId: hebergement.hebergeurProfileId,
         nombreNuits: nights,
         nombreVoyageurs: guests,
+        dateArrivee: stay.dateArrivee,
+        dateDepart: stay.dateDepart,
         prixTotal: totalPrice,
         clientName,
         currentDisponibilite: hebergement.disponibilite,
@@ -638,6 +648,72 @@ export default function HebergementDetailScreen() {
 
         {/* Booking bar */}
         <View style={{ paddingHorizontal: 4, paddingTop: 12 }}>
+          {/* Dates : date d'arrivée (picker) ; départ calculé = arrivée + nuits */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 14,
+            }}>
+            <View>
+              <Text
+                style={{ fontSize: 11, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 }}>
+                ARRIVÉE
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 13, color: '#6B7280' }}>
+                Départ le {formatDayMonthFr(checkOutDate)}
+              </Text>
+            </View>
+            {Platform.OS === 'ios' ? (
+              <DateTimePicker
+                value={checkIn}
+                mode="date"
+                display="compact"
+                minimumDate={new Date()}
+                onChange={(_e: DateTimePickerEvent, d?: Date) => {
+                  if (d) setCheckIn(d);
+                }}
+              />
+            ) : (
+              <TouchableOpacity
+                onPress={() => {
+                  hapticSelection();
+                  setShowCheckInPicker(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Choisir la date d'arrivée"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: 'white',
+                  borderRadius: 999,
+                  borderCurve: 'continuous',
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+                }}>
+                <Ionicons name="calendar-outline" size={16} color={HEBERGEUR_COLOR} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A' }}>
+                  {formatDayMonthFr(checkIn)}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {Platform.OS === 'android' && showCheckInPicker && (
+            <DateTimePicker
+              value={checkIn}
+              mode="date"
+              display="default"
+              minimumDate={new Date()}
+              onChange={(_e: DateTimePickerEvent, d?: Date) => {
+                setShowCheckInPicker(false);
+                if (d) setCheckIn(d);
+              }}
+            />
+          )}
+
           {/* Voyageurs counter — borné par la capacité du logement */}
           <View
             style={{

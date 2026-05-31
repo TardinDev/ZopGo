@@ -181,6 +181,8 @@ export interface HebergementReservation {
   hebergeurId: string;
   nombreNuits: number;
   nombreVoyageurs: number;
+  dateArrivee?: string;
+  dateDepart?: string;
   prixTotal: number;
   status: ReservationStatus;
   createdAt: string;

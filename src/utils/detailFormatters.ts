@@ -76,6 +76,47 @@ export function getHebergementAvailability(count: number): AvailabilityStyle {
   return { color: COLORS.success, label: `${count} dispo.` };
 }
 
+/** Returns a new Date `n` days after `d` (does not mutate `d`). */
+export function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+/** Local calendar date as `YYYY-MM-DD` (no timezone shift, unlike toISOString). */
+export function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Stay window for an hébergement booking: check-in date + nights → the two
+ * ISO calendar dates stored on the reservation. Nights is floored to >= 1
+ * so check-out is always strictly after check-in.
+ */
+export function computeStay(
+  checkIn: Date,
+  nights: number
+): { dateArrivee: string; dateDepart: string } {
+  const n = Math.max(1, Math.floor(nights) || 1);
+  return {
+    dateArrivee: toISODate(checkIn),
+    dateDepart: toISODate(addDays(checkIn, n)),
+  };
+}
+
+/** "12 juin" style day+month — empty string on bad input. */
+export function formatDayMonthFr(d: Date): string {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return '';
+  const months = [
+    'jan', 'fév', 'mar', 'avr', 'mai', 'juin',
+    'juil', 'août', 'sep', 'oct', 'nov', 'déc',
+  ];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
+}
+
 /**
  * Hebergement images param: JSON-encoded string[] when sent from the
  * listing, or a single URL string from older callers.
