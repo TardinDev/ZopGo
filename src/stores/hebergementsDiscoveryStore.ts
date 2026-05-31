@@ -73,6 +73,7 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
         disponibilite: h.disponibilite,
         description: h.description,
         adresse: h.adresse,
+        amenities: h.amenities || [],
       }));
       set({ listings: mapped, error: null });
     } catch (err) {

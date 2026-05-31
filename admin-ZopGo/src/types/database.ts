@@ -180,6 +180,8 @@ export interface DbHebergement {
     status: HebergementStatus;
     disponibilite: number;
     images: string[];
+    // Équipements déclarés par l'hébergeur (migration 032). Clés canoniques.
+    amenities: string[];
     deleted_at: string | null;
     created_at: string;
     updated_at: string;

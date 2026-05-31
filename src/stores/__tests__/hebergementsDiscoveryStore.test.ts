@@ -78,6 +78,7 @@ describe('hebergementsDiscoveryStore', () => {
         disponibilite: 3,
         description: 'Super hotel',
         adresse: '123 rue',
+        amenities: [],
       });
     });
 

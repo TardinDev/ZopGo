@@ -21,6 +21,7 @@ beforeEach(() => {
       disponible: true,
       disponibilite: '1',
       images: [],
+      amenities: [],
     },
     isLoading: false,
   });
@@ -82,6 +83,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -108,6 +110,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -129,6 +132,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -160,6 +164,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -182,6 +187,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -205,6 +211,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -228,6 +235,7 @@ describe('hebergementsStore', () => {
           disponible: false,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -250,6 +258,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '1',
           images: [],
+          amenities: [],
         },
       });
 
@@ -278,6 +287,7 @@ describe('hebergementsStore', () => {
           disponible: true,
           disponibilite: '5',
           images: [],
+          amenities: [],
         },
       });
 
@@ -297,8 +307,8 @@ describe('hebergementsStore', () => {
     it('removes listing optimistically', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
-          { id: '2', hebergeurId: 'h1', nom: 'B', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 2000, capacite: 2, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '2', hebergeurId: 'h1', nom: 'B', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 2000, capacite: 2, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -312,7 +322,7 @@ describe('hebergementsStore', () => {
       (deleteHebergement as jest.Mock).mockRejectedValue(new Error('DB error'));
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -325,7 +335,7 @@ describe('hebergementsStore', () => {
     it('toggles actif to inactif', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -337,7 +347,7 @@ describe('hebergementsStore', () => {
     it('toggles inactif to actif', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'inactif', disponibilite: 1, images: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'inactif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -356,7 +366,7 @@ describe('hebergementsStore', () => {
       (toggleHebergementStatus as jest.Mock).mockRejectedValue(new Error('error'));
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 

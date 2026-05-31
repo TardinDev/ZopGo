@@ -30,6 +30,7 @@ import {
   getHebergementAvailability,
   parseImagesParam,
 } from '../../../utils/detailFormatters';
+import { resolveAmenities } from '../../../constants/amenities';
 
 const HEBERGEUR_COLOR = '#8B5CF6';
 const HEBERGEUR_TINT = '#F3E8FF';
@@ -130,6 +131,14 @@ export default function HebergementDetailScreen() {
   const images = useMemo(
     () => parseImagesParam(params.images ?? params.image),
     [params.images, params.image]
+  );
+
+  // Only the amenity keys the hôte actually selected — unknown/legacy keys
+  // are dropped by resolveAmenities, so the client never sees a service the
+  // hôte didn't declare.
+  const amenities = useMemo(
+    () => resolveAmenities(parseImagesParam(params.amenities)),
+    [params.amenities]
   );
 
   const hebergement = {
@@ -575,6 +584,54 @@ export default function HebergementDetailScreen() {
               style={{ marginTop: 8, fontSize: 14, lineHeight: 21, color: '#374151' }}>
               {hebergement.description}
             </Text>
+          </View>
+        ) : null}
+
+        {/* Équipements — uniquement ceux déclarés par l'hôte */}
+        {amenities.length > 0 ? (
+          <View
+            style={{
+              marginTop: 14,
+              backgroundColor: 'white',
+              borderRadius: 18,
+              borderCurve: 'continuous',
+              padding: 18,
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '700',
+                color: '#9CA3AF',
+                letterSpacing: 1,
+              }}>
+              ÉQUIPEMENTS
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 10 }}>
+              {amenities.map((a) => (
+                <View
+                  key={a.key}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    backgroundColor: HEBERGEUR_TINT,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 10,
+                    borderCurve: 'continuous',
+                  }}>
+                  <Ionicons
+                    name={a.icon as keyof typeof Ionicons.glyphMap}
+                    size={16}
+                    color={HEBERGEUR_COLOR}
+                  />
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#374151' }}>
+                    {a.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         ) : null}
         </ScrollView>

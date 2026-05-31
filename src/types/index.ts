@@ -43,6 +43,8 @@ export interface Hebergement {
   disponibilite?: number;
   description?: string;
   adresse?: string;
+  /** Amenity keys the hôte selected (see constants/amenities.ts). */
+  amenities?: string[];
 }
 
 // Types pour les informations utilisateur
@@ -306,6 +308,7 @@ export interface HebergeurListing {
   status: HebergementStatus;
   disponibilite: number;
   images: string[];
+  amenities: string[];
   createdAt: string;
 }
 

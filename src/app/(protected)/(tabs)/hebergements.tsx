@@ -114,6 +114,8 @@ export default function HebergementsTab() {
         // Pass the full image gallery (JSON-serialised). Detail screen
         // parses it back so the client sees every photo, not just the first.
         images: JSON.stringify(hebergement.images || []),
+        // Amenities the hôte selected (JSON-serialised list of keys).
+        amenities: JSON.stringify(hebergement.amenities || []),
       },
     });
   }, [router]);

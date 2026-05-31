@@ -19,6 +19,7 @@ interface HebergementFormData {
   disponible: boolean;
   disponibilite: string;
   images: string[];
+  amenities: string[];
 }
 
 const initialFormData: HebergementFormData = {
@@ -32,6 +33,7 @@ const initialFormData: HebergementFormData = {
   disponible: true,
   disponibilite: '1',
   images: [],
+  amenities: [],
 };
 
 interface HebergementsState {
@@ -43,6 +45,7 @@ interface HebergementsState {
   removeListing: (id: string) => Promise<void>;
   toggleStatus: (id: string) => Promise<void>;
   updateForm: (field: keyof HebergementFormData, value: string | boolean) => void;
+  toggleFormAmenity: (key: string) => void;
   addFormImage: (uri: string) => void;
   removeFormImage: (index: number) => void;
   resetForm: () => void;
@@ -78,6 +81,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       status,
       disponibilite,
       images,
+      amenities: formData.amenities,
       createdAt: new Date().toISOString(),
     };
     set({ listings: [localListing, ...listings] });
@@ -95,6 +99,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         status,
         disponibilite,
         images,
+        amenities: formData.amenities,
       });
 
       if (result) {
@@ -159,6 +164,19 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
     set({ formData: { ...get().formData, [field]: value } });
   },
 
+  toggleFormAmenity: (key) => {
+    const { formData } = get();
+    const has = formData.amenities.includes(key);
+    set({
+      formData: {
+        ...formData,
+        amenities: has
+          ? formData.amenities.filter((k) => k !== key)
+          : [...formData.amenities, key],
+      },
+    });
+  },
+
   addFormImage: (uri) => {
     const { formData } = get();
     if (formData.images.length >= 5) return;
@@ -191,6 +209,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         status: h.status as 'actif' | 'inactif',
         disponibilite: h.disponibilite ?? 1,
         images: h.images || [],
+        amenities: h.amenities || [],
         createdAt: h.created_at,
       }));
       set({ listings });

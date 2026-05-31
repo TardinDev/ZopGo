@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, Switch, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { HEBERGEMENT_AMENITIES } from '../../../constants/amenities';
 import { AnimatedTabScreen, Confetti, EmptyState, CoachMark } from '../../../components/ui';
 import { shouldCelebrateFirstPublish } from '../../../utils/firstPublishCelebration';
 import { shouldShowCoachMark, markCoachMarkSeen } from '../../../utils/coachMarkSeen';
@@ -24,7 +25,7 @@ const ACCOMMODATION_OPTIONS: { type: AccommodationType; label: string; icon: str
 
 export default function MesHebergementsTab() {
   const { user, supabaseProfileId } = useAuthStore();
-  const { listings, formData, addListing, removeListing, toggleStatus, updateForm, addFormImage, removeFormImage, loadListings } = useHebergementsStore();
+  const { listings, formData, addListing, removeListing, toggleStatus, updateForm, toggleFormAmenity, addFormImage, removeFormImage, loadListings } = useHebergementsStore();
   const [isUploading, setIsUploading] = useState(false);
   const [confettiVisible, setConfettiVisible] = useState(false);
   const [coachVisible, setCoachVisible] = useState(false);
@@ -338,6 +339,46 @@ export default function MesHebergementsTab() {
                 value={formData.description}
                 onChangeText={(v) => updateForm('description', v)}
               />
+
+              {/* Équipements — services proposés au client */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>
+                Équipements proposés
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                {HEBERGEMENT_AMENITIES.map((a) => {
+                  const selected = formData.amenities.includes(a.key);
+                  return (
+                    <TouchableOpacity
+                      key={a.key}
+                      onPress={() => toggleFormAmenity(a.key)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      style={{
+                        paddingVertical: 10,
+                        paddingHorizontal: 14,
+                        borderRadius: 12,
+                        backgroundColor: selected ? '#8B5CF6' : '#F3F4F6',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <Ionicons
+                        name={a.icon as keyof typeof Ionicons.glyphMap}
+                        size={15}
+                        color={selected ? 'white' : '#6B7280'}
+                      />
+                      <Text style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: selected ? 'white' : '#6B7280',
+                      }}>
+                        {a.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
               {/* Photos */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>

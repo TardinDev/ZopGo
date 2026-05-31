@@ -156,6 +156,19 @@ export function HebergementShow() {
                             <Descriptions.Item label="Description" span={3}>
                                 {record.description || "—"}
                             </Descriptions.Item>
+                            <Descriptions.Item label="Équipements" span={3}>
+                                {record.amenities && record.amenities.length > 0 ? (
+                                    <Space wrap size={[6, 6]}>
+                                        {record.amenities.map((a) => (
+                                            <Tag key={a} color="purple" style={{ margin: 0 }}>
+                                                {a.replace(/_/g, " ")}
+                                            </Tag>
+                                        ))}
+                                    </Space>
+                                ) : (
+                                    "—"
+                                )}
+                            </Descriptions.Item>
                         </Descriptions>
                     </Card>
 

@@ -114,6 +114,7 @@ beforeEach(() => {
       disponible: true,
       disponibilite: '1',
       images: [],
+      amenities: [],
     },
     isLoading: false,
   });
@@ -337,6 +338,7 @@ describe('Flow 2 — Hebergeur publishes hebergement → Client discovery list',
         disponible: overrides.disponible ?? true,
         disponibilite: overrides.disponibilite ?? '3',
         images: ['https://img.example/1.jpg', 'https://img.example/2.jpg'],
+        amenities: [],
       },
     });
     await useHebergementsStore
@@ -554,6 +556,7 @@ describe('Flow 3 — Push notifications on publication', () => {
         disponible: true,
         disponibilite: '5',
         images: [],
+        amenities: [],
       },
     });
 
@@ -591,6 +594,7 @@ describe('Flow 3 — Push notifications on publication', () => {
         disponible: false, // → status='inactif'
         disponibilite: '5',
         images: [],
+        amenities: [],
       },
     });
 
@@ -617,6 +621,7 @@ describe('Flow 3 — Push notifications on publication', () => {
         disponible: true,
         disponibilite: '3',
         images: [],
+        amenities: [],
       },
     });
 
