@@ -118,6 +118,18 @@ export interface Review {
   tripId?: number;
 }
 
+// Avis attaché à un hébergement (migration 034)
+export interface HebergementReview {
+  id: string;
+  hebergementId: string;
+  clientId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  authorName?: string;
+  authorAvatar?: string;
+}
+
 // Types pour le résumé des notes
 export interface RatingSummaryData {
   average: number;

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView, Platform } from 'react-native';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +18,14 @@ import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
 import { toast } from '../../../stores/toastStore';
 import { ImageCarousel } from '../../../components/ui';
+import { RatingModal, RatingSummary, StarRating } from '../../../components/ratings';
+import {
+  fetchHebergementReviews,
+  computeReviewSummary,
+  clientCanReviewHebergement,
+  submitHebergementReview,
+} from '../../../lib/supabaseHebergementReviews';
+import type { HebergementReview } from '../../../types';
 import { validateHebergementBooking } from '../../../lib/bookingValidation';
 import {
   generateIdempotencyKey,
@@ -98,6 +106,9 @@ export default function HebergementDetailScreen() {
   const [checkIn, setCheckIn] = useState<Date>(() => new Date());
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const [reviews, setReviews] = useState<HebergementReview[]>([]);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
   // Payment flow state: open the method sheet first, then the status
   // modal while the provider settles. On 'succeeded' we create the
   // reservation via the existing bookHebergement path.
@@ -168,6 +179,53 @@ export default function HebergementDetailScreen() {
   const availability = getHebergementAvailability(hebergement.disponibilite);
   const checkOutDate = useMemo(() => addDays(checkIn, Math.max(1, nights)), [checkIn, nights]);
   const stay = useMemo(() => computeStay(checkIn, nights), [checkIn, nights]);
+  const reviewSummary = useMemo(() => computeReviewSummary(reviews), [reviews]);
+
+  const loadReviews = useCallback(async () => {
+    if (!hebergement.supabaseId) return;
+    setReviews(await fetchHebergementReviews(hebergement.supabaseId));
+  }, [hebergement.supabaseId]);
+
+  useEffect(() => {
+    void loadReviews();
+  }, [loadReviews]);
+
+  // Gate the "Laisser un avis" affordance: only a client with a reservation
+  // for this listing may review (RLS enforces it server-side too).
+  useEffect(() => {
+    if (!supabaseProfileId || !hebergement.supabaseId) {
+      setCanReview(false);
+      return;
+    }
+    let active = true;
+    clientCanReviewHebergement(supabaseProfileId, hebergement.supabaseId).then((ok) => {
+      if (active) setCanReview(ok);
+    });
+    return () => {
+      active = false;
+    };
+  }, [supabaseProfileId, hebergement.supabaseId]);
+
+  const handleSubmitReview = useCallback(
+    async (rating: number, comment: string) => {
+      if (!supabaseProfileId) return;
+      setReviewModalVisible(false);
+      const saved = await submitHebergementReview({
+        hebergementId: hebergement.supabaseId,
+        clientId: supabaseProfileId,
+        rating,
+        comment,
+      });
+      if (saved) {
+        hapticSuccess();
+        toast.success('Merci pour ton avis ⭐', { title: 'Avis publié' });
+        void loadReviews();
+      } else {
+        toast.error('Impossible de publier ton avis. Réessaie.', { title: 'Erreur' });
+      }
+    },
+    [supabaseProfileId, hebergement.supabaseId, loadReviews]
+  );
 
   const validation = validateHebergementBooking({
     supabaseProfileId,
@@ -644,6 +702,96 @@ export default function HebergementDetailScreen() {
             </View>
           </View>
         ) : null}
+
+        {/* Avis du logement */}
+        <View
+          style={{
+            marginTop: 14,
+            backgroundColor: 'white',
+            borderRadius: 18,
+            borderCurve: 'continuous',
+            padding: 18,
+            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <Text
+              style={{ fontSize: 10, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 }}>
+              AVIS
+            </Text>
+            {canReview && (
+              <TouchableOpacity
+                onPress={() => {
+                  hapticSelection();
+                  setReviewModalVisible(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Laisser un avis"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="create-outline" size={16} color={HEBERGEUR_COLOR} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: HEBERGEUR_COLOR }}>
+                  Laisser un avis
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {reviewSummary.total > 0 ? (
+            <View style={{ marginTop: 12 }}>
+              <RatingSummary data={reviewSummary} />
+              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 12 }} />
+              {reviews.slice(0, 5).map((rev) => (
+                <View key={rev.id} style={{ marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {rev.authorAvatar ? (
+                      <Image
+                        source={{ uri: rev.authorAvatar }}
+                        style={{ width: 32, height: 32, borderRadius: 16 }}
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          backgroundColor: HEBERGEUR_TINT,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                        <Ionicons name="person" size={16} color={HEBERGEUR_COLOR} />
+                      </View>
+                    )}
+                    <View style={{ marginLeft: 10, flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A' }}>
+                        {rev.authorName || 'Client'}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: '#9CA3AF' }}>
+                        {formatDayMonthFr(new Date(rev.createdAt))}
+                      </Text>
+                    </View>
+                    <StarRating rating={rev.rating} size={14} />
+                  </View>
+                  {rev.comment ? (
+                    <Text
+                      style={{ marginTop: 6, fontSize: 13, lineHeight: 19, color: '#374151' }}>
+                      {rev.comment}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={{ marginTop: 10, fontSize: 13, color: '#6B7280' }}>
+              {canReview
+                ? 'Sois le premier à laisser un avis sur ce logement.'
+                : "Pas encore d'avis."}
+            </Text>
+          )}
+        </View>
         </ScrollView>
 
         {/* Booking bar */}
@@ -996,6 +1144,12 @@ export default function HebergementDetailScreen() {
         onClose={handleClosePaymentStatus}
         onSuccess={handlePaymentSuccess}
         onFailure={handlePaymentFailure}
+      />
+
+      <RatingModal
+        visible={reviewModalVisible}
+        onClose={() => setReviewModalVisible(false)}
+        onSubmit={handleSubmitReview}
       />
     </View>
   );
