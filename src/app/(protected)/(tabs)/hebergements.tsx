@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Hebergement } from '../../../types';
 import { COLORS } from '../../../constants';
-import { useHebergementsDiscoveryStore } from '../../../stores';
+import { useHebergementsDiscoveryStore, useAuthStore, useFavoritesStore } from '../../../stores';
 import { SkeletonList, RotatingLoadingText } from '../../../components/ui';
 import {
   applyHebergementFilters,
@@ -55,10 +55,18 @@ export default function HebergementsTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const supabaseProfileId = useAuthStore((s) => s.supabaseProfileId);
+  const loadFavoriteIds = useFavoritesStore((s) => s.loadFavoriteIds);
+
   // Charger les hébergements au montage
   useEffect(() => {
     loadHebergements();
   }, [loadHebergements]);
+
+  // Charger les favoris du client pour allumer les ❤️ sur les cartes.
+  useEffect(() => {
+    if (supabaseProfileId) void loadFavoriteIds(supabaseProfileId);
+  }, [supabaseProfileId, loadFavoriteIds]);
 
   // Refresh when the user returns to this tab.
   useFocusEffect(

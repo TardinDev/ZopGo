@@ -279,6 +279,7 @@ export default function TabLayout() {
       <Tabs.Screen name="vehicles-edit" options={{ href: null, title: 'Mes véhicules', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="payment-methods" options={{ href: null, title: 'Méthodes de paiement', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="favorite-addresses" options={{ href: null, title: 'Adresses favorites', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="favorite-hebergements" options={{ href: null, title: 'Mes logements favoris', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="security" options={{ href: null, title: 'Sécurité', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="help-support" options={{ href: null, title: 'Aide & Support', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="settings-screen" options={{ href: null, title: 'Paramètres', tabBarStyle: { display: 'none' } }} />

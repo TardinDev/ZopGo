@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, {
   FadeInUp,
   LinearTransition,
@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, LAYOUT } from '../../constants';
 import { SPRING_CONFIG } from '../../constants/animations';
 import { hapticLight } from '../../utils/haptics';
+import { useFavoritesStore } from '../../stores/favoritesStore';
 import type { Hebergement } from '../../types';
 
 interface HebergementCardProps {
@@ -21,6 +22,8 @@ interface HebergementCardProps {
 
 export function HebergementCard({ hebergement, onPress, index = 0 }: HebergementCardProps) {
   const ratingDisplay = hebergement.rating > 0 ? hebergement.rating.toFixed(1) : 'N/A';
+  const isFavorite = useFavoritesStore((s) => s.favoriteIds.includes(hebergement.supabaseId));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
 
   // Press feedback
   const scale = useSharedValue(1);
@@ -41,6 +44,21 @@ export function HebergementCard({ hebergement, onPress, index = 0 }: Hebergement
         style={styles.card}
         accessibilityRole="button"
         accessibilityLabel={`${hebergement.name}, ${hebergement.location}, ${hebergement.price}${hebergement.capacite != null ? `, ${hebergement.capacite} personnes` : ''}, note ${ratingDisplay}`}>
+        <TouchableOpacity
+          onPress={() => {
+            hapticLight();
+            toggleFavorite(hebergement.supabaseId);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.favoriteBtn}>
+          <Ionicons
+            name={isFavorite ? 'heart' : 'heart-outline'}
+            size={18}
+            color={isFavorite ? '#EF4444' : COLORS.gray[500]}
+          />
+        </TouchableOpacity>
         <View style={styles.content}>
           <View style={styles.textContainer}>
             <Text style={styles.title}>{hebergement.name}</Text>
@@ -108,6 +126,18 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     padding: 20,
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+  },
+  favoriteBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
   },
   content: {
     flexDirection: 'row',

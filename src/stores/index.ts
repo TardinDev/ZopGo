@@ -12,3 +12,4 @@ export { useRatingsStore } from './ratingsStore';
 export { useHebergementsDiscoveryStore } from './hebergementsDiscoveryStore';
 export { useReservationsStore } from './reservationsStore';
 export { useAdminMessagesStore } from './adminMessagesStore';
+export { useFavoritesStore } from './favoritesStore';

@@ -30,6 +30,13 @@ export const menuItems: MenuItem[] = [
     roles: ['hebergeur'],
   },
   {
+    id: 'favorites',
+    icon: 'heart-outline',
+    title: 'Logements favoris',
+    subtitle: 'Vos coups de cœur',
+    roles: ['client'],
+  },
+  {
     id: 'payment',
     icon: 'card-outline',
     title: 'Méthodes de paiement',

@@ -115,6 +115,9 @@ export default function ProfilTab() {
       case 'accommodations':
         router.push('/(protected)/(tabs)/mes-hebergements');
         break;
+      case 'favorites':
+        router.push('/(protected)/(tabs)/favorite-hebergements');
+        break;
       case 'payment':
         router.push('/(protected)/(tabs)/payment-methods');
         break;

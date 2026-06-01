@@ -16,6 +16,7 @@ import { SPRING_CONFIG } from '../../../constants/animations';
 import { hapticSelection, hapticSuccess, hapticMedium } from '../../../utils/haptics';
 import { useAuthStore } from '../../../stores/authStore';
 import { useReservationsStore } from '../../../stores/reservationsStore';
+import { useFavoritesStore } from '../../../stores/favoritesStore';
 import { toast } from '../../../stores/toastStore';
 import { ImageCarousel } from '../../../components/ui';
 import { RatingModal, RatingSummary, StarRating } from '../../../components/ratings';
@@ -180,6 +181,16 @@ export default function HebergementDetailScreen() {
   const checkOutDate = useMemo(() => addDays(checkIn, Math.max(1, nights)), [checkIn, nights]);
   const stay = useMemo(() => computeStay(checkIn, nights), [checkIn, nights]);
   const reviewSummary = useMemo(() => computeReviewSummary(reviews), [reviews]);
+
+  const isFavorite = useFavoritesStore((s) => s.favoriteIds.includes(hebergement.supabaseId));
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
+  const loadFavoriteIds = useFavoritesStore((s) => s.loadFavoriteIds);
+
+  // Ensure the favourites store knows the client even on a direct deep-link
+  // into this screen (so the ❤️ toggles instead of being a no-op).
+  useEffect(() => {
+    if (supabaseProfileId) void loadFavoriteIds(supabaseProfileId);
+  }, [supabaseProfileId, loadFavoriteIds]);
 
   const loadReviews = useCallback(async () => {
     if (!hebergement.supabaseId) return;
@@ -385,6 +396,29 @@ export default function HebergementDetailScreen() {
                 backgroundColor: 'rgba(255,255,255,0.95)',
               }}>
               <Ionicons name="chevron-back" size={22} color="#111827" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                hapticSelection();
+                toggleFavorite(hebergement.supabaseId);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{
+                height: 40,
+                width: 40,
+                borderRadius: 20,
+                borderCurve: 'continuous',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255,255,255,0.95)',
+              }}>
+              <Ionicons
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={22}
+                color={isFavorite ? '#EF4444' : '#111827'}
+              />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
