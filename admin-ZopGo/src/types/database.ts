@@ -225,6 +225,22 @@ export interface DbHebergementReservation {
     hebergeur?: DbProfile;
 }
 
+// ─── Avis logement — migrations 034 (table) + 036 (modération) ──
+export interface DbHebergementReview {
+    id: string;
+    hebergement_id: string;
+    client_id: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+    updated_at: string;
+    // Migration 036 — masquage admin (deleted_at non-null = avis caché).
+    deleted_at: string | null;
+    hidden_by_admin: boolean;
+    hebergement?: DbHebergement;
+    client?: DbProfile;
+}
+
 // ─── Direct messages (entre users) — migration 013 ──────
 export interface DbDirectMessage {
     id: string;

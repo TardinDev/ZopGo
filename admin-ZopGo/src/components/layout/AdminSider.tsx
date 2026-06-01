@@ -18,6 +18,7 @@ import {
     CalendarOutlined,
     MessageOutlined,
     NotificationOutlined,
+    StarOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SIDEBAR, DARK } from "@/config/constants";
@@ -76,6 +77,11 @@ const buildMenuItems = (collapsed: boolean): MenuItem[] => [
                 key: "/reservations",
                 icon: <CalendarOutlined />,
                 label: "Réservations",
+            },
+            {
+                key: "/reviews",
+                icon: <StarOutlined />,
+                label: "Avis logements",
             },
         ],
     },

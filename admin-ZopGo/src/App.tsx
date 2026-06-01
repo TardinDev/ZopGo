@@ -26,6 +26,7 @@ import {
     MessageOutlined,
     NotificationOutlined,
     KeyOutlined,
+    StarOutlined,
 } from "@ant-design/icons";
 import { useAuth, useUser } from "@clerk/clerk-react";
 
@@ -62,6 +63,7 @@ import { HebergementShow } from "@/pages/hebergements/show";
 import { HebergementEdit } from "@/pages/hebergements/edit";
 import { ReservationList } from "@/pages/reservations/list";
 import { ReservationShow } from "@/pages/reservations/show";
+import { ReviewList } from "@/pages/reviews/list";
 import { DirectMessageList } from "@/pages/direct-messages/list";
 import { DirectMessageShow } from "@/pages/direct-messages/show";
 import { NotificationList } from "@/pages/notifications/list";
@@ -169,6 +171,14 @@ function AppContent() {
                     meta: {
                         label: "Réservations",
                         icon: <CalendarOutlined />,
+                    },
+                },
+                {
+                    name: "hebergement_reviews",
+                    list: "/reviews",
+                    meta: {
+                        label: "Avis logements",
+                        icon: <StarOutlined />,
                     },
                 },
                 {
@@ -295,6 +305,11 @@ function AppContent() {
                     <Route path="/reservations">
                         <Route index element={<ReservationList />} />
                         <Route path="show/:id" element={<ReservationShow />} />
+                    </Route>
+
+                    {/* Avis logements (modération) */}
+                    <Route path="/reviews">
+                        <Route index element={<ReviewList />} />
                     </Route>
 
                     {/* Direct messages (modération) */}
