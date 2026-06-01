@@ -395,6 +395,22 @@ describe('hebergementsStore', () => {
       useHebergementsStore.getState().removeFormImage(1);
       expect(useHebergementsStore.getState().formData.images).toEqual(['file:///a.jpg', 'file:///c.jpg']);
     });
+
+    it('setFormCoverImage promotes the chosen photo to index 0', () => {
+      useHebergementsStore.getState().addFormImage('a');
+      useHebergementsStore.getState().addFormImage('b');
+      useHebergementsStore.getState().addFormImage('c');
+      useHebergementsStore.getState().setFormCoverImage(2);
+      expect(useHebergementsStore.getState().formData.images).toEqual(['c', 'a', 'b']);
+    });
+
+    it('setFormCoverImage is a no-op for index 0 or out-of-range', () => {
+      useHebergementsStore.getState().addFormImage('a');
+      useHebergementsStore.getState().addFormImage('b');
+      useHebergementsStore.getState().setFormCoverImage(0);
+      useHebergementsStore.getState().setFormCoverImage(9);
+      expect(useHebergementsStore.getState().formData.images).toEqual(['a', 'b']);
+    });
   });
 
   describe('loadListings', () => {

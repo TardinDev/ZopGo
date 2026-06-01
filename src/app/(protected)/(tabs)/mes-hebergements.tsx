@@ -25,7 +25,7 @@ const ACCOMMODATION_OPTIONS: { type: AccommodationType; label: string; icon: str
 
 export default function MesHebergementsTab() {
   const { user, supabaseProfileId } = useAuthStore();
-  const { listings, formData, addListing, removeListing, toggleStatus, updateForm, toggleFormAmenity, addFormImage, removeFormImage, loadListings } = useHebergementsStore();
+  const { listings, formData, addListing, removeListing, toggleStatus, updateForm, toggleFormAmenity, addFormImage, removeFormImage, setFormCoverImage, loadListings } = useHebergementsStore();
   const [isUploading, setIsUploading] = useState(false);
   const [confettiVisible, setConfettiVisible] = useState(false);
   const [coachVisible, setCoachVisible] = useState(false);
@@ -381,8 +381,11 @@ export default function MesHebergementsTab() {
               </View>
 
               {/* Photos */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 4 }}>
                 Photos ({formData.images.length}/5)
+              </Text>
+              <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
+                La 1ʳᵉ photo est la couverture vue par les clients. Touche ★ pour la choisir.
               </Text>
               <ScrollView
                 horizontal
@@ -394,7 +397,13 @@ export default function MesHebergementsTab() {
                   <View key={index} style={{ position: 'relative' }}>
                     <Image
                       source={{ uri }}
-                      style={{ width: 80, height: 80, borderRadius: 10 }}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 10,
+                        borderWidth: index === 0 ? 2 : 0,
+                        borderColor: '#8B5CF6',
+                      }}
                     />
                     <TouchableOpacity
                       onPress={() => removeFormImage(index)}
@@ -412,6 +421,48 @@ export default function MesHebergementsTab() {
                     >
                       <MaterialCommunityIcons name="close" size={12} color="white" />
                     </TouchableOpacity>
+                    {index === 0 ? (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'rgba(139, 92, 246, 0.92)',
+                          borderBottomLeftRadius: 10,
+                          borderBottomRightRadius: 10,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 3,
+                          paddingVertical: 3,
+                        }}
+                      >
+                        <Ionicons name="star" size={9} color="white" />
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: 'white' }}>
+                          Couverture
+                        </Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => setFormCoverImage(index)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Définir comme couverture"
+                        style={{
+                          position: 'absolute',
+                          bottom: 4,
+                          right: 4,
+                          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                          borderRadius: 12,
+                          width: 24,
+                          height: 24,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Ionicons name="star-outline" size={14} color="white" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
                 {formData.images.length < 5 && (

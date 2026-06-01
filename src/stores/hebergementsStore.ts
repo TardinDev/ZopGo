@@ -48,6 +48,7 @@ interface HebergementsState {
   toggleFormAmenity: (key: string) => void;
   addFormImage: (uri: string) => void;
   removeFormImage: (index: number) => void;
+  setFormCoverImage: (index: number) => void;
   resetForm: () => void;
   loadListings: (supabaseProfileId: string) => Promise<void>;
 }
@@ -186,6 +187,17 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
   removeFormImage: (index) => {
     const { formData } = get();
     set({ formData: { ...formData, images: formData.images.filter((_, i) => i !== index) } });
+  },
+
+  // Promote a photo to position 0 — index 0 is the cover the client sees on
+  // the discovery card (images[0]) and as the first carousel slide.
+  setFormCoverImage: (index) => {
+    const { formData } = get();
+    if (index <= 0 || index >= formData.images.length) return;
+    const imgs = [...formData.images];
+    const [picked] = imgs.splice(index, 1);
+    imgs.unshift(picked);
+    set({ formData: { ...formData, images: imgs } });
   },
 
   resetForm: () => {
