@@ -16,6 +16,7 @@ interface TypeTheme {
 }
 
 const TYPE_THEME: Record<string, TypeTheme> = {
+  // Catégories transport (écran Voyages)
   All:     { emoji: '🌍', label: 'Tout',    a11y: 'Toutes les catégories' },
   Taxi:    { emoji: '🚕', label: 'Taxi',    a11y: 'Taxi' },
   Voiture: { emoji: '🚙', label: 'Voiture', a11y: 'Voiture' },
@@ -23,9 +24,18 @@ const TYPE_THEME: Record<string, TypeTheme> = {
   Train:   { emoji: '🚆', label: 'Train',   a11y: 'Train' },
   Avion:   { emoji: '✈️', label: 'Avion',   a11y: 'Avion' },
   Bateaux: { emoji: '🚢', label: 'Bateaux', a11y: 'Bateaux' },
+  // Types d'hébergement (écran Hébergements) — clés = `hebergementTypes`
+  // du store de découverte.
+  'Hôtel':   { emoji: '🏨', label: 'Hôtel',   a11y: 'Hôtel' },
+  Auberge:   { emoji: '🛖', label: 'Auberge', a11y: 'Auberge' },
+  'Appart.': { emoji: '🏢', label: 'Appart.', a11y: 'Appartement' },
+  Maison:    { emoji: '🏡', label: 'Maison',  a11y: 'Maison' },
+  Chambre:   { emoji: '🛏️', label: 'Chambre', a11y: 'Chambre' },
 };
 
-const FALLBACK: TypeTheme = { emoji: '❓', label: '—', a11y: 'Inconnu' };
+// Type inconnu : emoji générique + on garde le nom du type comme label
+// (jamais de '—' illisible).
+const FALLBACK: TypeTheme = { emoji: '🏷️', label: '', a11y: 'Catégorie' };
 
 export function TypeFilter({ types, selectedType, onTypeChange }: TypeFilterProps) {
   return (
@@ -36,7 +46,7 @@ export function TypeFilter({ types, selectedType, onTypeChange }: TypeFilterProp
       style={styles.scroll}>
       {types.map((type) => {
         const isActive = selectedType === type;
-        const theme = TYPE_THEME[type] ?? FALLBACK;
+        const theme = TYPE_THEME[type] ?? { ...FALLBACK, label: type, a11y: type };
         return (
           <TouchableOpacity
             key={type}
