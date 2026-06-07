@@ -3,6 +3,7 @@ import {
   isChauffeur,
   isHebergeur,
   chauffeurToLivreur,
+  ensureRoleProfileShape,
   VEHICLE_TYPES,
   ACCOMMODATION_TYPES,
 } from '../authStore';
@@ -24,6 +25,44 @@ beforeEach(() => {
   useDriversStore.setState({
     connectedDrivers: [],
     isLoading: false,
+  });
+});
+
+// ─── ensureRoleProfileShape ─────────────────────────────────────────
+
+describe('ensureRoleProfileShape', () => {
+  const bareProfile = {
+    name: 'X',
+    email: 'x@test.com',
+    phone: '',
+    address: '',
+    emergencyContact: '',
+    avatar: '',
+    rating: 5,
+    totalTrips: 0,
+    totalDeliveries: 0,
+    memberSince: '2026',
+  } as unknown as AuthUser['profile'];
+
+  it('adds a default accommodation for a hebergeur profile that lacks one', () => {
+    const out = ensureRoleProfileShape(bareProfile, 'hebergeur') as HebergeurProfile;
+    expect(out.accommodation.type).toBe('hotel');
+  });
+
+  it('adds a default vehicule for a chauffeur profile that lacks one', () => {
+    const out = ensureRoleProfileShape(bareProfile, 'chauffeur') as ChauffeurProfile;
+    expect(out.vehicule.type).toBe('voiture');
+  });
+
+  it('adds a default vehicule for an agence profile (agence publishes trajets)', () => {
+    const out = ensureRoleProfileShape(bareProfile, 'agence') as ChauffeurProfile;
+    expect(out.vehicule.type).toBe('voiture');
+  });
+
+  it('returns the SAME reference when nothing needs repair (client / already shaped)', () => {
+    expect(ensureRoleProfileShape(bareProfile, 'client')).toBe(bareProfile);
+    const hebergeur = { ...bareProfile, accommodation: ACCOMMODATION_TYPES.maison } as AuthUser['profile'];
+    expect(ensureRoleProfileShape(hebergeur, 'hebergeur')).toBe(hebergeur);
   });
 });
 
@@ -303,6 +342,56 @@ describe('switchRole', () => {
     expect(ok).toBe(true);
     expect(useAuthStore.getState().user!.role).toBe('chauffeur');
     expect(updateSupabaseProfile).toHaveBeenCalledWith('clerk-abc', { role: 'chauffeur' });
+  });
+
+  it('populates accommodation when switching to hebergeur from a profile that lacks it', () => {
+    seedMultiRoleUser(['client', 'hebergeur'], 'client');
+    const ok = useAuthStore.getState().switchRole('hebergeur');
+    expect(ok).toBe(true);
+    const profile = useAuthStore.getState().user!.profile as HebergeurProfile;
+    expect(profile.accommodation).toBeDefined();
+    expect(profile.accommodation.type).toBe('hotel');
+    expect(profile.accommodation.icon).toBeTruthy();
+    expect(profile.accommodation.label).toBeTruthy();
+  });
+
+  it('populates vehicule when switching to chauffeur from a profile that lacks it', () => {
+    seedMultiRoleUser(['client', 'chauffeur'], 'client');
+    const ok = useAuthStore.getState().switchRole('chauffeur');
+    expect(ok).toBe(true);
+    const profile = useAuthStore.getState().user!.profile as ChauffeurProfile;
+    expect(profile.vehicule).toBeDefined();
+    expect(profile.vehicule.type).toBe('voiture');
+    expect(profile.vehicule.icon).toBeTruthy();
+  });
+
+  it('preserves an existing accommodation when switching to hebergeur', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'user-2',
+        role: 'client',
+        roles: ['client', 'hebergeur'],
+        profile: {
+          name: 'Awa',
+          email: 'awa@test.com',
+          phone: '',
+          address: '',
+          emergencyContact: '',
+          avatar: '',
+          rating: 5,
+          totalTrips: 0,
+          totalDeliveries: 0,
+          memberSince: '2026',
+          accommodation: { type: 'maison', label: 'Maison', icon: '🏡' },
+          disponible: true,
+        } as unknown as AuthUser['profile'],
+      },
+      clerkId: 'clerk-xyz',
+      supabaseProfileId: 'profile-2',
+    });
+    useAuthStore.getState().switchRole('hebergeur');
+    const profile = useAuthStore.getState().user!.profile as HebergeurProfile;
+    expect(profile.accommodation.type).toBe('maison');
   });
 
   it('falls back to [user.role] when roles[] is missing (pre-migration profile)', () => {

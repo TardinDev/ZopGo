@@ -153,6 +153,32 @@ const createHebergeurProfile = (
   disponible: true,
 });
 
+type AnyProfile = UserInfo | ChauffeurProfile | HebergeurProfile | AgencyProfile;
+
+// A multi-role user keeps a single profile object and switches the active
+// role at runtime (switchRole) — but switching never reshapes the profile.
+// So a user who started as client and switched to hebergeur would carry a
+// profile WITHOUT `accommodation`, and the UI/type-guards (which trust the
+// role) would crash on `accommodation.icon`. This guarantees the role-specific
+// fields exist with sane defaults. Existing values are never overwritten.
+export const ensureRoleProfileShape = (profile: AnyProfile, role: UserRole): AnyProfile => {
+  if ((role === 'chauffeur' || role === 'agence') && !(profile as ChauffeurProfile).vehicule) {
+    return {
+      ...profile,
+      vehicule: VEHICLE_TYPES.voiture,
+      disponible: (profile as ChauffeurProfile).disponible ?? true,
+    } as ChauffeurProfile;
+  }
+  if (role === 'hebergeur' && !(profile as HebergeurProfile).accommodation) {
+    return {
+      ...profile,
+      accommodation: ACCOMMODATION_TYPES.hotel,
+      disponible: (profile as HebergeurProfile).disponible ?? true,
+    } as HebergeurProfile;
+  }
+  return profile;
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -269,7 +295,13 @@ export const useAuthStore = create<AuthState>()(
         if (!granted.includes(newRole)) return false;
         if (user.role === newRole) return true;
 
-        set({ user: { ...user, role: newRole } });
+        set({
+          user: {
+            ...user,
+            role: newRole,
+            profile: ensureRoleProfileShape(user.profile, newRole),
+          },
+        });
 
         // If the user was a chauffeur driving for the previous role and we
         // switch away, drop them from the connected-drivers list so they
@@ -309,13 +341,17 @@ export const useAuthStore = create<AuthState>()(
           const nextRoles = Array.from(
             new Set([...(state.user.roles ?? []), 'agence' as UserRole])
           );
+          // An agence publishes trajets, so its profile needs `vehicule` —
+          // a hôte/client promoted to agence wouldn't have one. Normalise
+          // first, then graft the agency identity on top.
+          const shaped = ensureRoleProfileShape(state.user.profile, 'agence');
           return {
             user: {
               ...state.user,
               role: 'agence',
               roles: nextRoles,
               profile: {
-                ...state.user.profile,
+                ...shaped,
                 agencyName: result.agencyName,
                 agencyLogoUrl: null,
               } as AgencyProfile,
@@ -418,6 +454,15 @@ export const useAuthStore = create<AuthState>()(
         notificationPreferences: state.notificationPreferences,
       }),
       onRehydrateStorage: () => (state) => {
+        // Repair profiles persisted before role-shape normalisation existed:
+        // a user who switched to hebergeur/chauffeur kept a profile missing
+        // `accommodation`/`vehicule`, which crashes the profil screen.
+        if (state?.user) {
+          const repaired = ensureRoleProfileShape(state.user.profile, state.user.role);
+          if (repaired !== state.user.profile) {
+            state.user = { ...state.user, profile: repaired };
+          }
+        }
         state?.setHasHydrated(true);
       },
     }

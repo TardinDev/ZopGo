@@ -172,7 +172,7 @@ export default function ProfilTab() {
               <Text className="mb-2 text-white/80">{profile.email}</Text>
 
               {/* Badge véhicule pour les chauffeurs */}
-              {isUserChauffeur && chauffeurProfile && (
+              {isUserChauffeur && chauffeurProfile?.vehicule && (
                 <View className="mb-2 flex-row items-center rounded-full bg-white/20 px-4 py-2">
                   <Text className="mr-2 text-lg">{chauffeurProfile.vehicule.icon}</Text>
                   <Text className="font-semibold text-white">
@@ -182,7 +182,7 @@ export default function ProfilTab() {
               )}
 
               {/* Badge hébergement pour les hébergeurs */}
-              {isUserHebergeur && hebergeurProfile && (
+              {isUserHebergeur && hebergeurProfile?.accommodation && (
                 <View className="mb-2 flex-row items-center rounded-full bg-white/20 px-4 py-2">
                   <Text className="mr-2 text-lg">{hebergeurProfile.accommodation.icon}</Text>
                   <Text className="font-semibold text-white">
