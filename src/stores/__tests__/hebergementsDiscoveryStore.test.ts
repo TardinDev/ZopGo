@@ -67,6 +67,7 @@ describe('hebergementsDiscoveryStore', () => {
         location: 'Libreville',
         price: '25000 FCFA/nuit',
         prixParNuit: 25000,
+        periodeTarif: 'nuit',
         rating: 4.5,
         icon: '🏨',
         images: [],
@@ -80,6 +81,30 @@ describe('hebergementsDiscoveryStore', () => {
         adresse: '123 rue',
         amenities: [],
       });
+    });
+
+    it('renders the price suffix from the tarif period', async () => {
+      (fetchAllAvailableHebergements as jest.Mock).mockResolvedValue([
+        {
+          id: 'uuid-mois',
+          hebergeur_id: 'heb-1',
+          type: 'appartement',
+          nom: 'Appart mensuel',
+          ville: 'Libreville',
+          prix_par_nuit: 300000,
+          periode_tarif: 'mois',
+          profiles: null,
+          capacite: 4,
+          disponibilite: 1,
+          description: '',
+          adresse: '',
+        },
+      ]);
+
+      await useHebergementsDiscoveryStore.getState().loadHebergements();
+      const listing = useHebergementsDiscoveryStore.getState().listings[0];
+      expect(listing.periodeTarif).toBe('mois');
+      expect(listing.price).toBe('300000 FCFA/mois');
     });
 
     it('sets isLoading during fetch', async () => {

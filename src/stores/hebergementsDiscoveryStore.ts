@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { fetchAllAvailableHebergements } from '../lib/supabaseHebergements';
 import type { Hebergement } from '../types';
 import type { HebergementSort } from '../lib/hebergementsFilters';
+import { isTarifPeriode, periodeSuffixe } from '../utils/tarifPeriode';
 
 const TYPE_LABEL: Record<string, string> = {
   hotel: 'Hôtel',
@@ -54,14 +55,17 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
     set({ isLoading: true, error: null });
     try {
       const data = await fetchAllAvailableHebergements();
-      const mapped: Hebergement[] = data.map((h, index) => ({
+      const mapped: Hebergement[] = data.map((h, index) => {
+        const periodeTarif = isTarifPeriode(h.periode_tarif) ? h.periode_tarif : 'nuit';
+        return {
         id: index + 1,
         supabaseId: h.id,
         type: TYPE_LABEL[h.type] || h.type,
         name: h.nom,
         location: h.ville,
-        price: `${h.prix_par_nuit} FCFA/nuit`,
+        price: `${h.prix_par_nuit} FCFA/${periodeSuffixe(periodeTarif)}`,
         prixParNuit: h.prix_par_nuit,
+        periodeTarif,
         rating: h.profiles?.rating ?? 0,
         icon: TYPE_ICON[h.type] || '🏨',
         images: h.images || [],
@@ -74,7 +78,8 @@ export const useHebergementsDiscoveryStore = create<HebergementsDiscoveryState>(
         description: h.description,
         adresse: h.adresse,
         amenities: h.amenities || [],
-      }));
+        };
+      });
       set({ listings: mapped, error: null });
     } catch (err) {
       console.warn('[loadHebergements] FAILED', err instanceof Error ? err.message : err);

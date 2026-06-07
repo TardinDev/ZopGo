@@ -113,6 +113,7 @@ export default function HebergementsTab() {
         description: hebergement.description || '',
         icon: hebergement.icon,
         prixParNuit: String(hebergement.prixParNuit),
+        periodeTarif: hebergement.periodeTarif,
         capacite: String(hebergement.capacite || 1),
         disponibilite: String(hebergement.disponibilite || 0),
         hebergeurProfileId: hebergement.hebergeurProfileId || '',

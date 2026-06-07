@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Hebergement } from '../types';
+import { isTarifPeriode, periodeSuffixe } from '../utils/tarifPeriode';
 
 const TYPE_LABEL: Record<string, string> = {
   hotel: 'Hôtel',
@@ -63,6 +64,7 @@ interface FavoriteJoinRow {
     ville: string;
     adresse: string;
     prix_par_nuit: number;
+    periode_tarif?: string;
     capacite: number;
     disponibilite: number;
     description: string;
@@ -83,7 +85,7 @@ export async function fetchFavoriteHebergements(clientId: string): Promise<Heber
   const { data, error } = await supabase
     .from('hebergement_favorites')
     .select(
-      'hebergement_id, hebergement:hebergement_id(id, nom, type, ville, adresse, prix_par_nuit, capacite, disponibilite, description, images, amenities, hebergeur_id, status, profiles:hebergeur_id(name, avatar, rating))'
+      'hebergement_id, hebergement:hebergement_id(id, nom, type, ville, adresse, prix_par_nuit, periode_tarif, capacite, disponibilite, description, images, amenities, hebergeur_id, status, profiles:hebergeur_id(name, avatar, rating))'
     )
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
@@ -98,14 +100,16 @@ export async function fetchFavoriteHebergements(clientId: string): Promise<Heber
     .map((row, index): Hebergement | null => {
       const h = row.hebergement;
       if (!h || h.status !== 'actif') return null;
+      const periodeTarif = isTarifPeriode(h.periode_tarif) ? h.periode_tarif : 'nuit';
       return {
         id: index + 1,
         supabaseId: h.id,
         type: TYPE_LABEL[h.type] || h.type,
         name: h.nom,
         location: h.ville,
-        price: `${h.prix_par_nuit} FCFA/nuit`,
+        price: `${h.prix_par_nuit} FCFA/${periodeSuffixe(periodeTarif)}`,
         prixParNuit: h.prix_par_nuit,
+        periodeTarif,
         rating: h.profiles?.rating ?? 0,
         icon: TYPE_ICON[h.type] || '🏨',
         images: h.images || [],

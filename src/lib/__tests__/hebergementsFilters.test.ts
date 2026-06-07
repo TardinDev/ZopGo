@@ -15,6 +15,7 @@ function h(overrides: Partial<Hebergement>): Hebergement {
     location: 'Libreville',
     price: '25000 FCFA/nuit',
     prixParNuit: 25000,
+    periodeTarif: 'nuit',
     rating: 4.0,
     icon: '🏨',
     ...overrides,

@@ -14,6 +14,8 @@ import { useAuthStore, ACCOMMODATION_TYPES } from '../../../stores/authStore';
 import { toast } from '../../../stores/toastStore';
 import { uploadHebergementImage } from '../../../lib/supabaseHebergementImages';
 import { AccommodationType } from '../../../types';
+import { TARIF_PERIODES, periodeLabel, periodeSuffixe } from '../../../utils/tarifPeriode';
+import { summarizeImageUploads } from '../../../utils/imageUploadSummary';
 
 const ACCOMMODATION_OPTIONS: { type: AccommodationType; label: string; icon: string }[] = [
   { type: 'hotel', label: 'Hôtel', icon: '🏨' },
@@ -64,7 +66,7 @@ export default function MesHebergementsTab() {
 
   const handlePublish = async () => {
     if (!formData.nom.trim() || !formData.ville.trim() || !formData.prixParNuit.trim()) {
-      toast.error('Remplis le nom, la ville et le prix par nuit.', { title: 'Champs requis' });
+      toast.error(`Remplis le nom, la ville et le prix par ${periodeSuffixe(formData.periodeTarif)}.`, { title: 'Champs requis' });
       return;
     }
     if (formData.images.length === 0) {
@@ -85,31 +87,40 @@ export default function MesHebergementsTab() {
       return;
     }
 
-    let imageUrls: string[] = [];
+    let summary = summarizeImageUploads([]);
     setIsUploading(true);
     try {
       const tempId = Date.now().toString();
       const uploads = await Promise.all(
         formData.images.map((uri) => uploadHebergementImage(tempId, uri))
       );
-      imageUrls = uploads.filter((url): url is string => url !== null);
+      summary = summarizeImageUploads(uploads);
     } catch {
-      // handled below via the empty-result guard
+      // handled below via the all-failed guard
     } finally {
       setIsUploading(false);
     }
 
-    // A photo is required, so refuse to publish a photoless listing if the
-    // upload silently failed (network/storage) rather than going live blank.
-    if (imageUrls.length === 0) {
+    // A photo is required, so refuse to publish a photoless listing if every
+    // upload failed (network/storage) rather than going live blank.
+    if (summary.allFailed) {
       toast.error("Échec de l'envoi des photos. Vérifie ta connexion et réessaie.", {
         title: 'Photos non envoyées',
       });
       return;
     }
 
+    // Partial failure: at least one photo made it. Tell the hôte which ones
+    // were lost instead of silently dropping them, then publish the rest.
+    if (summary.someFailed) {
+      toast.error(
+        `${summary.failed} photo${summary.failed > 1 ? 's' : ''} sur ${summary.total} n'${summary.failed > 1 ? 'ont' : 'a'} pas pu être envoyée${summary.failed > 1 ? 's' : ''}. L'annonce est publiée avec ${summary.uploaded} photo${summary.uploaded > 1 ? 's' : ''}.`,
+        { title: 'Certaines photos manquent', durationMs: 5000 }
+      );
+    }
+
     try {
-      await addListing(user.id, supabaseProfileId, imageUrls);
+      await addListing(user.id, supabaseProfileId, summary.urls);
       if (coachVisible) dismissCoach();
       const isFirst = await shouldCelebrateFirstPublish('hebergement');
       if (isFirst) {
@@ -272,11 +283,44 @@ export default function MesHebergementsTab() {
                 onChangeText={(v) => updateForm('adresse', v)}
               />
 
+              {/* Période de tarification — l'hôte choisit nuit / semaine / mois */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 8 }}>
+                Tarification par
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                {TARIF_PERIODES.map((p) => {
+                  const selected = formData.periodeTarif === p;
+                  return (
+                    <TouchableOpacity
+                      key={p}
+                      onPress={() => updateForm('periodeTarif', p)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        backgroundColor: selected ? '#8B5CF6' : '#F3F4F6',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{
+                        fontSize: 13,
+                        fontWeight: '600',
+                        color: selected ? 'white' : '#6B7280',
+                      }}>
+                        {periodeLabel(p)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
               {/* Prix et Capacité - côte à côte */}
               <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: '#6B7280', marginBottom: 6 }}>
-                    Prix/nuit (FCFA)
+                    Prix/{periodeSuffixe(formData.periodeTarif)} (FCFA)
                   </Text>
                   <TextInput
                     style={{
@@ -619,7 +663,7 @@ export default function MesHebergementsTab() {
                       borderTopColor: '#F3F4F6',
                     }}>
                       <Text style={{ fontSize: 16, fontWeight: '700', color: '#8B5CF6' }}>
-                        {listing.prixParNuit.toLocaleString()} FCFA/nuit
+                        {listing.prixParNuit.toLocaleString()} FCFA/{periodeSuffixe(listing.periodeTarif)}
                       </Text>
                       <TouchableOpacity
                         onPress={() => toggleStatus(listing.id)}

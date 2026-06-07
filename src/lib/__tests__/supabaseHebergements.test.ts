@@ -88,6 +88,27 @@ describe('supabaseHebergements', () => {
       expect(result).toEqual({ id: 'new_h1' });
     });
 
+    it('forwards the chosen tarif period to Supabase', async () => {
+      const mockChain = createMockChain({ data: { id: 'new_h2' }, error: null });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      await insertHebergement({
+        hebergeur_id: 'heb1',
+        nom: 'Appart mensuel',
+        type: 'appartement',
+        ville: 'Libreville',
+        adresse: '12 rue',
+        prix_par_nuit: 300000,
+        capacite: 4,
+        description: 'Loué au mois',
+        periode_tarif: 'mois',
+      });
+
+      expect(mockChain.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ periode_tarif: 'mois' })
+      );
+    });
+
     it('throws on Supabase error so callers surface the failure', async () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       const mockChain = createMockChain({

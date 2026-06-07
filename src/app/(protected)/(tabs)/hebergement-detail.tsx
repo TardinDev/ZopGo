@@ -44,6 +44,13 @@ import {
   formatDayMonthFr,
 } from '../../../utils/detailFormatters';
 import { resolveAmenities } from '../../../constants/amenities';
+import {
+  isTarifPeriode,
+  periodeSuffixe,
+  uniteLabel,
+  maxUnites,
+  dureeEnNuits,
+} from '../../../utils/tarifPeriode';
 
 const HEBERGEUR_COLOR = '#8B5CF6';
 const HEBERGEUR_TINT = '#F3E8FF';
@@ -102,7 +109,9 @@ function Perforation({ pageColor }: { pageColor: string }) {
 export default function HebergementDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [nights, setNights] = useState(1);
+  // `units` = nombre de périodes réservées (nuits, semaines ou mois selon
+  // periodeTarif). La durée réelle en nuits en est dérivée pour le stockage.
+  const [units, setUnits] = useState(1);
   const [guests, setGuests] = useState(1);
   const [checkIn, setCheckIn] = useState<Date>(() => new Date());
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
@@ -176,10 +185,16 @@ export default function HebergementDetailScreen() {
     hebergeurRating: Number(params.hebergeurRating) || 0,
   };
 
-  const totalPrice = hebergement.prixParNuit * nights;
+  const periodeTarif = isTarifPeriode(params.periodeTarif) ? params.periodeTarif : 'nuit';
+  // Durée réelle du séjour en nuits (1 semaine = 7 nuits, 1 mois = 30 nuits).
+  const durationNights = dureeEnNuits(periodeTarif, units);
+  const totalPrice = hebergement.prixParNuit * units;
   const availability = getHebergementAvailability(hebergement.disponibilite);
-  const checkOutDate = useMemo(() => addDays(checkIn, Math.max(1, nights)), [checkIn, nights]);
-  const stay = useMemo(() => computeStay(checkIn, nights), [checkIn, nights]);
+  const checkOutDate = useMemo(
+    () => addDays(checkIn, Math.max(1, durationNights)),
+    [checkIn, durationNights]
+  );
+  const stay = useMemo(() => computeStay(checkIn, durationNights), [checkIn, durationNights]);
   const reviewSummary = useMemo(() => computeReviewSummary(reviews), [reviews]);
 
   const isFavorite = useFavoritesStore((s) => s.favoriteIds.includes(hebergement.supabaseId));
@@ -260,7 +275,7 @@ export default function HebergementDetailScreen() {
         hebergementId: hebergement.supabaseId,
         clientId: supabaseProfileId!,
         hebergeurId: hebergement.hebergeurProfileId,
-        nombreNuits: nights,
+        nombreNuits: durationNights,
         nombreVoyageurs: guests,
         dateArrivee: stay.dateArrivee,
         dateDepart: stay.dateDepart,
@@ -991,7 +1006,7 @@ export default function HebergementDetailScreen() {
             <View>
               <Text
                 style={{ fontSize: 11, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 }}>
-                NUITS
+                {uniteLabel(periodeTarif, 2).split(' ')[1].toUpperCase()}
               </Text>
               <Text
                 selectable
@@ -1001,7 +1016,7 @@ export default function HebergementDetailScreen() {
                   color: '#6B7280',
                   fontVariant: ['tabular-nums'],
                 }}>
-                {formatPriceFr(hebergement.prixParNuit)} Fcfa / nuit
+                {formatPriceFr(hebergement.prixParNuit)} Fcfa / {periodeSuffixe(periodeTarif)}
               </Text>
             </View>
             <View
@@ -1017,14 +1032,14 @@ export default function HebergementDetailScreen() {
               }}>
               <TouchableOpacity
                 onPress={() => {
-                  if (nights > 1) {
+                  if (units > 1) {
                     hapticSelection();
                     animateCounter();
-                    setNights(nights - 1);
+                    setUnits(units - 1);
                   }
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Réduire le nombre de nuits"
+                accessibilityLabel={`Réduire le nombre de ${periodeSuffixe(periodeTarif)}s`}
                 style={{
                   height: 36,
                   width: 36,
@@ -1048,18 +1063,18 @@ export default function HebergementDetailScreen() {
                     textAlign: 'center',
                   },
                 ]}>
-                {nights}
+                {units}
               </Animated.Text>
               <TouchableOpacity
                 onPress={() => {
-                  if (nights < 30) {
+                  if (units < maxUnites(periodeTarif)) {
                     hapticSelection();
                     animateCounter();
-                    setNights(nights + 1);
+                    setUnits(units + 1);
                   }
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Augmenter le nombre de nuits"
+                accessibilityLabel={`Augmenter le nombre de ${periodeSuffixe(periodeTarif)}s`}
                 style={{
                   height: 36,
                   width: 36,
@@ -1081,7 +1096,7 @@ export default function HebergementDetailScreen() {
               marginBottom: 12,
             }}>
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>
-              Total · {nights} nuit{nights > 1 ? 's' : ''}
+              Total · {uniteLabel(periodeTarif, units)}
             </Text>
             <Animated.Text
               selectable
@@ -1123,7 +1138,7 @@ export default function HebergementDetailScreen() {
             accessibilityLabel={
               !validation.ok
                 ? 'Réservation indisponible'
-                : `Réserver ${nights} nuit${nights > 1 ? 's' : ''} pour ${totalPrice} Fcfa`
+                : `Réserver ${uniteLabel(periodeTarif, units)} pour ${totalPrice} Fcfa`
             }
             accessibilityState={{ disabled: isBooking || !validation.ok }}
             style={{

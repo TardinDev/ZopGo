@@ -1,3 +1,7 @@
+import type { TarifPeriode } from '../utils/tarifPeriode';
+
+export type { TarifPeriode };
+
 // Types pour les voyages
 export interface Voyage {
   id: string;
@@ -32,6 +36,7 @@ export interface Hebergement {
   location: string;
   price: string;
   prixParNuit: number;
+  periodeTarif: TarifPeriode;
   rating: number;
   icon: string;
   images?: string[];
@@ -317,6 +322,7 @@ export interface HebergeurListing {
   ville: string;
   adresse: string;
   prixParNuit: number;
+  periodeTarif: TarifPeriode;
   capacite: number;
   description: string;
   status: HebergementStatus;

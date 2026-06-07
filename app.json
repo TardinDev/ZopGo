@@ -31,8 +31,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "L'application a besoin d'accéder à vos photos pour définir votre photo de profil.",
-          "cameraPermission": "L'application a besoin d'accéder à votre caméra pour prendre une photo de profil."
+          "photosPermission": "L'application a besoin d'accéder à vos photos pour votre photo de profil et les photos de vos annonces d'hébergement.",
+          "cameraPermission": "L'application a besoin d'accéder à votre caméra pour prendre une photo de profil ou d'une annonce d'hébergement."
         }
       ],
       [

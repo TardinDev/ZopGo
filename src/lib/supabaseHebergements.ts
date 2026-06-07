@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { sanitizeInput } from '../utils/validation';
+import type { TarifPeriode } from '../utils/tarifPeriode';
 
 export interface SupabaseHebergement {
   id: string;
@@ -9,6 +10,7 @@ export interface SupabaseHebergement {
   ville: string;
   adresse: string;
   prix_par_nuit: number;
+  periode_tarif: TarifPeriode;
   capacite: number;
   description: string;
   status: string;
@@ -41,6 +43,7 @@ export async function insertHebergement(hebergement: {
   ville: string;
   adresse: string;
   prix_par_nuit: number;
+  periode_tarif?: TarifPeriode;
   capacite: number;
   description: string;
   disponibilite?: number;

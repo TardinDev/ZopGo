@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { HebergeurListing, AccommodationType } from '../types';
+import { isTarifPeriode, periodeSuffixe, type TarifPeriode } from '../utils/tarifPeriode';
 import {
   fetchHebergements as fetchSupabaseHebergements,
   insertHebergement,
@@ -14,6 +15,7 @@ interface HebergementFormData {
   ville: string;
   adresse: string;
   prixParNuit: string;
+  periodeTarif: TarifPeriode;
   capacite: string;
   description: string;
   disponible: boolean;
@@ -28,6 +30,7 @@ const initialFormData: HebergementFormData = {
   ville: '',
   adresse: '',
   prixParNuit: '',
+  periodeTarif: 'nuit',
   capacite: '1',
   description: '',
   disponible: true,
@@ -68,6 +71,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
     const status = formData.disponible ? 'actif' : 'inactif';
     const disponibilite = parseInt(formData.disponibilite) || 1;
     const images = imageUrls || [];
+    const periodeTarif = isTarifPeriode(formData.periodeTarif) ? formData.periodeTarif : 'nuit';
 
     const localListing: HebergeurListing = {
       id: Date.now().toString(),
@@ -77,6 +81,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
       ville: formData.ville,
       adresse: formData.adresse,
       prixParNuit: parseInt(formData.prixParNuit) || 0,
+      periodeTarif,
       capacite: parseInt(formData.capacite) || 1,
       description: formData.description,
       status,
@@ -95,6 +100,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         ville: formData.ville,
         adresse: formData.adresse,
         prix_par_nuit: parseInt(formData.prixParNuit) || 0,
+        periode_tarif: periodeTarif,
         capacite: parseInt(formData.capacite) || 1,
         description: formData.description,
         status,
@@ -116,7 +122,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
             category: 'hebergements',
             recipientRole: 'client',
             title: 'Nouvel hébergement disponible',
-            message: `${formData.nom} — ${formData.ville} — ${parseInt(formData.prixParNuit) || 0} FCFA/nuit`,
+            message: `${formData.nom} — ${formData.ville} — ${parseInt(formData.prixParNuit) || 0} FCFA/${periodeSuffixe(periodeTarif)}`,
             data: {
               hebergementId: result.id,
               type: 'new_hebergement',
@@ -216,6 +222,7 @@ export const useHebergementsStore = create<HebergementsState>((set, get) => ({
         ville: h.ville,
         adresse: h.adresse,
         prixParNuit: h.prix_par_nuit,
+        periodeTarif: isTarifPeriode(h.periode_tarif) ? h.periode_tarif : 'nuit',
         capacite: h.capacite,
         description: h.description,
         status: h.status as 'actif' | 'inactif',

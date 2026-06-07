@@ -16,6 +16,7 @@ beforeEach(() => {
       ville: '',
       adresse: '',
       prixParNuit: '',
+      periodeTarif: 'nuit',
       capacite: '1',
       description: '',
       disponible: true,
@@ -78,6 +79,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: '123 rue',
           prixParNuit: '25000',
+          periodeTarif: 'nuit',
           capacite: '3',
           description: 'Beau hotel',
           disponible: true,
@@ -105,6 +107,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: 'rue',
           prixParNuit: '10000',
+          periodeTarif: 'nuit',
           capacite: '2',
           description: 'desc',
           disponible: true,
@@ -127,6 +130,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: 'rue',
           prixParNuit: '10000',
+          periodeTarif: 'nuit',
           capacite: '2',
           description: 'desc',
           disponible: true,
@@ -159,6 +163,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: 'rue',
           prixParNuit: '10000',
+          periodeTarif: 'nuit',
           capacite: '2',
           description: 'desc',
           disponible: true,
@@ -182,6 +187,7 @@ describe('hebergementsStore', () => {
           ville: 'V',
           adresse: 'A',
           prixParNuit: '5000',
+          periodeTarif: 'nuit',
           capacite: '1',
           description: 'D',
           disponible: true,
@@ -206,6 +212,7 @@ describe('hebergementsStore', () => {
           ville: 'V',
           adresse: 'A',
           prixParNuit: 'abc',
+          periodeTarif: 'nuit',
           capacite: 'xyz',
           description: 'D',
           disponible: true,
@@ -230,6 +237,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: 'rue',
           prixParNuit: '10000',
+          periodeTarif: 'nuit',
           capacite: '2',
           description: 'desc',
           disponible: false,
@@ -253,6 +261,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: 'rue',
           prixParNuit: '10000',
+          periodeTarif: 'nuit',
           capacite: '2',
           description: 'desc',
           disponible: true,
@@ -273,6 +282,36 @@ describe('hebergementsStore', () => {
       expect(listing.images).toEqual(imageUrls);
     });
 
+    it('defaults the tarif period to "nuit"', () => {
+      expect(useHebergementsStore.getState().formData.periodeTarif).toBe('nuit');
+    });
+
+    it('passes the chosen tarif period to local listing and Supabase insert', async () => {
+      (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_mois' });
+      useHebergementsStore.setState({
+        formData: {
+          nom: 'Appart mensuel',
+          type: 'appartement',
+          ville: 'Libreville',
+          adresse: 'rue',
+          prixParNuit: '300000',
+          periodeTarif: 'mois',
+          capacite: '4',
+          description: 'desc',
+          disponible: true,
+          disponibilite: '1',
+          images: [],
+          amenities: [],
+        },
+      });
+
+      await useHebergementsStore.getState().addListing('heb_1', 'supa_profile_1');
+      expect(insertHebergement).toHaveBeenCalledWith(
+        expect.objectContaining({ periode_tarif: 'mois' })
+      );
+      expect(useHebergementsStore.getState().listings[0].periodeTarif).toBe('mois');
+    });
+
     it('passes disponibilite to Supabase insert', async () => {
       (insertHebergement as jest.Mock).mockResolvedValue({ id: 'supa_heb_2' });
       useHebergementsStore.setState({
@@ -282,6 +321,7 @@ describe('hebergementsStore', () => {
           ville: 'Libreville',
           adresse: 'rue',
           prixParNuit: '10000',
+          periodeTarif: 'nuit',
           capacite: '2',
           description: 'desc',
           disponible: true,
@@ -307,8 +347,8 @@ describe('hebergementsStore', () => {
     it('removes listing optimistically', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
-          { id: '2', hebergeurId: 'h1', nom: 'B', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 2000, capacite: 2, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, periodeTarif: 'nuit', capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '2', hebergeurId: 'h1', nom: 'B', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 2000, periodeTarif: 'nuit', capacite: 2, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -322,7 +362,7 @@ describe('hebergementsStore', () => {
       (deleteHebergement as jest.Mock).mockRejectedValue(new Error('DB error'));
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, periodeTarif: 'nuit', capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -335,7 +375,7 @@ describe('hebergementsStore', () => {
     it('toggles actif to inactif', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, periodeTarif: 'nuit', capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -347,7 +387,7 @@ describe('hebergementsStore', () => {
     it('toggles inactif to actif', async () => {
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'inactif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, periodeTarif: 'nuit', capacite: 1, description: '', status: 'inactif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -366,7 +406,7 @@ describe('hebergementsStore', () => {
       (toggleHebergementStatus as jest.Mock).mockRejectedValue(new Error('error'));
       useHebergementsStore.setState({
         listings: [
-          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
+          { id: '1', hebergeurId: 'h1', nom: 'A', type: 'hotel', ville: 'V', adresse: 'A', prixParNuit: 1000, periodeTarif: 'nuit', capacite: 1, description: '', status: 'actif', disponibilite: 1, images: [], amenities: [], createdAt: '' },
         ],
       });
 
@@ -429,6 +469,7 @@ describe('hebergementsStore', () => {
           status: 'actif',
           disponibilite: 3,
           images: ['https://example.com/img1.jpg'],
+          periode_tarif: 'semaine',
           created_at: '2026-01-01',
         },
       ]);
@@ -438,7 +479,31 @@ describe('hebergementsStore', () => {
       expect(listings).toHaveLength(1);
       expect(listings[0].nom).toBe('Hotel Gabon');
       expect(listings[0].prixParNuit).toBe(25000);
+      expect(listings[0].periodeTarif).toBe('semaine');
       expect(listings[0].images).toEqual(['https://example.com/img1.jpg']);
+    });
+
+    it('defaults legacy rows without periode_tarif to "nuit"', async () => {
+      (fetchHebergements as jest.Mock).mockResolvedValue([
+        {
+          id: 'h_legacy',
+          hebergeur_id: 'heb1',
+          nom: 'Vieux Hotel',
+          type: 'hotel',
+          ville: 'Libreville',
+          adresse: 'rue',
+          prix_par_nuit: 10000,
+          capacite: 2,
+          description: 'desc',
+          status: 'actif',
+          disponibilite: 1,
+          images: [],
+          created_at: '2026-01-01',
+        },
+      ]);
+
+      await useHebergementsStore.getState().loadListings('supa_1');
+      expect(useHebergementsStore.getState().listings[0].periodeTarif).toBe('nuit');
     });
 
     it('defaults images to empty array when null', async () => {

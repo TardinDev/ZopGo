@@ -39,6 +39,7 @@ export default function FavoriteHebergementsScreen() {
           description: h.description || '',
           icon: h.icon,
           prixParNuit: String(h.prixParNuit),
+          periodeTarif: h.periodeTarif,
           capacite: String(h.capacite || 1),
           disponibilite: String(h.disponibilite || 0),
           hebergeurProfileId: h.hebergeurProfileId || '',

@@ -75,6 +75,7 @@ describe('fetchFavoriteHebergements', () => {
               ville: 'Libreville',
               adresse: 'rue',
               prix_par_nuit: 40000,
+              periode_tarif: 'mois',
               capacite: 6,
               disponibilite: 2,
               description: 'Belle villa',
@@ -116,5 +117,7 @@ describe('fetchFavoriteHebergements', () => {
     expect(out[0].type).toBe('Maison');
     expect(out[0].amenities).toEqual(['wifi']);
     expect(out[0].hebergeurName).toBe('Awa');
+    expect(out[0].periodeTarif).toBe('mois');
+    expect(out[0].price).toBe('40000 FCFA/mois');
   });
 });
