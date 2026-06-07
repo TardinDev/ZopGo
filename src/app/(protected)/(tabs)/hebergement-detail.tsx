@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView, Platform } from 'react-native';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -262,11 +262,19 @@ export default function HebergementDetailScreen() {
     requestedGuests: guests,
   });
 
+  // Both the synchronous-success path (handlePaymentConfirm) and the realtime
+  // 'succeeded' callback (handlePaymentSuccess) can fire for one payment.
+  // Without this guard each would create its own reservation row + notify the
+  // hôte twice. Booked once per payment; reset when a new payment starts.
+  const hasBookedRef = useRef(false);
+
   const performBooking = async () => {
     if (!validation.ok) {
       toast.error(validation.message, { title: 'Réservation impossible', durationMs: 5000 });
       return;
     }
+    if (hasBookedRef.current) return;
+    hasBookedRef.current = true;
 
     setIsBooking(true);
     try {
@@ -276,6 +284,8 @@ export default function HebergementDetailScreen() {
         clientId: supabaseProfileId!,
         hebergeurId: hebergement.hebergeurProfileId,
         nombreNuits: durationNights,
+        periodeTarif,
+        nombreUnites: units,
         nombreVoyageurs: guests,
         dateArrivee: stay.dateArrivee,
         dateDepart: stay.dateDepart,
@@ -292,9 +302,11 @@ export default function HebergementDetailScreen() {
         });
         router.back();
       } else {
+        hasBookedRef.current = false; // let the client retry
         toast.error('Impossible de créer la demande. Réessaie.', { title: 'Erreur' });
       }
     } catch {
+      hasBookedRef.current = false; // let the client retry
       toast.error('Une erreur est survenue.', { title: 'Erreur' });
     } finally {
       setIsBooking(false);
@@ -321,6 +333,7 @@ export default function HebergementDetailScreen() {
       toast.error('Connecte-toi pour payer.', { title: 'Session expirée' });
       return;
     }
+    hasBookedRef.current = false; // new payment attempt → allow one booking
     setIsBooking(true);
     const idempotencyKey = generateIdempotencyKey();
     const result = await initiatePayment({

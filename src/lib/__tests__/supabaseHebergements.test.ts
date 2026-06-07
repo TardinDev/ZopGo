@@ -146,15 +146,14 @@ describe('supabaseHebergements', () => {
       expect(result).toHaveLength(1);
     });
 
-    it('returns empty array on error', async () => {
+    it('throws on error so the discovery store can show a retry banner', async () => {
       const mockChain = createMockChain({
         data: null,
-        error: { message: 'error' },
+        error: { message: 'network down' },
       });
       (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
-      const result = await fetchAllAvailableHebergements();
-      expect(result).toEqual([]);
+      await expect(fetchAllAvailableHebergements()).rejects.toThrow('network down');
     });
   });
 

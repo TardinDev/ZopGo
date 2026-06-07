@@ -16,6 +16,7 @@ import {
   NotificationPreferences,
 } from '../types';
 import { useDriversStore } from './driversStore';
+import { useFavoritesStore } from './favoritesStore';
 import {
   upsertProfile,
   fetchProfileByClerkId,
@@ -368,6 +369,10 @@ export const useAuthStore = create<AuthState>()(
         if (user && user.role === 'chauffeur') {
           useDriversStore.getState().removeConnectedDriver(user.id);
         }
+
+        // Clear per-user favourites so the next account doesn't inherit the
+        // previous user's hearts (and can't toggle against the old clientId).
+        useFavoritesStore.getState().reset();
 
         if (clerkId) {
           updatePushToken(clerkId, null);

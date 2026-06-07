@@ -18,6 +18,8 @@ interface FavoritesState {
   /** Full listings for the "Mes favoris" screen. */
   loadFavorites: (clientId: string) => Promise<void>;
   toggleFavorite: (hebergementId: string) => Promise<void>;
+  /** Clear all favourite state — call on logout so the next user starts clean. */
+  reset: () => void;
 }
 
 export const useFavoritesStore = create<FavoritesState>((set, get) => ({
@@ -62,4 +64,6 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
       set({ favoriteIds });
     }
   },
+
+  reset: () => set({ clientId: null, favoriteIds: [], favorites: [], isLoading: false }),
 }));

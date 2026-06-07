@@ -25,6 +25,15 @@ describe('favoritesStore', () => {
     expect(useFavoritesStore.getState().favoriteIds).toEqual(['h1', 'h2']);
   });
 
+  it('reset clears clientId and all favourites', () => {
+    useFavoritesStore.setState({ clientId: 'c1', favoriteIds: ['h1'], favorites: [{ supabaseId: 'h1' } as never] });
+    useFavoritesStore.getState().reset();
+    const s = useFavoritesStore.getState();
+    expect(s.clientId).toBeNull();
+    expect(s.favoriteIds).toEqual([]);
+    expect(s.favorites).toEqual([]);
+  });
+
   it('toggleFavorite optimistically adds then persists', async () => {
     (addFavorite as jest.Mock).mockResolvedValue(true);
     useFavoritesStore.setState({ clientId: 'c1', favoriteIds: [] });

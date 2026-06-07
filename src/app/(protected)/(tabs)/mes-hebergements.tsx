@@ -16,6 +16,7 @@ import { uploadHebergementImage } from '../../../lib/supabaseHebergementImages';
 import { AccommodationType } from '../../../types';
 import { TARIF_PERIODES, periodeLabel, periodeSuffixe } from '../../../utils/tarifPeriode';
 import { summarizeImageUploads } from '../../../utils/imageUploadSummary';
+import { validatePrice, validatePlaces } from '../../../utils/validation';
 
 const ACCOMMODATION_OPTIONS: { type: AccommodationType; label: string; icon: string }[] = [
   { type: 'hotel', label: 'Hôtel', icon: '🏨' },
@@ -67,6 +68,15 @@ export default function MesHebergementsTab() {
   const handlePublish = async () => {
     if (!formData.nom.trim() || !formData.ville.trim() || !formData.prixParNuit.trim()) {
       toast.error(`Remplis le nom, la ville et le prix par ${periodeSuffixe(formData.periodeTarif)}.`, { title: 'Champs requis' });
+      return;
+    }
+    // Guard against 0 / negative / NaN prices reaching the discovery list.
+    if (!validatePrice(parseInt(formData.prixParNuit, 10))) {
+      toast.error('Le prix doit être un nombre entre 1 et 1 000 000 FCFA.', { title: 'Prix invalide' });
+      return;
+    }
+    if (!validatePlaces(parseInt(formData.capacite, 10))) {
+      toast.error('La capacité doit être un nombre entre 1 et 100.', { title: 'Capacité invalide' });
       return;
     }
     if (formData.images.length === 0) {

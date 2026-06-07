@@ -8,6 +8,7 @@ import {
   ACCOMMODATION_TYPES,
 } from '../authStore';
 import { useDriversStore } from '../driversStore';
+import { useFavoritesStore } from '../favoritesStore';
 import { fetchProfileByClerkId, upsertProfile, updateProfile as updateSupabaseProfile } from '../../lib/supabaseProfile';
 import { updatePushToken, fetchNotificationPreferences, updateNotificationPreferences } from '../../lib/supabaseNotifications';
 import type { AuthUser, ChauffeurProfile, HebergeurProfile } from '../../types';
@@ -472,6 +473,14 @@ describe('logout', () => {
     expect(useDriversStore.getState().connectedDrivers).toHaveLength(1);
     useAuthStore.getState().logout();
     expect(useDriversStore.getState().connectedDrivers).toHaveLength(0);
+  });
+
+  it('clears the favourites store on logout', () => {
+    useFavoritesStore.setState({ clientId: 'c1', favoriteIds: ['h1'], favorites: [] });
+    useAuthStore.getState().setupProfile('client', 'Jean', 'jean@test.com', undefined, 'clerk_1');
+    useAuthStore.getState().logout();
+    expect(useFavoritesStore.getState().clientId).toBeNull();
+    expect(useFavoritesStore.getState().favoriteIds).toEqual([]);
   });
 
   it('clears push token in Supabase on logout', () => {

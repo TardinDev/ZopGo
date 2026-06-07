@@ -21,7 +21,9 @@ import {
 import { decrementTrajetPlaces } from '../lib/supabaseTrajets';
 import { updateHebergementDisponibilite } from '../lib/supabaseHebergements';
 import { sendPushIfAllowed } from '../lib/pushNotifications';
+import { bookingDurationLabel } from '../utils/reservationDuration';
 import type { Reservation, HebergementReservation } from '../types';
+import type { TarifPeriode } from '../utils/tarifPeriode';
 
 interface ReservationsState {
   clientReservations: Reservation[];
@@ -109,6 +111,10 @@ interface ReservationsState {
     currentDisponibilite: number;
     hebergementNom: string;
     hebergementVille: string;
+    // Période choisie par le client + nombre d'unités, pour un message clair
+    // à l'hôte ("1 mois" plutôt que "30 nuits"). Optionnels (rétro-compat).
+    periodeTarif?: TarifPeriode;
+    nombreUnites?: number;
   }) => Promise<HebergementReservation | null>;
 
   acceptHebergementReservation: (params: {
@@ -547,6 +553,8 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
     currentDisponibilite,
     hebergementNom,
     hebergementVille,
+    periodeTarif,
+    nombreUnites,
   }) => {
     set({ isLoading: true });
     try {
@@ -570,14 +578,15 @@ export const useReservationsStore = create<ReservationsState>((set) => ({
       await updateHebergementDisponibilite(hebergementId, newDispo);
 
       const contextLabel = `${hebergementNom} — ${hebergementVille}`;
+      const dureeLabel = bookingDurationLabel(nombreNuits, periodeTarif, nombreUnites);
 
       void sendPushIfAllowed({
         recipientProfileId: hebergeurId,
         category: 'hebergements',
         type: 'hebergement_reservation',
         title: 'Nouvelle demande',
-        body: `${clientName} souhaite réserver ${nombreNuits} nuit(s) — ${contextLabel}`,
-        message: `${clientName} souhaite réserver ${nombreNuits} nuit${nombreNuits > 1 ? 's' : ''} dans votre hébergement`,
+        body: `${clientName} souhaite réserver ${dureeLabel} — ${contextLabel}`,
+        message: `${clientName} souhaite réserver ${dureeLabel} dans votre hébergement`,
         icon: 'bed-outline',
         data: {
           hebergementReservationId: reservation.id,

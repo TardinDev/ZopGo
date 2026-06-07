@@ -83,8 +83,11 @@ export async function fetchAllAvailableHebergements(): Promise<SupabaseHebergeme
     .limit(100);
 
   if (error) {
+    // Throw (rather than swallow to []) so the discovery store can tell a
+    // real failure apart from a genuinely empty result and surface a retry
+    // banner instead of the cheerful empty state.
     if (__DEV__) console.error('Error fetching all available hebergements:', error.message);
-    return [];
+    throw new Error(error.message);
   }
   return (data as SupabaseHebergement[]) || [];
 }
