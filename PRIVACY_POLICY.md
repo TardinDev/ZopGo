@@ -39,7 +39,8 @@ Nous utilisons les services tiers suivants, chacun ayant sa propre politique de 
 | [Clerk](https://clerk.com/privacy) | Authentification | Email, nom, session |
 | [Supabase](https://supabase.com/privacy) | Base de données et stockage | Profil, évaluations, avatar |
 | [Google Gemini](https://ai.google.dev/terms) | Assistant IA | Messages de conversation |
-| [Expo Push](https://expo.dev/privacy) | Notifications push | Token de notification |
+| [Firebase Cloud Messaging (Google)](https://firebase.google.com/support/privacy) | Notifications push (Android) | Token d'appareil |
+| [Expo Push](https://expo.dev/privacy) | Notifications push (iOS) | Token de notification |
 
 ## 4. Stockage local
 
@@ -51,7 +52,7 @@ Ces données ne quittent jamais votre appareil sauf pour l'authentification.
 
 ## 5. Notifications push
 
-ZopGo utilise Expo Push Notifications pour vous envoyer des notifications. Un token unique est généré pour votre appareil et stocké sur nos serveurs. Vous pouvez désactiver les notifications dans les paramètres de votre appareil à tout moment.
+ZopGo utilise Firebase Cloud Messaging (Google) sur Android et Expo Push sur iOS pour vous envoyer des notifications. Un token unique est généré pour votre appareil et stocké sur nos serveurs afin de vous adresser les notifications. Vous pouvez désactiver les notifications dans les paramètres de votre appareil à tout moment.
 
 ## 6. Assistant IA
 
