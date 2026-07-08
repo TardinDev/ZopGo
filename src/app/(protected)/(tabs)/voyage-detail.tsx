@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -166,11 +166,20 @@ export default function VoyageDetailScreen() {
     requestedSeats: passengers,
   });
 
+  // Both the synchronous-success path (handlePaymentConfirm) and the realtime
+  // 'succeeded' callback (handlePaymentSuccess) can fire for one payment.
+  // Without this guard each would create its own reservation row + notify le
+  // transporteur twice. Booked once per payment; reset when a new payment starts.
+  // (Même correctif que hebergement-detail — audit "double résa".)
+  const hasBookedRef = useRef(false);
+
   const performBooking = async () => {
     if (!validation.ok) {
       toast.error(validation.message, { title: 'Réservation impossible', durationMs: 5000 });
       return;
     }
+    if (hasBookedRef.current) return;
+    hasBookedRef.current = true;
 
     setIsBooking(true);
     try {
@@ -192,9 +201,11 @@ export default function VoyageDetailScreen() {
         });
         router.back();
       } else {
+        hasBookedRef.current = false; // let the client retry
         toast.error('Impossible de créer la réservation. Réessaie.', { title: 'Erreur' });
       }
     } catch {
+      hasBookedRef.current = false; // let the client retry
       toast.error('Une erreur est survenue lors de la réservation.', { title: 'Erreur' });
     } finally {
       setIsBooking(false);
@@ -222,6 +233,7 @@ export default function VoyageDetailScreen() {
       toast.error('Connecte-toi pour payer.', { title: 'Session expirée' });
       return;
     }
+    hasBookedRef.current = false; // new payment attempt → allow one booking
     setIsBooking(true);
     const idempotencyKey = generateIdempotencyKey();
     const result = await initiatePayment({
