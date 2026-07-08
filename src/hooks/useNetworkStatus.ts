@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 /**
@@ -38,6 +39,12 @@ async function pingReachability(): Promise<boolean> {
       method: 'HEAD',
       signal: controller.signal,
       cache: 'no-store',
+      // Web : la racine Supabase ne renvoie pas d'en-têtes CORS → fetch
+      // rejette alors que le réseau marche → fausse bannière "hors ligne"
+      // et checkNetwork() bloque les actions des stores. En no-cors la
+      // réponse est opaque mais le fetch aboutit dès que le réseau répond ;
+      // seule une vraie panne (DNS, timeout) rejette. Ignoré en natif.
+      ...(Platform.OS === 'web' ? { mode: 'no-cors' as RequestMode } : {}),
     });
     return true;
   } catch {
