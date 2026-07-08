@@ -96,6 +96,14 @@ interface AuthState {
    * profile sync from `setupProfile` to complete before invoking this.
    */
   promoteToAgence: (code: string) => Promise<import('../lib/supabaseAgencyInvitations').ClaimResult>;
+  /**
+   * Retente la synchronisation du profil Supabase quand `supabaseProfileId`
+   * est resté null (première sync échouée — réseau, ou requête partie avant
+   * l'injection du JWT Clerk — puis persistée telle quelle). Sans ça le
+   * compte reste bloqué : toutes les réservations affichent "profil pas
+   * encore synchronisé". No-op si déjà synchronisé ou pas de session.
+   */
+  resyncSupabaseProfile: () => Promise<void>;
   logout: () => void;
   updateProfile: (profile: Partial<UserInfo | ChauffeurProfile | HebergeurProfile | AgencyProfile>) => void;
   setDisponible: (disponible: boolean) => void;
@@ -180,6 +188,92 @@ export const ensureRoleProfileShape = (profile: AnyProfile, role: UserRole): Any
   return profile;
 };
 
+type AuthStateSetter = (
+  partial: Partial<AuthState> | ((state: AuthState) => Partial<AuthState> | AuthState)
+) => void;
+
+// Fetch-or-create de la ligne `profiles` côté Supabase. Extrait de
+// setupProfile pour pouvoir être rejoué par resyncSupabaseProfile quand la
+// première tentative a échoué. Le verrou évite les doublons quand le layout
+// protégé relance une sync pendant que celle de setupProfile est en vol.
+let profileSyncInFlight = false;
+const syncSupabaseProfileRow = async (
+  clerkId: string,
+  fallback: { role: UserRole; name: string; email: string },
+  set: AuthStateSetter
+): Promise<void> => {
+  if (profileSyncInFlight) return;
+  profileSyncInFlight = true;
+  try {
+    const existing = await fetchProfileByClerkId(clerkId);
+    if (existing) {
+      const effectiveRoles = getEffectiveRoles(existing);
+      set((state) => {
+        if (!state.user) return state;
+        // If the server says role='agence' (e.g. the user claimed
+        // an invitation code on a previous session), trust the DB
+        // over the optimistic local role from this setupProfile
+        // call. Also surface agency_name / agency_logo_url so the
+        // tab bar + voyage cards render the agency identity.
+        const serverRole = existing.role === 'agence' ? 'agence' : state.user.role;
+        const baseProfile = {
+          ...state.user.profile,
+          avatar: existing.avatar || state.user.profile.avatar,
+          address: existing.address || '',
+          emergencyContact: existing.emergency_contact || '',
+          rating: existing.rating,
+          totalTrips: existing.total_trips,
+          totalDeliveries: existing.total_deliveries,
+          memberSince: new Date(existing.member_since).getFullYear().toString(),
+        };
+        const nextProfile =
+          existing.role === 'agence'
+            ? {
+                ...baseProfile,
+                agencyName: existing.agency_name ?? '',
+                agencyLogoUrl: existing.agency_logo_url ?? null,
+              }
+            : baseProfile;
+        return {
+          supabaseProfileId: existing.id,
+          user: {
+            ...state.user,
+            role: serverRole,
+            roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
+            profile: nextProfile as typeof state.user.profile,
+          },
+        };
+      });
+      const prefs = await fetchNotificationPreferences(clerkId);
+      set({ notificationPreferences: prefs });
+    } else {
+      const created = await upsertProfile(clerkId, {
+        role: fallback.role,
+        name: fallback.name,
+        email: fallback.email,
+        disponible: fallback.role === 'chauffeur' || fallback.role === 'hebergeur',
+        roles: buildDefaultRoles(fallback.role),
+      });
+      if (created) {
+        const effectiveRoles = getEffectiveRoles(created);
+        set((state) => ({
+          supabaseProfileId: created.id,
+          user: state.user
+            ? {
+                ...state.user,
+                roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
+              }
+            : state.user,
+        }));
+      }
+    }
+  } catch (err) {
+    if (__DEV__) console.error('setupProfile sync error:', err);
+  } finally {
+    profileSyncInFlight = false;
+  }
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -216,76 +310,18 @@ export const useAuthStore = create<AuthState>()(
         }
 
         if (clerkId) {
-          (async () => {
-            try {
-              const existing = await fetchProfileByClerkId(clerkId);
-              if (existing) {
-                const effectiveRoles = getEffectiveRoles(existing);
-                set((state) => {
-                  if (!state.user) return state;
-                  // If the server says role='agence' (e.g. the user claimed
-                  // an invitation code on a previous session), trust the DB
-                  // over the optimistic local role from this setupProfile
-                  // call. Also surface agency_name / agency_logo_url so the
-                  // tab bar + voyage cards render the agency identity.
-                  const serverRole =
-                    existing.role === 'agence' ? 'agence' : state.user.role;
-                  const baseProfile = {
-                    ...state.user.profile,
-                    avatar: existing.avatar || state.user.profile.avatar,
-                    address: existing.address || '',
-                    emergencyContact: existing.emergency_contact || '',
-                    rating: existing.rating,
-                    totalTrips: existing.total_trips,
-                    totalDeliveries: existing.total_deliveries,
-                    memberSince: new Date(existing.member_since).getFullYear().toString(),
-                  };
-                  const nextProfile =
-                    existing.role === 'agence'
-                      ? {
-                          ...baseProfile,
-                          agencyName: existing.agency_name ?? '',
-                          agencyLogoUrl: existing.agency_logo_url ?? null,
-                        }
-                      : baseProfile;
-                  return {
-                    supabaseProfileId: existing.id,
-                    user: {
-                      ...state.user,
-                      role: serverRole,
-                      roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
-                      profile: nextProfile as typeof state.user.profile,
-                    },
-                  };
-                });
-                const prefs = await fetchNotificationPreferences(clerkId);
-                set({ notificationPreferences: prefs });
-              } else {
-                const created = await upsertProfile(clerkId, {
-                  role,
-                  name,
-                  email,
-                  disponible: role === 'chauffeur' || role === 'hebergeur',
-                  roles: buildDefaultRoles(role),
-                });
-                if (created) {
-                  const effectiveRoles = getEffectiveRoles(created);
-                  set((state) => ({
-                    supabaseProfileId: created.id,
-                    user: state.user
-                      ? {
-                          ...state.user,
-                          roles: effectiveRoles.length > 0 ? effectiveRoles : state.user.roles,
-                        }
-                      : state.user,
-                  }));
-                }
-              }
-            } catch (err) {
-              if (__DEV__) console.error('setupProfile sync error:', err);
-            }
-          })();
+          void syncSupabaseProfileRow(clerkId, { role, name, email }, set);
         }
+      },
+
+      resyncSupabaseProfile: async () => {
+        const { user, clerkId, supabaseProfileId } = get();
+        if (!clerkId || !user || supabaseProfileId) return;
+        await syncSupabaseProfileRow(
+          clerkId,
+          { role: user.role, name: user.profile.name, email: user.profile.email },
+          set
+        );
       },
 
       switchRole: (newRole) => {

@@ -288,6 +288,94 @@ describe('setupProfile', () => {
   });
 });
 
+// ─── resyncSupabaseProfile ──────────────────────────────────────────
+// Répare les comptes bloqués avec supabaseProfileId=null persisté (première
+// sync partie sans JWT Clerk → rejetée par RLS → jamais retentée).
+
+describe('resyncSupabaseProfile', () => {
+  function seedStuckUser() {
+    // setupProfile sans clerkId ne déclenche PAS la sync Supabase — on
+    // reproduit l'état persisté d'un testeur bloqué (user + clerkId mais
+    // supabaseProfileId null).
+    useAuthStore.getState().setupProfile('client', 'Jean', 'jean@test.com');
+    useAuthStore.setState({ clerkId: 'clerk_123' });
+  }
+
+  it('recovers a stuck account by fetching the existing Supabase row', async () => {
+    seedStuckUser();
+    (fetchProfileByClerkId as jest.Mock).mockResolvedValue({
+      id: 'supa_recovered',
+      rating: 4.8,
+      total_trips: 3,
+      total_deliveries: 0,
+      member_since: '2026-01-01',
+    });
+
+    await useAuthStore.getState().resyncSupabaseProfile();
+
+    expect(useAuthStore.getState().supabaseProfileId).toBe('supa_recovered');
+  });
+
+  it('creates the missing Supabase row when none exists server-side', async () => {
+    seedStuckUser();
+    (fetchProfileByClerkId as jest.Mock).mockResolvedValue(null);
+    (upsertProfile as jest.Mock).mockResolvedValue({ id: 'supa_created' });
+
+    await useAuthStore.getState().resyncSupabaseProfile();
+
+    expect(upsertProfile).toHaveBeenCalledWith(
+      'clerk_123',
+      expect.objectContaining({ role: 'client', name: 'Jean', email: 'jean@test.com' })
+    );
+    expect(useAuthStore.getState().supabaseProfileId).toBe('supa_created');
+  });
+
+  it('is a no-op when the profile is already synced', async () => {
+    seedStuckUser();
+    useAuthStore.setState({ supabaseProfileId: 'supa_already' });
+
+    await useAuthStore.getState().resyncSupabaseProfile();
+
+    expect(fetchProfileByClerkId).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().supabaseProfileId).toBe('supa_already');
+  });
+
+  it('is a no-op without a clerkId or user', async () => {
+    await useAuthStore.getState().resyncSupabaseProfile();
+    expect(fetchProfileByClerkId).not.toHaveBeenCalled();
+  });
+
+  it('does not double-sync when called while a sync is already in flight', async () => {
+    seedStuckUser();
+    (fetchProfileByClerkId as jest.Mock).mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                id: 'supa_once',
+                rating: 5,
+                total_trips: 0,
+                total_deliveries: 0,
+                member_since: '2026-01-01',
+              }),
+            20
+          )
+        )
+    );
+
+    await Promise.all([
+      useAuthStore.getState().resyncSupabaseProfile(),
+      useAuthStore.getState().resyncSupabaseProfile(),
+    ]);
+    // Laisse le fetch en vol (verrou) se terminer avant les assertions.
+    await new Promise((r) => setTimeout(r, 40));
+
+    expect(fetchProfileByClerkId).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState().supabaseProfileId).toBe('supa_once');
+  });
+});
+
 // ─── switchRole ─────────────────────────────────────────────────────
 
 describe('switchRole', () => {

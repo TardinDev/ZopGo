@@ -23,6 +23,7 @@ jest.mock('@clerk/clerk-expo', () => ({
     isLoaded: true,
   }),
   useUser: () => ({ user: null }),
+  useAuth: () => ({ getToken: jest.fn().mockResolvedValue(null) }),
 }));
 
 // Avoid expo-haptics module init in the test runner (no native bridge).

@@ -17,6 +17,7 @@ export default function ProtectedLayout() {
   const { user: clerkUser } = useUser();
   const { user: localUser, setupProfile, logout } = useAuthStore();
   const supabaseProfileId = useAuthStore((s) => s.supabaseProfileId);
+  const resyncSupabaseProfile = useAuthStore((s) => s.resyncSupabaseProfile);
   const router = useRouter();
   const backgroundTimestamp = useRef<number | null>(null);
   const [supabaseReady, setSupabaseReady] = useState(false);
@@ -95,6 +96,35 @@ export default function ProtectedLayout() {
       setupProfile(role, name, email, role === 'chauffeur' ? vehicleType : undefined, clerkUser.id, role === 'hebergeur' ? accommodationType : undefined);
     }
   }, [isSignedIn, clerkUser, localUser, setupProfile]);
+
+  // Auto-réparation : session active mais profil Supabase jamais synchronisé
+  // (première sync échouée — ex: requête partie avant l'injection du JWT
+  // Clerk, ou coupure réseau — puis id null persisté par Zustand). Sans
+  // retry, le compte reste bloqué : toute réservation affiche "profil pas
+  // encore synchronisé". On attend supabaseReady pour que la requête parte
+  // avec le JWT, puis on retente avec backoff.
+  useEffect(() => {
+    if (!isSignedIn || !supabaseReady || !localUser || supabaseProfileId) return;
+    let cancelled = false;
+    let attempt = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const run = () => {
+      attempt += 1;
+      resyncSupabaseProfile().finally(() => {
+        if (cancelled) return;
+        if (!useAuthStore.getState().supabaseProfileId && attempt < 4) {
+          timer = setTimeout(run, attempt * 4000);
+        }
+      });
+    };
+    // Petit délai initial : laisse la sync de setupProfile (inscription en
+    // cours) aboutir avant de relancer la nôtre.
+    timer = setTimeout(run, 1500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isSignedIn, supabaseReady, localUser, supabaseProfileId, resyncSupabaseProfile]);
 
   // Attendre que Clerk soit chargé
   if (!isLoaded) return null;

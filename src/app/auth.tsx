@@ -19,8 +19,9 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
+import { useAuth, useSignIn, useSignUp, useUser } from '@clerk/clerk-expo';
 import { useAuthStore, VEHICLE_TYPES, ACCOMMODATION_TYPES } from '../stores/authStore';
+import { setClerkTokenProvider } from '../lib/supabase';
 import { UserRole, VehicleType, AccommodationType } from '../types';
 
 // Clerk second factor types (not exported by @clerk/clerk-expo)
@@ -49,6 +50,7 @@ const TEAL = '#0D9488';
 export default function AuthScreen() {
   const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn();
   const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
+  const { getToken } = useAuth();
   const { user: clerkUser } = useUser();
   const { setupProfile, promoteToAgence, supabaseProfileId } = useAuthStore();
 
@@ -187,6 +189,11 @@ export default function AuthScreen() {
       'Utilisateur';
     const email = clerkUser.primaryEmailAddress?.emailAddress || formData.email;
 
+    // La sync Supabase de setupProfile part immédiatement, mais le layout
+    // protégé (qui enregistre normalement le token provider) n'est pas
+    // encore monté — sans JWT la requête est rejetée par RLS et le profil
+    // ne se crée jamais. On enregistre le provider ici, avant la sync.
+    setClerkTokenProvider(() => getToken());
     setupProfile(baseRole, name, email, vehicleType, clerkUser.id, accommodationType);
 
     // Defer the agency claim until supabaseProfileId is set by setupProfile's
@@ -368,6 +375,10 @@ export default function AuthScreen() {
         const vehicleType = baseRole === 'chauffeur' ? selectedVehicle : undefined;
         const accommodationType = baseRole === 'hebergeur' ? selectedAccommodation : undefined;
         hasSetupProfile.current = true;
+        // Même raison que dans le useEffect clerkUser : le token provider
+        // n'est pas encore enregistré (layout protégé pas monté), la sync
+        // Supabase partirait sans JWT et serait bloquée par RLS.
+        setClerkTokenProvider(() => getToken());
         setupProfile(baseRole, name, formData.email, vehicleType, userId, accommodationType);
 
         if (selectedRole === 'agence' && agencyCode.trim()) {
