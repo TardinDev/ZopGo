@@ -69,6 +69,7 @@ import { DirectMessageShow } from "@/pages/direct-messages/show";
 import { NotificationList } from "@/pages/notifications/list";
 import { AuditLogList } from "@/pages/audit/list";
 import { SettingsPage } from "@/pages/settings";
+import { PrivacyPage } from "@/pages/privacy";
 
 // Styles
 import "@refinedev/antd/dist/reset.css";
@@ -231,6 +232,9 @@ function AppContent() {
                 {/* Auth: Login + Forbidden — wildcard * pour les sous-routes Clerk */}
                 <Route path="/login/*" element={<LoginPage />} />
                 <Route path="/forbidden" element={<LoginPage />} />
+
+                {/* Politique de confidentialité — page publique (URL Play Store) */}
+                <Route path="/privacy" element={<PrivacyPage />} />
 
                 {/* Protected routes */}
                 <Route

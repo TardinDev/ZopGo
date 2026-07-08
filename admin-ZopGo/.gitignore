@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Expo (non pertinent pour l'app admin web)
+.expo/
+
 # Environment variables
 .env
 .env.local
@@ -16,3 +19,4 @@ dist/
 *.swo
 .DS_Store
 .vercel
+.gstack/
