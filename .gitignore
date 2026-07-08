@@ -48,3 +48,4 @@ supabase/.temp/
 
 # Test coverage
 coverage/
+.gstack/
