@@ -461,6 +461,8 @@ export default function MesHebergementsTab() {
                     />
                     <TouchableOpacity
                       onPress={() => removeFormImage(index)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Supprimer la photo ${index + 1}`}
                       style={{
                         position: 'absolute',
                         top: -6,
@@ -522,6 +524,8 @@ export default function MesHebergementsTab() {
                 {formData.images.length < 5 && (
                   <TouchableOpacity
                     onPress={pickImage}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ajouter une photo"
                     style={{
                       width: 80,
                       height: 80,
