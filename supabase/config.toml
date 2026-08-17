@@ -26,3 +26,15 @@ verify_jwt = false
 # Same reasoning: resolves the payer from the Clerk `sub` claim itself.
 [functions.payments-initiate]
 verify_jwt = false
+
+# Appelée par Svix (l'infra webhook de Clerk), qui n'envoie aucun JWT Supabase
+# mais des en-têtes `svix-id` / `svix-timestamp` / `svix-signature`. Avec
+# verify_jwt = true le gateway rejetterait 100 % des livraisons avant le
+# handler — meme panne silencieuse que send-push. L'authenticité est établie
+# par la vérification HMAC-SHA256 de la signature Svix dans la fonction.
+[functions.clerk-webhook]
+verify_jwt = false
+
+# Sonde de disponibilité : doit répondre sans authentification.
+[functions.health]
+verify_jwt = false
