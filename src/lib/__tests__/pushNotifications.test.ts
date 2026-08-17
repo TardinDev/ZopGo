@@ -287,3 +287,52 @@ describe('sendPushBroadcast', () => {
     expect(result.error).toBe('nope');
   });
 });
+
+// ── Observabilité des échecs ─────────────────────────────────────────
+//
+// La panne totale de push est restée invisible parce que les erreurs
+// n'étaient tracées que sous __DEV__ et que les appelants ignorent le
+// résultat. Ces tests garantissent que les anomalies remontent, et que les
+// issues normales ne polluent pas les logs.
+describe('sendPushIfAllowed — remontée des anomalies', () => {
+  let warnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it('signale un profil destinataire introuvable', async () => {
+    mockProfileFetch(null);
+
+    const res = await sendPushIfAllowed({
+      recipientProfileId: 'ghost',
+      category: 'messages',
+      type: 'direct_message',
+      title: 't',
+      body: 'b',
+    });
+
+    expect(res.skippedReason).toBe('profile_not_found');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('profile_not_found'));
+  });
+
+  it("reste silencieux quand le destinataire n'a pas de token", async () => {
+    mockProfileFetch({ push_token: null, notification_preferences: {} });
+    (createNotification as jest.Mock).mockResolvedValue(true);
+
+    const res = await sendPushIfAllowed({
+      recipientProfileId: 'p1',
+      category: 'messages',
+      type: 'direct_message',
+      title: 't',
+      body: 'b',
+    });
+
+    expect(res.skippedReason).toBe('no_token');
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+});

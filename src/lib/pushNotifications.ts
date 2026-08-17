@@ -68,6 +68,29 @@ export type SkippedReason =
   | 'profile_not_found'
   | 'error';
 
+/**
+ * Remonte les échecs d'envoi anormaux, en production comprise.
+ *
+ * Une panne totale de push est restée invisible pendant des semaines : les
+ * appelants font du fire-and-forget (`void sendPushIfAllowed(...)`) et les
+ * erreurs n'étaient tracées que sous `__DEV__`. Un `console.warn` non
+ * conditionnel atterrit dans les logs natifs et sera capté tel quel le jour
+ * où un rapporteur d'erreurs sera branché.
+ *
+ * `no_token` et `pref_disabled` ne passent pas par ici : ce sont des issues
+ * normales (utilisateur sans appareil enregistré, ou qui a coupé la
+ * catégorie). Les noyer dans le bruit ferait perdre le signal.
+ */
+function reportPushAnomaly(
+  reason: Extract<SkippedReason, 'profile_not_found' | 'error'>,
+  context: { recipientProfileId: string; category: string; type: string }
+): void {
+  console.warn(
+    `[push] envoi échoué (${reason}) — destinataire=${context.recipientProfileId} ` +
+      `catégorie=${context.category} type=${context.type}`
+  );
+}
+
 export interface SendPushIfAllowedResult {
   inAppCreated: boolean;
   pushSent: boolean;
@@ -113,6 +136,7 @@ export async function sendPushIfAllowed(
 
     if (error || !profile) {
       result.skippedReason = 'profile_not_found';
+      reportPushAnomaly(result.skippedReason, { recipientProfileId, category, type });
       return result;
     }
 
@@ -162,6 +186,7 @@ export async function sendPushIfAllowed(
     result.pushSent = sent;
     if (!sent) {
       result.skippedReason = 'error';
+      reportPushAnomaly('error', { recipientProfileId, category, type });
     }
     return result;
   } catch (err) {
@@ -169,6 +194,7 @@ export async function sendPushIfAllowed(
       console.error('[sendPushIfAllowed] unexpected error:', err);
     }
     result.skippedReason = 'error';
+    reportPushAnomaly('error', { recipientProfileId, category, type });
     return result;
   }
 }
