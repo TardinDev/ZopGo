@@ -84,6 +84,13 @@
       "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}",
       "geminiApiKey": "${EXPO_PUBLIC_GEMINI_API_KEY}"
     },
-    "owner": "tardin"
+    "owner": "tardin",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0fa2c027-7583-499a-b7e5-3a320db18af6",
+      "fallbackToCacheTimeout": 0
+    }
   }
 }
