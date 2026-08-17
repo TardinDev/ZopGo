@@ -325,7 +325,7 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text className="text-base font-semibold text-gray-800">Mode sombre</Text>
-                <Text className="text-sm text-gray-500">Thème sombre pour l'application</Text>
+                <Text className="text-sm text-gray-500">Thème sombre pour l&apos;application</Text>
               </View>
             </View>
             <Switch
@@ -389,7 +389,7 @@ export default function SettingsScreen() {
           </View>
 
           <View className="flex-row items-center justify-between border-b border-gray-100 py-4">
-            <Text className="text-base text-gray-600">Version de l'application</Text>
+            <Text className="text-base text-gray-600">Version de l&apos;application</Text>
             <Text className="text-base font-medium text-gray-800">1.0.0</Text>
           </View>
 

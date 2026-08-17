@@ -170,7 +170,7 @@ export default function VehiclesEditScreen() {
                 placeholder="Ex: Ma Toyota Corolla"
               />
 
-              <Text className="mb-2 text-gray-600">Plaque d'immatriculation</Text>
+              <Text className="mb-2 text-gray-600">Plaque d&apos;immatriculation</Text>
               <TextInput
                 value={formPlaque}
                 onChangeText={setFormPlaque}

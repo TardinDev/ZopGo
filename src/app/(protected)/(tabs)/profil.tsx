@@ -25,14 +25,19 @@ export default function ProfilTab() {
   const { user, updateProfile, clerkId } = useAuthStore();
 
   const profile = user?.profile;
+
+  // Ces deux hooks doivent rester AU-DESSUS du `return null` ci-dessous :
+  // appeles apres, ils disparaissent du render des que `profile` devient nul
+  // (logout, changement de role) et React plante sur un nombre de hooks
+  // inferieur au render precedent.
+  const [avatarUri, setAvatarUri] = useState<string>(profile?.avatar || '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
   if (!profile) return null;
   const isUserChauffeur = isChauffeur(user);
   const isUserHebergeur = isHebergeur(user);
   const chauffeurProfile = isUserChauffeur ? (user.profile as ChauffeurProfile) : null;
   const hebergeurProfile = isUserHebergeur ? (user.profile as HebergeurProfile) : null;
-
-  const [avatarUri, setAvatarUri] = useState<string>(profile.avatar || '');
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Pour les chauffeurs, on affiche uniquement les avis reçus
   const reviews = activeReviewTab === 'received' ? receivedReviews : givenReviews;
@@ -155,7 +160,7 @@ export default function ProfilTab() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <View style={{ width: 96, height: 96, marginBottom: 16 }}>
                   <Image
-                    source={{ uri: avatarUri || generateAvatarPlaceholder(profile.name || 'User', clerkId || 'default') }}
+                    source={{ uri: avatarUri || profile.avatar || generateAvatarPlaceholder(profile.name || 'User', clerkId || 'default') }}
                     style={{ width: 96, height: 96, borderRadius: 48, borderWidth: 4, borderColor: 'white' }}
                   />
                   {isUploadingAvatar && (
