@@ -195,7 +195,7 @@ Les stores `trajetsStore`, `hebergementsStore` utilisent le pattern optimistic:
 - **Avatar upload**: Utiliser `FileSystem.readAsStringAsync` + `base64-arraybuffer` (pas `fetch` + `blob` qui crash en React Native)
 - **Path alias**: `~/*` mappe vers `src/*` (configure dans `tsconfig.json` et `jest.config.js`)
 - **DateTimePicker**: necessite un dev client (Expo Go ne supporte pas les modules natifs custom)
-- **TypeScript pre-existing errors**: le dossier `admin-ZopGo/` a des erreurs TS qui ne concernent pas l'app mobile. `npx tsc --noEmit` montrera ces erreurs, filtrer avec `grep -v admin-ZopGo`
+- **TypeScript**: `admin-ZopGo/` est exclu du `tsconfig.json` racine (app Vite/React DOM autonome, avec son propre tsconfig), au meme titre que `supabase/functions` (Deno). `npm run typecheck` ne couvre donc que l'app mobile et doit sortir en 0 erreur — plus besoin de filtrer la sortie. Pour typechecker l'admin, le faire depuis `admin-ZopGo/`
 
 ## Design System
 

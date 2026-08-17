@@ -9,5 +9,9 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "nativewind-env.d.ts"],
-  "exclude": ["node_modules", "supabase/functions"]
+  // admin-ZopGo est une app Vite/React DOM autonome avec son propre tsconfig,
+  // ses propres dependances et son propre lib DOM ; supabase/functions tourne
+  // sous Deno. Les typer avec la config React Native produit des centaines
+  // d'erreurs sans rapport avec l'app mobile — chacun se typecheck chez lui.
+  "exclude": ["node_modules", "supabase/functions", "admin-ZopGo"]
 }
