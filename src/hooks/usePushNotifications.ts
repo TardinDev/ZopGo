@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
-import * as Device from 'expo-device';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { updatePushToken } from '../lib/supabaseNotifications';
+import { acquirePushToken } from '../lib/pushRegistration';
 import { useMessagesStore } from '../stores/messagesStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { toast } from '../stores/toastStore';
@@ -41,75 +41,6 @@ if (Notifications) {
       };
     },
   });
-}
-
-async function registerForPushNotifications(): Promise<string | null> {
-  if (!Notifications) return null;
-
-  // Push notifications only work on physical devices
-  if (!Device.isDevice) {
-    if (__DEV__) console.log('Push notifications require a physical device');
-    return null;
-  }
-
-  // Create Android notification channel
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'ZopGo',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#2162FE',
-      sound: 'default',
-      enableVibrate: true,
-      showBadge: true,
-    });
-  }
-
-  // Check / request permissions
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    if (__DEV__) console.log('Push notification permission not granted');
-    return null;
-  }
-
-  // On Android, get the native FCM device token directly.
-  // This bypasses Expo Push Service and sends via Firebase Cloud Messaging,
-  // eliminating the need for FCM V1 credentials on EAS.
-  if (Platform.OS === 'android') {
-    try {
-      const { data: token } = await Notifications.getDevicePushTokenAsync();
-      if (__DEV__) console.log('[Push] FCM device token:', String(token).substring(0, 30) + '...');
-      return String(token);
-    } catch (err) {
-      if (__DEV__) console.error('[Push] getDevicePushTokenAsync error:', err);
-      return null;
-    }
-  }
-
-  // iOS: use Expo Push Token (APNs routing via Expo)
-  const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-
-  if (!projectId) {
-    if (__DEV__) console.log('[Push] Missing EAS projectId — run `eas init` first');
-    return null;
-  }
-
-  try {
-    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-    if (__DEV__) console.log('[Push] Expo push token:', token);
-    return token;
-  } catch (err) {
-    if (__DEV__) console.error('[Push] getExpoPushTokenAsync error:', err);
-    return null;
-  }
 }
 
 /**
@@ -173,7 +104,7 @@ export function usePushNotifications(clerkId: string | null) {
     let tokenListener: { remove(): void } | undefined;
 
     (async () => {
-      const token = await registerForPushNotifications();
+      const token = await acquirePushToken();
 
       if (token && token !== lastTokenRef.current) {
         lastTokenRef.current = token;

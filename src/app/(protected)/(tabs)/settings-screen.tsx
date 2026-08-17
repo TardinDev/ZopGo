@@ -14,6 +14,7 @@ import {
   requestPushPermission,
   type PushPermissionStatus,
 } from '../../../lib/pushPermission';
+import { registerAndPersistPushToken } from '../../../lib/pushRegistration';
 import { toast } from '../../../stores/toastStore';
 import type { UserRole } from '../../../types';
 
@@ -21,7 +22,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user: clerkUser } = useUser();
-  const { user, logout, switchRole, promoteToAgence } = useAuthStore();
+  const { user, logout, switchRole, promoteToAgence, clerkId } = useAuthStore();
   const { generalSettings, updateGeneralSettings } = useSettingsStore();
   const [isDeleting, setIsDeleting] = useState(false);
   const [logoutSheetVisible, setLogoutSheetVisible] = useState(false);
@@ -54,7 +55,18 @@ export default function SettingsScreen() {
       const result = await requestPushPermission();
       setPushStatus(result.status);
       if (result.status === 'granted') {
-        toast.success('Notifications activées.');
+        // La permission ne suffit pas : sans token persiste, le serveur n'a
+        // aucune adresse ou envoyer. C'est exactement le cas qui laissait des
+        // comptes sans push tout en affichant « Notifications activées ».
+        const registered = await registerAndPersistPushToken(clerkId);
+        if (registered) {
+          toast.success('Notifications activées.');
+        } else {
+          toast.info(
+            "Autorisation accordée, mais l'appareil n'a pas pu être enregistré. Réessaie depuis cet écran.",
+            { title: 'Enregistrement incomplet' }
+          );
+        }
       } else if (result.openedSettings) {
         toast.info(
           'Active "Notifications" pour ZopGo, puis reviens dans l\'app.',
@@ -68,7 +80,7 @@ export default function SettingsScreen() {
     } finally {
       setRequestingPush(false);
     }
-  }, [requestingPush]);
+  }, [requestingPush, clerkId]);
 
   const availableRoles = (user?.roles && user.roles.length > 0
     ? user.roles
