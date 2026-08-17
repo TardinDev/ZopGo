@@ -1,0 +1,28 @@
+# Supabase project configuration.
+#
+# Minimal on purpose: this repo deploys against the hosted project and does not
+# run the local stack. The functions section below is load-bearing — see the
+# comment on `send-push`.
+
+project_id = "kjwlhjhtywzcthhhvptl"
+
+# ---------------------------------------------------------------------------
+# Edge Functions
+# ---------------------------------------------------------------------------
+
+# The app authenticates via Clerk Third-Party Auth, so devices send a
+# Clerk-issued session token. The Edge gateway validates Bearer tokens against
+# Supabase's own asymmetric keys and rejects Clerk tokens with
+# `UNAUTHORIZED_ASYMMETRIC_JWT`, so with verify_jwt = true the request never
+# reaches the handler and every push is dropped before it is sent.
+#
+# The function authenticates callers itself instead, verifying the Clerk token
+# signature against the instance JWKS (see `authenticateCaller` in
+# functions/send-push/index.ts). Do NOT set this back to true without moving
+# that verification somewhere else first.
+[functions.send-push]
+verify_jwt = false
+
+# Same reasoning: resolves the payer from the Clerk `sub` claim itself.
+[functions.payments-initiate]
+verify_jwt = false

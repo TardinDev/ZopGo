@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createRemoteJWKSet, jwtVerify } from 'https://esm.sh/jose@5';
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -9,7 +10,65 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const EXPO_ACCESS_TOKEN = Deno.env.get('EXPO_ACCESS_TOKEN'); // optional
 const GOOGLE_SERVICE_ACCOUNT = Deno.env.get('GOOGLE_SERVICE_ACCOUNT'); // required for FCM
 
+/**
+ * Clerk Frontend API origin — the `iss` claim of every session token.
+ * Override per instance via the CLERK_ISSUER secret.
+ */
+const CLERK_ISSUER =
+  Deno.env.get('CLERK_ISSUER') ?? 'https://saved-chimp-89.clerk.accounts.dev';
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// ---------------------------------------------------------------------------
+// Authentication
+// ---------------------------------------------------------------------------
+//
+// This function is deployed with `verify_jwt = false` (see supabase/config.toml)
+// and therefore authenticates callers ITSELF.
+//
+// Why: the app authenticates through Clerk Third-Party Auth, so devices send a
+// Clerk-issued session token. The Edge gateway validates Bearer tokens against
+// Supabase's own asymmetric keys and rejects Clerk tokens with
+// `UNAUTHORIZED_ASYMMETRIC_JWT` — the request never reaches this handler and
+// every push is silently dropped. PostgREST accepts the same token (it knows
+// about the third-party issuer), which is why database writes worked while
+// pushes did not.
+//
+// Because the gateway no longer guards this endpoint — and this function holds
+// the service role key and can fan out to every user — the signature MUST be
+// verified here. Presence of a Bearer header is not authentication.
+
+const CLERK_JWKS = createRemoteJWKSet(
+  new URL(`${CLERK_ISSUER}/.well-known/jwks.json`)
+);
+
+/**
+ * Verifies the caller's Clerk session token and returns its `sub` (clerk user
+ * id), or null when the token is missing, malformed, expired or not signed by
+ * the configured Clerk instance.
+ *
+ * The service role key is also accepted so that trusted server-side callers
+ * (cron jobs, other Edge Functions) can fan out without a user session.
+ */
+async function authenticateCaller(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+
+  const token = authHeader.slice(7).trim();
+  if (!token) return null;
+
+  if (token === SUPABASE_SERVICE_ROLE_KEY) return 'service_role';
+
+  try {
+    const { payload } = await jwtVerify(token, CLERK_JWKS, {
+      issuer: CLERK_ISSUER,
+    });
+    return typeof payload.sub === 'string' && payload.sub ? payload.sub : null;
+  } catch (err) {
+    console.error('[send-push] JWT verification failed:', (err as Error).message);
+    return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -359,8 +418,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
+  const callerId = await authenticateCaller(req);
+  if (!callerId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
