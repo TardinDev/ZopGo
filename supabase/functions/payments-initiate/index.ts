@@ -18,9 +18,9 @@
 // credentials yet). The Singpay adapter is a documented stub — its real API
 // contract must be filled in (see _singpayInitiate). PayPal follows the
 // documented Orders v2 API but needs a sandbox e2e pass before go-live.
-// Clerk JWT *signature* verification is still a TODO (see resolvePayer).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createRemoteJWKSet, jwtVerify } from 'https://esm.sh/jose@5';
 
 // ─── Env ────────────────────────────────────────────────────────────
 
@@ -28,6 +28,14 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_FROM = Deno.env.get('RESEND_FROM') ?? 'ZopGo <onboarding@resend.dev>';
+
+/** Origine Frontend API Clerk — claim `iss` de tout jeton de session. */
+const CLERK_ISSUER =
+  Deno.env.get('CLERK_ISSUER') ?? 'https://saved-chimp-89.clerk.accounts.dev';
+
+const CLERK_JWKS = createRemoteJWKSet(
+  new URL(`${CLERK_ISSUER}/.well-known/jwks.json`)
+);
 
 // 'test' (default) | 'live'. Anything other than 'live' keeps the simulation.
 const PAYMENTS_MODE = (Deno.env.get('PAYMENTS_MODE') ?? 'test').toLowerCase();
@@ -198,16 +206,33 @@ async function profileByClerkId(clerkId: string): Promise<Payer | null> {
   return (data as Payer) ?? null;
 }
 
-/** Extract the Clerk `sub` claim from the Bearer token (decode only). */
-function clerkSubFromRequest(req: Request): string | null {
+/**
+ * Extrait le `sub` Clerk du Bearer APRES verification de signature.
+ *
+ * Cette fonction tourne en `verify_jwt = false` (le gateway Edge rejette les
+ * jetons Clerk Third-Party Auth, cf. supabase/config.toml), et elle detient
+ * la service role key. Un simple decodage du payload — ce qu'elle faisait —
+ * laissait n'importe qui forger `{"sub":"user_victime"}` et initier un
+ * paiement au nom d'un autre. Sans effet tant que PAYMENTS_MODE reste a
+ * 'test', mais exploitable des le passage en 'live'.
+ */
+async function clerkSubFromRequest(req: Request): Promise<string | null> {
+  const auth = req.headers.get('Authorization');
+  if (!auth?.startsWith('Bearer ')) return null;
+
+  const token = auth.slice(7).trim();
+  if (!token) return null;
+
   try {
-    const auth = req.headers.get('Authorization');
-    if (!auth?.startsWith('Bearer ')) return null;
-    const parts = auth.slice(7).split('.');
-    if (parts.length < 2) return null;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return (payload.sub as string) ?? null;
-  } catch {
+    const { payload } = await jwtVerify(token, CLERK_JWKS, {
+      issuer: CLERK_ISSUER,
+    });
+    return typeof payload.sub === 'string' && payload.sub ? payload.sub : null;
+  } catch (err) {
+    console.error(
+      '[payments-initiate] JWT verification failed:',
+      (err as Error).message
+    );
     return null;
   }
 }
@@ -215,13 +240,15 @@ function clerkSubFromRequest(req: Request): string | null {
 /**
  * Resolves the paying profile.
  *   • live: from the Clerk JWT ONLY (the body is not trusted).
- *     TODO(security): verify the JWT signature against Clerk's JWKS before
- *     go-live — we currently only decode the claim.
+ *     La signature du jeton est verifiee contre le JWKS Clerk.
  *   • test: keep the lenient behaviour (body.payerProfileId, then JWT).
+ *     Le body reste accepte sans authentification — acceptable tant que ce
+ *     mode ne fait que simuler, mais c'est bien `live` qui doit servir des
+ *     qu'un vrai fournisseur est branche.
  */
 async function resolvePayer(body: Record<string, unknown>, req: Request): Promise<Payer | null> {
   if (IS_LIVE) {
-    const sub = clerkSubFromRequest(req);
+    const sub = await clerkSubFromRequest(req);
     return sub ? await profileByClerkId(sub) : null;
   }
   const fromBody = body.payerProfileId;
@@ -229,7 +256,7 @@ async function resolvePayer(body: Record<string, unknown>, req: Request): Promis
     const p = await profileById(fromBody).catch(() => null);
     if (p) return p;
   }
-  const sub = clerkSubFromRequest(req);
+  const sub = await clerkSubFromRequest(req);
   return sub ? await profileByClerkId(sub).catch(() => null) : null;
 }
 
