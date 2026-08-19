@@ -1,5 +1,11 @@
 /**
- * ZopGo Admin — Page de connexion
+ * ZopGo — Page publique (vitrine + connexion)
+ *
+ * Cette page est servie sur l'apex zopgo.app et vue par le grand public.
+ * Aucun texte visible ne doit mentionner l'administration : ni le titre, ni
+ * la description, ni les libellés d'accessibilité, ni le message affiché
+ * quand un compte sans le role n'est pas autorise. Rien ne doit laisser
+ * deviner qu'un espace d'administration se trouve derriere ce formulaire.
  *
  * Layout : marketing à gauche (titre, pitch, store badges), phone mockup
  * à droite, bouton « Se connecter » top-right qui déroule un panneau de
@@ -273,7 +279,7 @@ export function LoginPage() {
                                 ref={panelRef}
                                 id="signin-panel"
                                 role="dialog"
-                                aria-label="Formulaire de connexion administrateur"
+                                aria-label="Formulaire de connexion"
                                 className="zopgo-signin-panel"
                                 style={signInPanelStyle}
                                 initial={{ opacity: 0, y: -8, scale: 0.97 }}
@@ -284,7 +290,7 @@ export function LoginPage() {
                                 <div style={panelHeaderStyle}>
                                     <h2 style={panelTitleStyle}>Bienvenue</h2>
                                     <p style={panelSubtitleStyle}>
-                                        Connectez-vous à votre compte administrateur ZopGo.
+                                        Connectez-vous à votre compte ZopGo.
                                     </p>
                                 </div>
 
@@ -920,7 +926,7 @@ function PartnersSection() {
                             distribution, vous gardez la main sur l'offre.
                         </p>
                         <a
-                            href="mailto:partenaires@zopgo.com?subject=Devenir%20partenaire%20ZopGo"
+                            href="mailto:partenaires@zopgo.app?subject=Devenir%20partenaire%20ZopGo"
                             style={ctaPrimaryStyle}
                             className="zopgo-cta-primary"
                         >
@@ -970,7 +976,7 @@ function SiteFooter() {
                     <a href="#about" style={footerLinkStyle}>À propos</a>
                     <a href="#services" style={footerLinkStyle}>Services</a>
                     <a href="#partners" style={footerLinkStyle}>Partenaires</a>
-                    <a href="mailto:contact@zopgo.com" style={footerLinkStyle}>Contact</a>
+                    <a href="mailto:contact@zopgo.app" style={footerLinkStyle}>Contact</a>
                 </div>
             </div>
         </footer>
@@ -1054,8 +1060,8 @@ function ForbiddenView() {
                     Accès refusé
                 </h2>
                 <p style={{ color: "#6B7280", fontSize: 14, lineHeight: 1.55, marginBottom: 24 }}>
-                    Votre compte ne possède pas le rôle administrateur. Contactez un super
-                    administrateur pour qu'il vous accorde l'accès.
+                    Votre compte n'a pas accès à cet espace. Si vous pensez qu'il s'agit
+                    d'une erreur, contactez l'équipe ZopGo.
                 </p>
                 <button
                     onClick={() => signOut()}

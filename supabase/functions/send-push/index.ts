@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { createRemoteJWKSet, jwtVerify } from 'https://esm.sh/jose@5';
+import { verifyClerkToken } from '../_shared/clerkAuth.ts';
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -9,13 +9,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const EXPO_ACCESS_TOKEN = Deno.env.get('EXPO_ACCESS_TOKEN'); // optional
 const GOOGLE_SERVICE_ACCOUNT = Deno.env.get('GOOGLE_SERVICE_ACCOUNT'); // required for FCM
-
-/**
- * Clerk Frontend API origin — the `iss` claim of every session token.
- * Override per instance via the CLERK_ISSUER secret.
- */
-const CLERK_ISSUER =
-  Deno.env.get('CLERK_ISSUER') ?? 'https://saved-chimp-89.clerk.accounts.dev';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -38,14 +31,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 // the service role key and can fan out to every user — the signature MUST be
 // verified here. Presence of a Bearer header is not authentication.
 
-const CLERK_JWKS = createRemoteJWKSet(
-  new URL(`${CLERK_ISSUER}/.well-known/jwks.json`)
-);
-
 /**
  * Verifies the caller's Clerk session token and returns its `sub` (clerk user
  * id), or null when the token is missing, malformed, expired or not signed by
- * the configured Clerk instance.
+ * one of the accepted Clerk instances (see _shared/clerkAuth.ts — plusieurs
+ * émetteurs sont acceptés pour que deux instances coexistent pendant une
+ * bascule).
  *
  * The service role key is also accepted so that trusted server-side callers
  * (cron jobs, other Edge Functions) can fan out without a user session.
@@ -59,15 +50,7 @@ async function authenticateCaller(req: Request): Promise<string | null> {
 
   if (token === SUPABASE_SERVICE_ROLE_KEY) return 'service_role';
 
-  try {
-    const { payload } = await jwtVerify(token, CLERK_JWKS, {
-      issuer: CLERK_ISSUER,
-    });
-    return typeof payload.sub === 'string' && payload.sub ? payload.sub : null;
-  } catch (err) {
-    console.error('[send-push] JWT verification failed:', (err as Error).message);
-    return null;
-  }
+  return verifyClerkToken(token);
 }
 
 // ---------------------------------------------------------------------------

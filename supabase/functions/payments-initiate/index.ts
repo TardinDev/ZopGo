@@ -20,7 +20,7 @@
 // documented Orders v2 API but needs a sandbox e2e pass before go-live.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { createRemoteJWKSet, jwtVerify } from 'https://esm.sh/jose@5';
+import { verifyClerkToken } from '../_shared/clerkAuth.ts';
 
 // ─── Env ────────────────────────────────────────────────────────────
 
@@ -28,14 +28,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const RESEND_FROM = Deno.env.get('RESEND_FROM') ?? 'ZopGo <onboarding@resend.dev>';
-
-/** Origine Frontend API Clerk — claim `iss` de tout jeton de session. */
-const CLERK_ISSUER =
-  Deno.env.get('CLERK_ISSUER') ?? 'https://saved-chimp-89.clerk.accounts.dev';
-
-const CLERK_JWKS = createRemoteJWKSet(
-  new URL(`${CLERK_ISSUER}/.well-known/jwks.json`)
-);
 
 // 'test' (default) | 'live'. Anything other than 'live' keeps the simulation.
 const PAYMENTS_MODE = (Deno.env.get('PAYMENTS_MODE') ?? 'test').toLowerCase();
@@ -219,22 +211,7 @@ async function profileByClerkId(clerkId: string): Promise<Payer | null> {
 async function clerkSubFromRequest(req: Request): Promise<string | null> {
   const auth = req.headers.get('Authorization');
   if (!auth?.startsWith('Bearer ')) return null;
-
-  const token = auth.slice(7).trim();
-  if (!token) return null;
-
-  try {
-    const { payload } = await jwtVerify(token, CLERK_JWKS, {
-      issuer: CLERK_ISSUER,
-    });
-    return typeof payload.sub === 'string' && payload.sub ? payload.sub : null;
-  } catch (err) {
-    console.error(
-      '[payments-initiate] JWT verification failed:',
-      (err as Error).message
-    );
-    return null;
-  }
+  return verifyClerkToken(auth.slice(7).trim());
 }
 
 /**

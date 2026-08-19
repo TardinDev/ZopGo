@@ -32,6 +32,14 @@ const sendPushSource = readFileSync(
   'utf8'
 );
 
+// La vérification vit dans un module partagé depuis la bascule d'instance
+// Clerk : send-push et payments-initiate doivent appliquer exactement les
+// mêmes règles, et une copie par fonction finissait toujours par diverger.
+const clerkAuthSource = readFileSync(
+  join(REPO_ROOT, 'supabase', 'functions', '_shared', 'clerkAuth.ts'),
+  'utf8'
+);
+
 /** Strips comment lines so assertions never match commented-out config. */
 function activeLines(toml: string): string[] {
   return toml
@@ -61,17 +69,36 @@ describe('send-push edge function auth contract', () => {
     expect(section).toContain('verify_jwt = false');
   });
 
-  it('verifies the Clerk token signature inside the function', () => {
-    // Signature verification, not just decoding: a decoded claim is forgeable.
-    expect(sendPushSource).toMatch(/jwtVerify/);
-    expect(sendPushSource).toMatch(/createRemoteJWKSet/);
+  it('verifies the Clerk token signature, via the shared module', () => {
+    // Vérification de signature, pas simple décodage : un claim décodé se forge.
+    expect(clerkAuthSource).toMatch(/jwtVerify/);
+    expect(clerkAuthSource).toMatch(/createRemoteJWKSet/);
+
+    // send-push délègue au module partagé au lieu d'avoir sa propre copie.
+    expect(sendPushSource).toMatch(
+      /import\s*\{[^}]*verifyClerkToken[^}]*\}\s*from\s*'\.\.\/_shared\/clerkAuth\.ts'/
+    );
     expect(sendPushSource).toMatch(/authenticateCaller/);
   });
 
-  it('pins verification to the configured Clerk issuer', () => {
-    // Without an issuer check, any validly-signed JWT from any issuer passes.
-    expect(sendPushSource).toMatch(/CLERK_ISSUER/);
-    expect(sendPushSource).toMatch(/issuer:\s*CLERK_ISSUER/);
+  it('pins verification to the issuer the token declares', () => {
+    // Sans épinglage, n'importe quel JWT valablement signé par n'importe quel
+    // émetteur passerait. L'émetteur lu avant vérification ne sert qu'à
+    // choisir le JWKS ; il est ensuite imposé à jwtVerify.
+    expect(clerkAuthSource).toMatch(/jwtVerify\(token,\s*jwks,\s*\{\s*issuer\s*\}/);
+  });
+
+  it('accepte plusieurs émetteurs, pour survivre à une bascule d’instance', () => {
+    // Le build publié sur le store embarque l'ancienne clé en dur. N'accepter
+    // qu'un émetteur couperait ses utilisateurs le jour de la bascule — la
+    // panne de push qu'on a déjà vécue, rejouée.
+    expect(clerkAuthSource).toMatch(/CLERK_ISSUERS/);
+    expect(clerkAuthSource).toMatch(/split\(','\)/);
+    expect(clerkAuthSource).toMatch(/JWKS_BY_ISSUER/);
+  });
+
+  it('refuse un émetteur absent de la liste', () => {
+    expect(clerkAuthSource).toMatch(/if\s*\(!jwks\)/);
   });
 
   it('rejects the request when the caller cannot be authenticated', () => {
