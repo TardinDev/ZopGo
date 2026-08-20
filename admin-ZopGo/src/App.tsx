@@ -56,11 +56,13 @@ import { AgencyInvitationList } from "@/pages/agency-invitations/list";
 import { AgencyInvitationCreate } from "@/pages/agency-invitations/create";
 import { TrajetList } from "@/pages/trajets/list";
 import { TrajetShow } from "@/pages/trajets/show";
+import { TrajetCreate } from "@/pages/trajets/create";
 import { LivraisonList } from "@/pages/livraisons/list";
 import { LivraisonShow } from "@/pages/livraisons/show";
 import { HebergementList } from "@/pages/hebergements/list";
 import { HebergementShow } from "@/pages/hebergements/show";
 import { HebergementEdit } from "@/pages/hebergements/edit";
+import { HebergementCreate } from "@/pages/hebergements/create";
 import { ReservationList } from "@/pages/reservations/list";
 import { ReservationShow } from "@/pages/reservations/show";
 import { ReviewList } from "@/pages/reviews/list";
@@ -140,6 +142,7 @@ function AppContent() {
                 {
                     name: "trajets",
                     list: "/trajets",
+                    create: "/trajets/create",
                     show: "/trajets/show/:id",
                     meta: {
                         label: "Trajets",
@@ -158,6 +161,7 @@ function AppContent() {
                 {
                     name: "hebergements",
                     list: "/hebergements",
+                    create: "/hebergements/create",
                     show: "/hebergements/show/:id",
                     edit: "/hebergements/edit/:id",
                     meta: {
@@ -289,6 +293,7 @@ function AppContent() {
                     {/* Trajets */}
                     <Route path="/trajets">
                         <Route index element={<TrajetList />} />
+                        <Route path="create" element={<TrajetCreate />} />
                         <Route path="show/:id" element={<TrajetShow />} />
                     </Route>
 
@@ -301,6 +306,7 @@ function AppContent() {
                     {/* Hébergements */}
                     <Route path="/hebergements">
                         <Route index element={<HebergementList />} />
+                        <Route path="create" element={<HebergementCreate />} />
                         <Route path="show/:id" element={<HebergementShow />} />
                         <Route path="edit/:id" element={<HebergementEdit />} />
                     </Route>

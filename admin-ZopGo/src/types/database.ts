@@ -137,6 +137,11 @@ export interface DbTrajet {
     date: string | null;
     places_disponibles: number;
     status: TrajetStatus;
+    // Détails du véhicule, recopiés sur chaque trajet. Présents en base depuis
+    // l'origine mais absents de ce type, donc invisibles côté admin.
+    immatriculation: string | null;
+    modele: string | null;
+    couleur: string | null;
     deleted_at: string | null;
     created_at: string;
     chauffeur?: DbProfile;
