@@ -16,7 +16,7 @@
 
 | Fichier | Responsabilité |
 |---|---|
-| `supabase/migrations/043_vehicle_photo.sql` | Colonne + bucket + policies cadrées |
+| `supabase/migrations/044_vehicle_photo.sql` | Colonne + bucket + policies cadrées |
 | `src/lib/supabaseVehiclePhoto.ts` | Dépôt et suppression du fichier. Jumeau de `supabaseAvatar.ts` |
 | `src/lib/__tests__/supabaseVehiclePhoto.test.ts` | Tests du module ci-dessus |
 | `src/types/index.ts` | Champ `vehiclePhotoUrl` sur `UserInfo` |
@@ -30,12 +30,12 @@
 ### Task 1 : Migration — colonne, bucket et policies
 
 **Files:**
-- Create: `supabase/migrations/043_vehicle_photo.sql`
+- Create: `supabase/migrations/044_vehicle_photo.sql`
 
 - [ ] **Step 1 : Écrire la migration**
 
 ```sql
--- Migration 043 — Photo de véhicule du chauffeur
+-- Migration 044 — Photo de véhicule du chauffeur
 --
 -- Rattachée au profil et non au trajet : un chauffeur roule avec un véhicule
 -- dans le cas général, il dépose la photo une fois et elle sert tous ses
@@ -83,7 +83,7 @@ CREATE POLICY "vehicle_photos_owner_delete"
 - [ ] **Step 2 : Appliquer**
 
 Run: `npx supabase db push --linked`
-Expected: `Applying migration 043_vehicle_photo.sql...` puis `Finished supabase db push.`
+Expected: `Applying migration 044_vehicle_photo.sql...` puis `Finished supabase db push.`
 
 - [ ] **Step 3 : Vérifier qu'aucune policy permissive ne subsiste sur ce bucket**
 
@@ -96,7 +96,7 @@ Expected: 4 policies. Les trois d'écriture contiennent `foldername`. Seule cell
 - [ ] **Step 4 : Commit**
 
 ```bash
-git add supabase/migrations/043_vehicle_photo.sql
+git add supabase/migrations/044_vehicle_photo.sql
 git commit -m "feat(db): colonne et bucket pour la photo de vehicule"
 ```
 
@@ -227,7 +227,7 @@ const BUCKET = 'vehicle-photos';
  * Dépose la photo du véhicule et renvoie son URL publique.
  *
  * Le chemin est `{clerkId}/{timestamp}.{ext}` : le premier segment porte le
- * cadrage RLS (migration 043). Le modifier reviendrait à faire rejeter tous
+ * cadrage RLS (migration 044). Le modifier reviendrait à faire rejeter tous
  * les dépôts en production.
  *
  * Lecture en base64 plutôt que `fetch` + `blob`, qui ne fonctionne pas en

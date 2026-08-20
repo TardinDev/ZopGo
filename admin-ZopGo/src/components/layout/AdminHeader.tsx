@@ -2,7 +2,7 @@
  * ZopGo Admin — Dark header with route-based title, search, notifications, user
  */
 
-import { Layout, Avatar, Dropdown, Space, Badge, Input } from "antd";
+import { Layout, Avatar, Dropdown, Space, Input } from "antd";
 import {
     UserOutlined,
     LogoutOutlined,
@@ -12,7 +12,7 @@ import {
     SearchOutlined,
 } from "@ant-design/icons";
 import { useGetIdentity, useLogout } from "@refinedev/core";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DARK } from "@/config/constants";
 
 const { Header } = Layout;
@@ -50,6 +50,7 @@ export function AdminHeader() {
     const { data: identity } = useGetIdentity<Identity>();
     const { mutate: logout } = useLogout();
     const location = useLocation();
+    const navigate = useNavigate();
 
     const { title, subtitle } = getPageInfo(location.pathname);
 
@@ -111,7 +112,21 @@ export function AdminHeader() {
                 {/* Search */}
                 <Input
                     prefix={<SearchOutlined style={{ color: DARK.textMuted }} />}
-                    placeholder="Rechercher..."
+                    placeholder="Rechercher un utilisateur..."
+                    allowClear
+                    aria-label="Rechercher un utilisateur"
+                    onPressEnter={(e) => {
+                        // syncWithLocation etant actif, Refine lit ses filtres
+                        // depuis l'URL : la liste s'ouvre deja filtree.
+                        const q = (e.target as HTMLInputElement).value.trim();
+                        if (!q) return;
+                        const params = new URLSearchParams({
+                            "filters[0][field]": "name",
+                            "filters[0][operator]": "contains",
+                            "filters[0][value]": q,
+                        });
+                        navigate(`/users?${params.toString()}`);
+                    }}
                     style={{
                         width: 220,
                         background: DARK.cardBgHover,
@@ -121,26 +136,51 @@ export function AdminHeader() {
                 />
 
                 {/* Notification bell */}
-                <div className="notification-bell" style={{ cursor: "pointer" }}>
-                    <Badge count={3} size="small" offset={[-2, 2]}>
-                        <BellOutlined
-                            style={{ fontSize: 20, color: "#A0A0B8", transition: "color 0.2s" }}
-                            onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
-                            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
-                        />
-                    </Badge>
+                <div
+                    className="notification-bell"
+                    style={{ cursor: "pointer" }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Notifications"
+                    title="Notifications"
+                    onClick={() => navigate("/notifications")}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") navigate("/notifications");
+                    }}
+                >
+                    <BellOutlined
+                        style={{ fontSize: 20, color: "#A0A0B8", transition: "color 0.2s" }}
+                        onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
+                        onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
+                    />
                 </div>
 
                 {/* Messages */}
                 <MessageOutlined
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Messages entre utilisateurs"
+                    title="Messages entre utilisateurs"
                     style={{ fontSize: 20, color: "#A0A0B8", cursor: "pointer", transition: "color 0.2s" }}
+                    onClick={() => navigate("/direct-messages")}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") navigate("/direct-messages");
+                    }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
                     onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
                 />
 
                 {/* Settings */}
                 <SettingOutlined
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Paramètres"
+                    title="Paramètres"
                     style={{ fontSize: 20, color: "#A0A0B8", cursor: "pointer", transition: "color 0.2s" }}
+                    onClick={() => navigate("/settings")}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") navigate("/settings");
+                    }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = DARK.accent; }}
                     onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "#A0A0B8"; }}
                 />
