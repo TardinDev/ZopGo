@@ -767,3 +767,52 @@ describe('ACCOMMODATION_TYPES', () => {
     ]);
   });
 });
+
+// ── Session Clerk périmée après changement d'instance ────────────────
+//
+// Zustand persiste `user`, `clerkId` et `supabaseProfileId` dans
+// AsyncStorage, qui survit à une mise à jour de l'application. Après une
+// bascule d'instance Clerk, l'app redémarre donc avec l'identité de
+// l'ancienne instance alors que la session active porte un autre clerkId.
+//
+// Les deux garde-fous du layout sont alors court-circuités : la synchro
+// Clerk→Zustand exige `!localUser`, l'auto-réparation exige
+// `!supabaseProfileId`. Les deux valeurs étant présentes, l'app se croit
+// synchronisée — et toute écriture visant le nouveau clerkId ne trouve
+// aucune ligne. L'utilisateur cesse silencieusement de recevoir ses
+// notifications.
+describe('authStore — session périmée après changement d’instance Clerk', () => {
+  it('efface l’identité persistée quand le compte actif a changé', () => {
+    useAuthStore.getState().setupProfile('client', 'Ancien', 'ancien@zopgo.app');
+    useAuthStore.setState({
+      clerkId: 'user_ancienne_instance',
+      supabaseProfileId: 'profil-ancien',
+    });
+
+    useAuthStore.getState().clearStaleSession();
+
+    const s = useAuthStore.getState();
+    expect(s.user).toBeNull();
+    expect(s.clerkId).toBeNull();
+    expect(s.supabaseProfileId).toBeNull();
+  });
+
+  it('laisse la voie libre à une reconstruction complète du profil', () => {
+    useAuthStore.getState().setupProfile('client', 'Ancien', 'ancien@zopgo.app');
+    useAuthStore.setState({ supabaseProfileId: 'profil-ancien' });
+
+    useAuthStore.getState().clearStaleSession();
+    useAuthStore.getState().setupProfile(
+      'chauffeur',
+      'Nouveau',
+      'nouveau@zopgo.app',
+      'voiture',
+      'user_nouvelle_instance'
+    );
+
+    const s = useAuthStore.getState();
+    expect(s.clerkId).toBe('user_nouvelle_instance');
+    expect(s.user?.profile.name).toBe('Nouveau');
+    expect(s.user?.role).toBe('chauffeur');
+  });
+});

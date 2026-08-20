@@ -18,6 +18,8 @@ export default function ProtectedLayout() {
   const { user: localUser, setupProfile, logout } = useAuthStore();
   const supabaseProfileId = useAuthStore((s) => s.supabaseProfileId);
   const resyncSupabaseProfile = useAuthStore((s) => s.resyncSupabaseProfile);
+  const storedClerkId = useAuthStore((s) => s.clerkId);
+  const clearStaleSession = useAuthStore((s) => s.clearStaleSession);
   const router = useRouter();
   const backgroundTimestamp = useRef<number | null>(null);
   const [supabaseReady, setSupabaseReady] = useState(false);
@@ -78,6 +80,21 @@ export default function ProtectedLayout() {
       setSupabaseReady(false);
     };
   }, [isSignedIn, getToken]);
+
+  // L'identité persistée n'appartient plus au compte Clerk actif.
+  //
+  // AsyncStorage survit à une mise à jour de l'application, donc après une
+  // bascule d'instance Clerk l'app redémarre avec l'ancien `clerkId` et
+  // l'ancien `supabaseProfileId`. Les deux garde-fous ci-dessous sont alors
+  // court-circuités — la synchro exige `!localUser`, l'auto-réparation exige
+  // `!supabaseProfileId` — et l'app se croit synchronisée alors qu'aucune
+  // ligne ne correspond au compte réel. Le profil ne se crée jamais et le
+  // token de notification est écrit sur zéro ligne, sans le moindre signal.
+  useEffect(() => {
+    if (isSignedIn && clerkUser && storedClerkId && storedClerkId !== clerkUser.id) {
+      clearStaleSession();
+    }
+  }, [isSignedIn, clerkUser, storedClerkId, clearStaleSession]);
 
   // Synchroniser le profil Clerk -> Zustand si connecté mais pas de profil local
   // (ex: après redémarrage de l'app, Clerk garde la session mais Zustand est réinitialisé)

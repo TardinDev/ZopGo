@@ -105,6 +105,26 @@ interface AuthState {
    */
   resyncSupabaseProfile: () => Promise<void>;
   logout: () => void;
+  /**
+   * Efface l'identité persistée lorsqu'elle n'appartient plus au compte
+   * Clerk actif.
+   *
+   * Zustand persiste `user`, `clerkId` et `supabaseProfileId` dans
+   * AsyncStorage, qui survit a une mise a jour de l'application. Apres une
+   * bascule d'instance Clerk, l'app redemarre donc avec l'identite de
+   * l'ancienne instance alors que la session active porte un autre clerkId.
+   *
+   * Les deux garde-fous du layout sont alors court-circuites : la synchro
+   * Clerk→Zustand exige `!localUser`, l'auto-reparation exige
+   * `!supabaseProfileId`. Les deux valeurs etant presentes, l'app se croit
+   * synchronisee — et toute ecriture visant le nouveau clerkId ne trouve
+   * aucune ligne. L'utilisateur cesse silencieusement de recevoir ses
+   * notifications, son profil ne se cree jamais.
+   *
+   * Remettre les trois a zero laisse la synchro Clerk→Zustand reconstruire
+   * un profil propre au demarrage suivant.
+   */
+  clearStaleSession: () => void;
   updateProfile: (profile: Partial<UserInfo | ChauffeurProfile | HebergeurProfile | AgencyProfile>) => void;
   setDisponible: (disponible: boolean) => void;
   loadNotificationPreferences: (clerkId: string) => Promise<void>;
@@ -397,6 +417,10 @@ export const useAuthStore = create<AuthState>()(
         });
 
         return result;
+      },
+
+      clearStaleSession: () => {
+        set({ user: null, clerkId: null, supabaseProfileId: null });
       },
 
       logout: () => {
