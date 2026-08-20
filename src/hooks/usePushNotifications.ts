@@ -107,8 +107,15 @@ export function usePushNotifications(clerkId: string | null) {
       const token = await acquirePushToken();
 
       if (token && token !== lastTokenRef.current) {
-        lastTokenRef.current = token;
-        await updatePushToken(clerkId, token);
+        // On ne mémorise le token qu'une fois l'écriture CONFIRMÉE. Le faire
+        // avant perdait définitivement le token quand l'écriture échouait
+        // (coupure réseau, erreur passagère) : la référence contenait déjà la
+        // valeur, donc plus aucune tentative jusqu'au redémarrage de l'app —
+        // et l'utilisateur ne recevait plus rien sans le savoir.
+        const persisted = await updatePushToken(clerkId, token);
+        if (persisted) {
+          lastTokenRef.current = token;
+        }
       }
 
       // Cold-launch routing: if the app was opened by tapping a notification
@@ -181,9 +188,15 @@ export function usePushNotifications(clerkId: string | null) {
         const next = typeof event === 'string' ? event : event?.data;
         if (!next || typeof next !== 'string') return;
         if (next === lastTokenRef.current) return;
-        lastTokenRef.current = next;
-        // Fire-and-forget — failure is non-fatal, will retry on next launch.
-        void updatePushToken(clerkId, next);
+        // Même règle que ci-dessus : mémoriser seulement après confirmation.
+        // Mémoriser avant serait pire ici — en cas d'échec l'ancien token
+        // resterait en base pendant que la référence contiendrait déjà le
+        // nouveau, rendant toute nouvelle tentative impossible.
+        void updatePushToken(clerkId, next).then((persisted) => {
+          if (persisted) {
+            lastTokenRef.current = next;
+          }
+        });
         if (__DEV__) console.log('[Push] token rotated, persisted to Supabase');
       });
     })();

@@ -139,6 +139,42 @@ describe('usePushNotifications — iOS Expo push token path', () => {
     expect(updatePushToken).toHaveBeenCalledTimes(1);
   });
 
+  // Le token n'était mémorisé qu'en mémoire, AVANT que l'écriture en base
+  // soit confirmée, et le résultat de updatePushToken n'était jamais lu. Une
+  // écriture ratée — coupure réseau, erreur passagère — perdait donc le token
+  // définitivement : la référence contenait déjà la valeur, donc plus aucune
+  // tentative jusqu'au redémarrage de l'app. C'est la famille de panne
+  // silencieuse qui a déjà coûté des semaines de notifications manquantes.
+  it('retente la persistance quand l’écriture en base a échoué', async () => {
+    (updatePushToken as jest.Mock).mockResolvedValueOnce(false);
+
+    const { rerender } = renderHook<void, { id: string }>(
+      ({ id }) => usePushNotifications(id),
+      { initialProps: { id: 'clk_1' } }
+    );
+    await flushAsync();
+    expect(updatePushToken).toHaveBeenCalledTimes(1);
+
+    // Même token, mais la première écriture a échoué : il faut réessayer.
+    rerender({ id: 'clk_1' });
+    await flushAsync();
+    expect(updatePushToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('cesse de réécrire une fois la persistance réussie', async () => {
+    (updatePushToken as jest.Mock).mockResolvedValue(true);
+
+    const { rerender } = renderHook<void, { id: string }>(
+      ({ id }) => usePushNotifications(id),
+      { initialProps: { id: 'clk_1' } }
+    );
+    await flushAsync();
+    rerender({ id: 'clk_1' });
+    await flushAsync();
+
+    expect(updatePushToken).toHaveBeenCalledTimes(1);
+  });
+
   it('requests permissions when current status is not granted', async () => {
     (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ status: 'undetermined' });
     (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValueOnce({ status: 'granted' });
