@@ -28,6 +28,8 @@ export interface SupabaseProfile {
   // Agency fields (migration 027). NULL for non-agence accounts.
   agency_name: string | null;
   agency_logo_url: string | null;
+  // Photo du véhicule du chauffeur (migration 044). NULL pour les autres rôles.
+  vehicle_photo_url: string | null;
 }
 
 // Returns the effective roles array for a profile: prefers the multi-role
@@ -145,6 +147,8 @@ export async function updateProfile(
     role: 'client' | 'chauffeur' | 'hebergeur' | 'agence';
     agency_name: string;
     agency_logo_url: string;
+    // Photo du véhicule (migration 044) — écrite depuis authStore.updateProfile.
+    vehicle_photo_url: string;
   }>
 ): Promise<boolean> {
   const sanitizedUpdates = { ...updates };

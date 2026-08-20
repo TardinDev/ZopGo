@@ -60,6 +60,8 @@ export interface UserInfo {
   address: string;
   emergencyContact: string;
   avatar: string;
+  /** Photo du véhicule, renseignée par les chauffeurs. Vide sinon. */
+  vehiclePhotoUrl?: string;
   rating: number;
   totalTrips: number;
   totalDeliveries: number;

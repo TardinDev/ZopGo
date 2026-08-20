@@ -604,6 +604,27 @@ describe('updateProfile', () => {
     useAuthStore.getState().updateProfile({ name: 'Nobody' });
     expect(useAuthStore.getState().user).toBeNull();
   });
+
+  // Le mapping camelCase → snake_case de updateProfile est explicite : un champ
+  // oublié est écrit en local puis perdu au redémarrage, sans aucune erreur.
+  // Ce test verrouille la colonne `vehicle_photo_url`.
+  it('persists vehiclePhotoUrl to the vehicle_photo_url column', () => {
+    useAuthStore
+      .getState()
+      .setupProfile('chauffeur', 'Pierre', 'pierre@test.com', 'voiture', 'clerk-abc');
+    (updateSupabaseProfile as jest.Mock).mockClear();
+
+    useAuthStore
+      .getState()
+      .updateProfile({ vehiclePhotoUrl: 'https://cdn.test/vehicle-photos/clerk-abc/1.jpg' });
+
+    expect(useAuthStore.getState().user!.profile.vehiclePhotoUrl).toBe(
+      'https://cdn.test/vehicle-photos/clerk-abc/1.jpg'
+    );
+    expect(updateSupabaseProfile).toHaveBeenCalledWith('clerk-abc', {
+      vehicle_photo_url: 'https://cdn.test/vehicle-photos/clerk-abc/1.jpg',
+    });
+  });
 });
 
 // ─── setDisponible ──────────────────────────────────────────────────

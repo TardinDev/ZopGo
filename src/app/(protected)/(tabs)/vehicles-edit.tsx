@@ -9,14 +9,18 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '../../../constants';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useAuthStore, isChauffeur, VEHICLE_TYPES } from '../../../stores/authStore';
+import { uploadVehiclePhoto } from '../../../lib/supabaseVehiclePhoto';
 import type { VehicleType } from '../../../types';
 import type { SettingsVehicle } from '../../../stores/settingsStore';
 
@@ -31,13 +35,62 @@ const VEHICLE_TYPE_OPTIONS: { type: VehicleType; label: string; icon: string }[]
 export default function VehiclesEditScreen() {
   const router = useRouter();
   const { vehicles, addVehicle, removeVehicle, setDefaultVehicle } = useSettingsStore();
-  const { user, updateProfile } = useAuthStore();
+  const { user, updateProfile, clerkId } = useAuthStore();
   const isDriver = isChauffeur(user);
 
   const [showForm, setShowForm] = useState(false);
   const [formLabel, setFormLabel] = useState('');
   const [formPlaque, setFormPlaque] = useState('');
   const [formType, setFormType] = useState<VehicleType>('voiture');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // Source de vérité unique : le profil. On n'affiche jamais l'URI locale
+  // choisie dans la galerie, donc un envoi qui échoue laisse la photo
+  // précédente à l'écran au lieu d'afficher une photo qui n'existe pas côté serveur.
+  const vehiclePhotoUrl = user?.profile.vehiclePhotoUrl;
+
+  // Même mécanique que l'avatar du profil (voir profil.tsx : permission →
+  // picker → upload → persistance), au ratio 16:9 du futur aperçu client.
+  const handlePickVehiclePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission refusée',
+          'Nous avons besoin de la permission pour accéder à la galerie.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+
+      // Le premier segment du chemin Storage doit être le clerkId (policies
+      // RLS du bucket `vehicle-photos`) : sans lui, l'envoi serait rejeté.
+      const uploaderId = clerkId || user?.id;
+      if (!uploaderId) {
+        Alert.alert('Erreur', 'Session introuvable. Reconnectez-vous puis réessayez.');
+        return;
+      }
+
+      setIsUploadingPhoto(true);
+      const publicUrl = await uploadVehiclePhoto(uploaderId, result.assets[0].uri);
+      if (publicUrl) {
+        updateProfile({ vehiclePhotoUrl: publicUrl });
+      } else {
+        Alert.alert('Erreur', "Impossible d'envoyer la photo. Veuillez réessayer.");
+      }
+    } catch {
+      Alert.alert('Erreur', "Une erreur s'est produite lors de la sélection de l'image.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const handleAdd = () => {
     if (!formLabel.trim() || !formPlaque.trim()) {
@@ -97,6 +150,62 @@ export default function VehiclesEditScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1">
         <ScrollView className="-mt-4 flex-1 px-6" showsVerticalScrollIndicator={false}>
+          {/* Photo du véhicule (chauffeurs) */}
+          {isDriver && (
+            <View className="mb-6 rounded-2xl bg-white p-4 shadow-sm">
+              <Text className="mb-3 font-semibold text-gray-800">Photo du véhicule</Text>
+              <TouchableOpacity
+                onPress={handlePickVehiclePhoto}
+                disabled={isUploadingPhoto}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Ajouter une photo du véhicule"
+                accessibilityState={{ disabled: isUploadingPhoto, busy: isUploadingPhoto }}>
+                {vehiclePhotoUrl ? (
+                  <View
+                    className="overflow-hidden rounded-xl bg-gray-100"
+                    style={{ width: '100%', aspectRatio: 16 / 9 }}>
+                    <Image
+                      source={{ uri: vehiclePhotoUrl }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
+                    {isUploadingPhoto ? (
+                      <View
+                        className="absolute inset-0 items-center justify-center"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
+                        <ActivityIndicator color="white" />
+                      </View>
+                    ) : (
+                      <View className="absolute bottom-2 right-2 flex-row items-center rounded-lg bg-black/60 px-3 py-1.5">
+                        <Ionicons name="camera-outline" size={14} color="white" />
+                        <Text className="ml-1 text-xs font-medium text-white">Modifier</Text>
+                      </View>
+                    )}
+                  </View>
+                ) : (
+                  <View
+                    className="items-center justify-center rounded-xl border-2 border-dashed border-blue-300 bg-blue-50"
+                    style={{ width: '100%', aspectRatio: 16 / 9 }}>
+                    {isUploadingPhoto ? (
+                      <ActivityIndicator color={COLORS.primary} />
+                    ) : (
+                      <>
+                        <Ionicons name="camera-outline" size={28} color={COLORS.primary} />
+                        <Text className="mt-2 font-semibold text-[#2162FE]">
+                          Ajouter une photo
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+              <Text className="mt-3 text-xs text-gray-500">
+                Cette photo aide vos passagers à reconnaître votre véhicule.
+              </Text>
+            </View>
+          )}
+
           {/* Liste des véhicules */}
           {vehicles.length > 0 ? (
             <View className="mb-6 rounded-2xl bg-white p-4 shadow-sm">

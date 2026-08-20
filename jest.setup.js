@@ -245,10 +245,22 @@ jest.mock('./src/lib/supabaseHebergementImages', () => ({
   updateHebergementImages: jest.fn(() => Promise.resolve(true)),
 }));
 
+// Mock supabaseVehiclePhoto
+jest.mock('./src/lib/supabaseVehiclePhoto', () => ({
+  uploadVehiclePhoto: jest.fn(() => Promise.resolve(null)),
+  deleteVehiclePhoto: jest.fn(() => Promise.resolve(true)),
+}));
+
 // Mock expo-image-picker
+// Les vraies permissions renvoient `status` ET `granted` : les deux sont
+// exposés ici car les écrans testent l'un ou l'autre.
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: [] })),
   launchCameraAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: [] })),
-  requestMediaLibraryPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
-  requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  requestMediaLibraryPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ granted: true, status: 'granted' })
+  ),
+  requestCameraPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ granted: true, status: 'granted' })
+  ),
 }));

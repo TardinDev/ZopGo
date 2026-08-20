@@ -239,6 +239,10 @@ const syncSupabaseProfileRow = async (
         const baseProfile = {
           ...state.user.profile,
           avatar: existing.avatar || state.user.profile.avatar,
+          // Réhydrate la photo du véhicule depuis la base : sans ça, elle
+          // n'existerait que dans le store persisté et disparaîtrait sur un
+          // nouvel appareil ou après réinstallation.
+          vehiclePhotoUrl: existing.vehicle_photo_url ?? state.user.profile.vehiclePhotoUrl,
           address: existing.address || '',
           emergencyContact: existing.emergency_contact || '',
           rating: existing.rating,
@@ -458,10 +462,16 @@ export const useAuthStore = create<AuthState>()(
         });
 
         if (clerkId) {
+          // ATTENTION — ce mapping camelCase → snake_case est explicite : tout
+          // champ absent d'ici est appliqué en local puis perdu au redémarrage,
+          // silencieusement (aucune erreur, aucun log). Ajouter la ligne
+          // correspondante ici pour chaque nouveau champ persisté.
           const supabaseUpdates: Record<string, string | boolean> = {};
           if ('name' in updates && updates.name) supabaseUpdates.name = updates.name;
           if ('phone' in updates && updates.phone) supabaseUpdates.phone = updates.phone;
           if ('avatar' in updates && updates.avatar) supabaseUpdates.avatar = updates.avatar;
+          if ('vehiclePhotoUrl' in updates && updates.vehiclePhotoUrl !== undefined)
+            supabaseUpdates.vehicle_photo_url = updates.vehiclePhotoUrl;
           if ('address' in updates && updates.address !== undefined) supabaseUpdates.address = updates.address;
           if ('emergencyContact' in updates && updates.emergencyContact !== undefined) supabaseUpdates.emergency_contact = updates.emergencyContact;
           if (Object.keys(supabaseUpdates).length > 0) {
