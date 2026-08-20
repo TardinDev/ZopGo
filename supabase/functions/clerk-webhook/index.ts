@@ -1,6 +1,27 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const CLERK_WEBHOOK_SECRET = Deno.env.get('CLERK_WEBHOOK_SECRET')!;
+/**
+ * Secrets de signature Svix, séparés par des virgules.
+ *
+ * Chaque instance Clerk a son propre endpoint webhook, donc son propre
+ * secret. Pendant une bascule d'instance les deux coexistent : le build
+ * publié sur le store reste rattaché à l'ancienne, le nouveau à la
+ * nouvelle. N'accepter qu'un secret ferait échouer silencieusement les
+ * livraisons de l'autre — donc, pour `user.deleted`, des comptes supprimés
+ * dont les données resteraient en base. Exactement ce que Google interdit.
+ *
+ * CLERK_WEBHOOK_SECRETS (liste) ; CLERK_WEBHOOK_SECRET (ancien nom) reste
+ * accepté. Retirer un secret dès que son instance n'émet plus rien.
+ */
+const CLERK_WEBHOOK_SECRETS = (
+  Deno.env.get('CLERK_WEBHOOK_SECRETS') ??
+  Deno.env.get('CLERK_WEBHOOK_SECRET') ??
+  ''
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter((s) => s.length > 0);
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -30,36 +51,51 @@ async function verifyWebhook(
   const encoder = new TextEncoder();
   const signedContent = `${svixId}.${svixTimestamp}.${body}`;
 
-  // Clerk webhook secret starts with "whsec_", remove prefix and decode base64
-  const secretBytes = Uint8Array.from(
-    atob(CLERK_WEBHOOK_SECRET.replace('whsec_', '')),
-    (c) => c.charCodeAt(0)
-  );
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    secretBytes,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const signatureBytes = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(signedContent)
-  );
-
-  const computedSignature = btoa(
-    String.fromCharCode(...new Uint8Array(signatureBytes))
-  );
-
-  // svix-signature can contain multiple signatures separated by spaces
+  // svix-signature peut contenir plusieurs signatures séparées par des espaces
   const signatures = svixSignature.split(' ');
-  const isValid = signatures.some((sig) => {
-    const [, sigValue] = sig.split(',');
-    return sigValue === computedSignature;
-  });
+
+  // La livraison est valide dès qu'un des secrets configurés produit la
+  // signature attendue : on ne sait pas a priori de quelle instance Clerk
+  // vient l'événement.
+  let isValid = false;
+
+  for (const secret of CLERK_WEBHOOK_SECRETS) {
+    // Le secret Clerk commence par "whsec_" ; on retire le préfixe et on
+    // décode le base64 restant.
+    const secretBytes = Uint8Array.from(
+      atob(secret.replace('whsec_', '')),
+      (c) => c.charCodeAt(0)
+    );
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signatureBytes = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(signedContent)
+    );
+
+    const computedSignature = btoa(
+      String.fromCharCode(...new Uint8Array(signatureBytes))
+    );
+
+    if (signatures.some((sig) => sig.split(',')[1] === computedSignature)) {
+      isValid = true;
+      break;
+    }
+  }
+
+  if (!isValid) {
+    console.error(
+      `[clerk-webhook] signature invalide — ${CLERK_WEBHOOK_SECRETS.length} secret(s) essayé(s)`
+    );
+  }
 
   return { valid: isValid, body };
 }
