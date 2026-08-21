@@ -142,7 +142,18 @@ Deno.serve(async (req: Request) => {
           userData.first_name ||
           email.split('@')[0] ||
           'Utilisateur';
-        const role = userData.unsafe_metadata?.role || 'client';
+        // Une invitation Clerk ne transporte que `public_metadata`. Sans ce
+        // repli, tout compte créé par invitation deviendrait `client` quel que
+        // soit le rôle choisi par l'administration — sans qu'aucune erreur ne
+        // le signale.
+        //
+        // `unsafe_metadata` reste prioritaire : c'est lui qu'alimentent les
+        // inscriptions faites depuis l'application mobile, et leur
+        // comportement ne doit pas changer.
+        const role =
+          userData.unsafe_metadata?.role ||
+          userData.public_metadata?.role ||
+          'client';
 
         const { data } = await supabase
           .from('profiles')
