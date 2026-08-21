@@ -13,7 +13,6 @@
 import { supabase } from "@/config/supabase";
 import type { AdminMessageTargetType, UserRole } from "@/types/enums";
 
-const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 const BATCH_SIZE = 100;
 
 export interface SendAdminPushParams {
@@ -29,14 +28,6 @@ export interface SendAdminPushResult {
     sent: number;
     failed: number;
     skipped: number;
-}
-
-interface ExpoPushMessage {
-    to: string;
-    title: string;
-    body: string;
-    sound: "default";
-    data: { admin_message_id: string; type: "admin_message" };
 }
 
 interface ProfileRow {
@@ -87,34 +78,41 @@ export async function sendAdminPush(
         return { sent: 0, failed: 0, skipped };
     }
 
-    // 2. Batch et POST vers Expo Push API
-    const messages: ExpoPushMessage[] = tokens.map((token) => ({
-        to: token,
-        title,
-        body,
-        sound: "default",
-        data: { admin_message_id: messageId, type: "admin_message" },
-    }));
-
+    // 2. Envoi via l'Edge Function send-push
+    //
+    // Cette fonction envoyait auparavant directement vers l'API Expo Push.
+    // Or AUCUN token de production n'est un token Expo: l'application obtient
+    // des tokens FCM natifs via getDevicePushTokenAsync (voir
+    // lib/pushRegistration.ts). Expo les rejetait donc tous, en repondant
+    // malgre tout un HTTP 200 — les annonces etaient comptees comme envoyees
+    // sans jamais atteindre le moindre telephone.
+    //
+    // send-push distingue les deux formats et route chacun vers le bon
+    // service, avec les credentials Google cote serveur.
     let sent = 0;
     let failed = 0;
 
-    for (let i = 0; i < messages.length; i += BATCH_SIZE) {
-        const batch = messages.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+        const batch = tokens.slice(i, i + BATCH_SIZE);
         try {
-            const res = await fetch(EXPO_PUSH_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    "Accept-Encoding": "gzip, deflate",
+            const { data, error } = await supabase.functions.invoke("send-push", {
+                body: {
+                    directTokens: batch,
+                    title,
+                    message: body,
+                    category: "promotions",
+                    skipInAppRecord: true,
+                    data: { admin_message_id: messageId, type: "admin_message" },
                 },
-                body: JSON.stringify(batch),
             });
-            if (res.ok) {
-                sent += batch.length;
-            } else {
+            if (error) {
                 failed += batch.length;
+            } else {
+                // send-push renvoie le nombre reellement accepte par le
+                // service de notification, pas la taille du lot.
+                const accepted = (data as { sent?: number } | null)?.sent ?? 0;
+                sent += accepted;
+                failed += batch.length - accepted;
             }
         } catch {
             failed += batch.length;

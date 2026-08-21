@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { verifyClerkToken } from '../_shared/clerkAuth.ts';
+import { isAdminCaller } from '../_shared/adminAuth.ts';
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -50,7 +51,16 @@ async function authenticateCaller(req: Request): Promise<string | null> {
 
   if (token === SUPABASE_SERVICE_ROLE_KEY) return 'service_role';
 
-  return verifyClerkToken(token);
+  const clerkSub = await verifyClerkToken(token);
+  if (clerkSub) return clerkSub;
+
+  // L'admin web ne presente pas un jeton Clerk brut mais un jeton HS256 issu
+  // du template `supabase`, que verifyClerkToken rejette. On lui laisse une
+  // seconde chance en verifiant sa qualite d'administrateur aupres des
+  // policies — c'est ce qui permet a l'admin de diffuser une annonce.
+  if (await isAdminCaller(req)) return 'admin';
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
