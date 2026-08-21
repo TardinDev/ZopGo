@@ -3,6 +3,10 @@
  */
 
 import { List, useTable, FilterDropdown, ShowButton } from "@refinedev/antd";
+import { useUpdate } from "@refinedev/core";
+import { Button, Popconfirm } from "antd";
+import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
+import { softDeletePayload, estRetire } from "@/pages/moderation";
 import { Table, Space, Select, Tag, Typography, Avatar } from "antd";
 import { GlobalOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -25,6 +29,20 @@ export function TrajetList() {
                 "*, chauffeur:chauffeur_id(id, name, avatar, role, agency_name, agency_logo_url)",
         },
     });
+
+    const { mutate: update } = useUpdate();
+
+    // Retrait reversible: on estampille `deleted_at`, les policies de lecture
+    // filtrant sur `deleted_at IS NULL`. Le contenu disparait de l'application
+    // mobile mais reste consultable ici, et le geste est trace par le
+    // declencheur d'audit.
+    const toggleRetrait = (row: DbTrajet) => {
+        update({
+            resource: "trajets",
+            id: row.id,
+            values: softDeletePayload(!estRetire(row), new Date().toISOString()),
+        });
+    };
 
     return (
         <List title="Trajets inter-villes">
@@ -165,6 +183,24 @@ export function TrajetList() {
                     width={80}
                     fixed="right"
                     render={(_, r) => <ShowButton hideText size="small" recordItemId={r.id} />}
+                />
+                <Table.Column<DbTrajet>
+                    title="Modération"
+                    key="moderation"
+                    width={150}
+                    fixed="right"
+                    render={(_, r) => (
+                        <Popconfirm
+                            title={estRetire(r) ? "Rétablir ce trajet ?" : "Retirer ce trajet de l'application ?"}
+                            onConfirm={() => toggleRetrait(r)}>
+                            <Button
+                                size="small"
+                                danger={!estRetire(r)}
+                                icon={estRetire(r) ? <EyeOutlined /> : <EyeInvisibleOutlined />}>
+                                {estRetire(r) ? "Rétablir" : "Retirer"}
+                            </Button>
+                        </Popconfirm>
+                    )}
                 />
             </Table>
         </List>

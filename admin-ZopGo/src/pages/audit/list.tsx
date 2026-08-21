@@ -2,11 +2,14 @@
  * ZopGo Admin — Journal d'audit (lecture seule)
  */
 
+import { useMemo } from "react";
 import { List, useTable, FilterDropdown } from "@refinedev/antd";
-import { Table, Space, Select, Tag, Typography } from "antd";
+import { useList } from "@refinedev/core";
+import { Table, Space, Select, Tag, Typography, Tooltip } from "antd";
 import dayjs from "dayjs";
 import { DARK } from "@/config/constants";
-import type { DbAuditLog } from "@/types";
+import { describeActor, type ActorKind } from "./actor";
+import type { DbAuditLog, DbProfile } from "@/types";
 
 const { Text } = Typography;
 
@@ -22,6 +25,31 @@ export function AuditLogList() {
         sorters: { initial: [{ field: "performed_at", order: "desc" }] },
         pagination: { pageSize: 50 },
     });
+
+    // Résout les identifiants de la page courante en noms. Charger tous les
+    // profils serait inutile : une page affiche au plus 50 lignes, et les
+    // auteurs s'y répètent beaucoup.
+    const clerkIds = useMemo(() => {
+        const brut = (tableProps.dataSource ?? [])
+            .map((l) => l.performed_by)
+            .filter((p): p is string => !!p && p !== "system" && p !== "clerk-webhook");
+        return Array.from(new Set(brut));
+    }, [tableProps.dataSource]);
+
+    const { data: auteursData } = useList<DbProfile>({
+        resource: "profiles",
+        filters: [{ field: "clerk_id", operator: "in", value: clerkIds }],
+        pagination: { pageSize: 100 },
+        queryOptions: { enabled: clerkIds.length > 0 },
+    });
+
+    const nomsParClerkId = useMemo(() => {
+        const m: Record<string, string> = {};
+        for (const p of auteursData?.data ?? []) {
+            if (p.clerk_id) m[p.clerk_id] = p.name;
+        }
+        return m;
+    }, [auteursData]);
 
     return (
         <List title="Journal d'audit" canCreate={false}>
@@ -82,11 +110,28 @@ export function AuditLogList() {
                     title="Effectué par"
                     dataIndex="performed_by"
                     width={200}
-                    render={(p: string) => (
-                        <Text style={{ fontSize: 12, color: DARK.textSecondary }}>
-                            {p ?? "système"}
-                        </Text>
-                    )}
+                    render={(p: string) => {
+                        const a = describeActor(p, nomsParClerkId);
+                        const couleur: Record<ActorKind, string> = {
+                            personne: DARK.textPrimary,
+                            systeme: DARK.textMuted,
+                            webhook: DARK.textMuted,
+                            retire: DARK.textMuted,
+                        };
+                        return (
+                            <Tooltip title={a.raw || "aucun identifiant"}>
+                                <Text
+                                    style={{
+                                        fontSize: 12,
+                                        color: couleur[a.kind],
+                                        fontStyle: a.kind === "personne" ? "normal" : "italic",
+                                    }}
+                                >
+                                    {a.label}
+                                </Text>
+                            </Tooltip>
+                        );
+                    }}
                 />
 
                 <Table.Column<DbAuditLog>
