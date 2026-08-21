@@ -652,25 +652,6 @@ export default function VoyageDetailScreen() {
                       style={{ marginTop: 2, fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
                       {voyage.driver}
                     </Text>
-                    {/* Photo du véhicule : le seul élément qui permet vraiment
-                        de repérer la voiture au point de rendez-vous. Sans
-                        photo on ne rend rien — un cadre vide ou une icône
-                        générique n'aiderait personne à reconnaître quoi que
-                        ce soit et alourdirait le billet pour rien. */}
-                    {voyage.vehiclePhotoUrl ? (
-                      <Image
-                        accessibilityLabel="Photo du véhicule"
-                        source={{ uri: voyage.vehiclePhotoUrl }}
-                        resizeMode="cover"
-                        style={{
-                          width: '100%',
-                          aspectRatio: 16 / 9,
-                          borderRadius: 12,
-                          marginTop: 8,
-                          backgroundColor: '#E5E7EB',
-                        }}
-                      />
-                    ) : null}
                     {vehicleSpecs ? (
                       <Text
                         selectable
@@ -708,6 +689,29 @@ export default function VoyageDetailScreen() {
                 </>
               )}
             </View>
+
+            {/* Photo du vehicule — hors de la rangee, donc pleine largeur du
+                billet. Placee dans la colonne de texte a cote de l'avatar,
+                elle n'occupait que la moitie et devenait trop petite pour
+                remplir son office : reconnaitre la voiture dans la rue.
+
+                Sans photo on ne rend rien. Un cadre vide ou une icone
+                generique n'aiderait personne a reconnaitre quoi que ce soit
+                et alourdirait le billet pour rien. */}
+            {voyage.vehiclePhotoUrl ? (
+              <Image
+                accessibilityLabel="Photo du véhicule"
+                source={{ uri: voyage.vehiclePhotoUrl }}
+                resizeMode="cover"
+                style={{
+                  width: '100%',
+                  aspectRatio: 16 / 9,
+                  borderRadius: 12,
+                  marginTop: 14,
+                  backgroundColor: '#E5E7EB',
+                }}
+              />
+            ) : null}
           </View>
 
           {/* Spacer */}
