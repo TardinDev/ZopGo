@@ -38,3 +38,9 @@ verify_jwt = false
 # Sonde de disponibilité : doit répondre sans authentification.
 [functions.health]
 verify_jwt = false
+
+# Détient la clé secrète Clerk pour créer des invitations. Comme les autres,
+# le gateway ne sait pas valider le jeton de l'admin — l'autorisation est
+# faite dans la fonction par _shared/adminAuth.ts.
+[functions.admin-invitations]
+verify_jwt = false
