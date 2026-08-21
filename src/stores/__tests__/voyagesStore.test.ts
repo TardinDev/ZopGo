@@ -95,6 +95,55 @@ describe('voyagesStore', () => {
       });
     });
 
+    it('remonte la photo du véhicule depuis le profil joint du chauffeur', async () => {
+      (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
+        {
+          id: 'uuid-photo',
+          chauffeur_id: 'cf-photo',
+          vehicule: 'voiture',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Oyem',
+          prix: 12000,
+          profiles: {
+            name: 'Jean',
+            avatar: 'jean.jpg',
+            rating: 4.2,
+            vehicle_photo_url: 'https://cdn.example/vehicule.jpg',
+          },
+          places_disponibles: 3,
+          date: null,
+        },
+      ]);
+
+      await useVoyagesStore.getState().loadVoyages();
+      // La photo vient du profil, pas du trajet : c'est ce qui permet à un
+      // changement de véhicule de se répercuter sur les trajets déjà publiés.
+      expect(useVoyagesStore.getState().trajets[0].vehiclePhotoUrl).toBe(
+        'https://cdn.example/vehicule.jpg'
+      );
+    });
+
+    it('laisse la photo du véhicule indéfinie quand le chauffeur n’en a pas déposé', async () => {
+      (fetchAllAvailableTrajets as jest.Mock).mockResolvedValue([
+        {
+          id: 'uuid-nophoto',
+          chauffeur_id: 'cf-nophoto',
+          vehicule: 'voiture',
+          ville_depart: 'Libreville',
+          ville_arrivee: 'Lambaréné',
+          prix: 8000,
+          // La colonne existe mais vaut NULL — le mapping doit produire
+          // `undefined`, pas `null`, pour que le paramètre de route reste vide.
+          profiles: { name: 'Alice', avatar: 'alice.jpg', rating: 4, vehicle_photo_url: null },
+          places_disponibles: 2,
+          date: null,
+        },
+      ]);
+
+      await useVoyagesStore.getState().loadVoyages();
+      expect(useVoyagesStore.getState().trajets[0].vehiclePhotoUrl).toBeUndefined();
+    });
+
     it('sets isLoading during fetch', async () => {
       let resolvePromise: (value: unknown[]) => void;
       (fetchAllAvailableTrajets as jest.Mock).mockReturnValue(

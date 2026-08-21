@@ -114,6 +114,7 @@ export default function VoyagesTab() {
           icon: voyage.icon,
           chauffeurName: voyage.chauffeurName || '',
           chauffeurAvatar: voyage.chauffeurAvatar || '',
+          vehiclePhotoUrl: voyage.vehiclePhotoUrl || '',
           chauffeurRating: voyage.chauffeurRating?.toString() || '',
           chauffeurProfileId: voyage.chauffeurProfileId || '',
           placesDisponibles: voyage.placesDisponibles?.toString() || '',

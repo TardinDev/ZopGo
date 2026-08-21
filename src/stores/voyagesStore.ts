@@ -81,6 +81,7 @@ export const useVoyagesStore = create<VoyagesState>((set, get) => ({
           icon: VEHICLE_ICON[t.vehicule] || '🚗',
           chauffeurName: t.profiles?.name,
           chauffeurAvatar: t.profiles?.avatar,
+          vehiclePhotoUrl: t.profiles?.vehicle_photo_url ?? undefined,
           chauffeurRating: t.profiles?.rating,
           chauffeurProfileId: t.chauffeur_id,
           placesDisponibles: t.places_disponibles,

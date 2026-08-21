@@ -135,6 +135,9 @@ export default function VoyageDetailScreen() {
     driver: String(params.chauffeurName || 'Conducteur'),
     driverRating: Number(params.chauffeurRating) || 0,
     driverAvatar: String(params.chauffeurAvatar || ''),
+    // Photo du véhicule du chauffeur, relayée depuis son profil. Vide tant
+    // qu'il n'en a pas déposé — on ne rend alors rien du tout.
+    vehiclePhotoUrl: String(params.vehiclePhotoUrl || ''),
     chauffeurProfileId: String(params.chauffeurProfileId || ''),
     date: String(params.date || ''),
     immatriculation: String(params.immatriculation || ''),
@@ -649,6 +652,25 @@ export default function VoyageDetailScreen() {
                       style={{ marginTop: 2, fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
                       {voyage.driver}
                     </Text>
+                    {/* Photo du véhicule : le seul élément qui permet vraiment
+                        de repérer la voiture au point de rendez-vous. Sans
+                        photo on ne rend rien — un cadre vide ou une icône
+                        générique n'aiderait personne à reconnaître quoi que
+                        ce soit et alourdirait le billet pour rien. */}
+                    {voyage.vehiclePhotoUrl ? (
+                      <Image
+                        accessibilityLabel="Photo du véhicule"
+                        source={{ uri: voyage.vehiclePhotoUrl }}
+                        resizeMode="cover"
+                        style={{
+                          width: '100%',
+                          aspectRatio: 16 / 9,
+                          borderRadius: 12,
+                          marginTop: 8,
+                          backgroundColor: '#E5E7EB',
+                        }}
+                      />
+                    ) : null}
                     {vehicleSpecs ? (
                       <Text
                         selectable

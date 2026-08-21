@@ -28,6 +28,10 @@ export interface SupabaseTrajet {
     role?: string;
     agency_name?: string | null;
     agency_logo_url?: string | null;
+    // Lue en direct sur le profil du chauffeur, jamais recopiée sur le trajet :
+    // elle sert à reconnaître le véhicule ACTUEL, donc changer de photo doit
+    // changer l'affichage de tous les trajets déjà publiés.
+    vehicle_photo_url?: string | null;
   } | null;
 }
 
@@ -101,7 +105,9 @@ export async function insertTrajet(trajet: {
 export async function fetchAllAvailableTrajets(): Promise<SupabaseTrajet[]> {
   const { data, error } = await supabase
     .from('trajets')
-    .select('*, profiles:chauffeur_id(name, avatar, rating, role, agency_name, agency_logo_url)')
+    .select(
+      '*, profiles:chauffeur_id(name, avatar, rating, role, agency_name, agency_logo_url, vehicle_photo_url)'
+    )
     .eq('status', 'en_attente')
     .gt('places_disponibles', 0)
     .order('created_at', { ascending: false })

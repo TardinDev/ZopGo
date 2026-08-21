@@ -12,6 +12,9 @@ export interface Voyage {
   icon: string;
   chauffeurName?: string;
   chauffeurAvatar?: string;
+  // Photo du véhicule du chauffeur, lue en direct sur son profil (jamais
+  // figée sur le trajet) : elle doit refléter le véhicule ACTUEL.
+  vehiclePhotoUrl?: string;
   chauffeurRating?: number;
   chauffeurProfileId?: string;
   placesDisponibles?: number;
