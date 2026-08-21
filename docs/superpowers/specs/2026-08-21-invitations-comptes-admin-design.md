@@ -19,7 +19,7 @@ Constaté avant conception :
 - `_shared/clerkAuth.ts` vérifie des jetons **RS256** contre le JWKS Clerk. Il rejetterait donc l'admin.
 - `sendAdminPush.ts` n'appelle **aucune** Edge Function : il tape l'API Expo Push directement depuis le navigateur. Il n'existe aucun précédent d'appel de fonction côté admin.
 - `clerk-webhook` crée la ligne `profiles` sur `user.created`, en lisant le rôle dans `userData.unsafe_metadata?.role || 'client'`.
-- `audit_log` est réservé aux admins depuis la migration 040.
+- `_shared/adminAuth.ts` existe déjà : il vérifie la signature HS256 du jeton du template et le claim `admin_role`. Écrit et vérifié en production lors du correctif des annonces diffusées.
 
 ## Décisions
 
@@ -27,7 +27,7 @@ Constaté avant conception :
 |---|---|---|
 | Accès du nouveau | Invitation par email | L'administration ne manipule aucun mot de passe, et l'email valide l'adresse |
 | Suivi | Liste des invitations en attente + révocation | Sans elle, on invite à l'aveugle et une adresse mal saisie reste valable jusqu'à expiration |
-| Authentification de la fonction | Délégation à RLS | Évite d'introduire un second mécanisme de vérification et le secret JWT Supabase avec lui |
+| Authentification de la fonction | Vérification de la signature HS256 + claim `admin_role` | Une première conception déléguait aux policies ; elle était fausse, voir ci-dessous |
 | Emplacement du secret Clerk | Secret Supabase | Seul endroit où il ne transite jamais par un navigateur |
 
 ## Architecture
@@ -36,9 +36,11 @@ Constaté avant conception :
 
 Déployée en `verify_jwt = false`, comme les autres fonctions du projet — le gateway Edge ne sait valider ni les jetons Clerk, ni ceux du template.
 
-**Autorisation par délégation.** La fonction construit un client Supabase portant le jeton `Authorization` de l'appelant, puis lit une ligne d'`audit_log`. Cette table n'étant lisible que par un porteur du claim `admin_role`, une lecture réussie prouve la qualité d'administrateur.
+**Autorisation par `_shared/adminAuth.ts`**, module déjà écrit, déployé et vérifié en production lors du correctif des annonces diffusées.
 
-Ce choix évite de dupliquer la logique d'autorisation : elle reste définie dans les policies, à un seul endroit. Il évite aussi d'exposer le secret JWT Supabase à une seconde fonction.
+Il vérifie la signature HS256 du jeton avec le secret JWT du projet (`ADMIN_JWT_SECRET`), contrôle l'expiration, puis lit le claim `admin_role`. C'est le même contrôle que les policies, appliqué en amont de la base.
+
+**Une première conception, écartée.** L'idée initiale était de déléguer l'autorisation aux policies : lire `audit_log`, table réservée aux admins, et conclure « admin » si la lecture passait. Elle ne tient pas — **un refus RLS ne produit aucune erreur**, PostgREST renvoie un résultat vide. La fonction concluait donc « admin » pour tout porteur de jeton valide. Constaté en production avant correction.
 
 **Trois opérations**, distinguées par la méthode HTTP :
 
@@ -73,13 +75,13 @@ Ressource `invitations` déclarée dans `App.tsx`, entrée dans le menu latéral
 Suivant la convention du dépôt admin (`payload.ts`, `actor.ts`, `moderation.ts`) :
 
 - `buildInvitationPayload(email, role)` — détoure l'email, le passe en minuscules, place le rôle dans `public_metadata`
-- `resolveInvitedRole(unsafeMeta, publicMeta)` — la règle de repli ci-dessus, également utilisée côté fonction
+La règle de repli du rôle vit directement dans le webhook — trois lignes n'appellent pas un module. Elle est verrouillée par un test de contrat lisant la source, comme `sendPushAuthContract.test.ts` le fait pour `send-push` : le webhook tourne sous Deno, hors de portée de Jest.
 
 ## Flux
 
 1. L'admin saisit email + rôle, valide
 2. L'admin web appelle `admin-invitations` en `POST`, jeton du template en en-tête
-3. La fonction vérifie la qualité d'admin en lisant `audit_log`
+3. La fonction vérifie la signature du jeton et le claim `admin_role`
 4. Elle crée l'invitation Clerk, qui envoie l'email
 5. La personne clique, choisit son mot de passe → Clerk crée l'utilisateur avec `public_metadata.role`
 6. `user.created` déclenche `clerk-webhook`, qui crée la ligne `profiles` avec le bon rôle
@@ -95,7 +97,7 @@ Suivant la convention du dépôt admin (`payload.ts`, `actor.ts`, `moderation.ts
 ## Tests
 
 - `buildInvitationPayload` : détourage, minuscules, rôle placé dans `public_metadata`, email vide refusé
-- `resolveInvitedRole` : `unsafe_metadata` prioritaire, repli sur `public_metadata`, défaut `client` quand les deux manquent
+- Contrat du webhook : présence du repli, `unsafe_metadata` prioritaire, défaut `client`
 - Vérification en production : invitation réellement créée, listée, puis révoquée ; et un appel sans qualité d'admin refusé en `403`
 
 ## Hors périmètre
@@ -107,3 +109,7 @@ Suivant la convention du dépôt admin (`payload.ts`, `actor.ts`, `moderation.ts
 ## Prérequis côté exploitant
 
 Le secret `CLERK_SECRET_KEY` doit être posé dans les secrets Supabase, avec une clé `sk_live_` de l'instance de production. Elle ne transite jamais par le navigateur ni par le dépôt.
+
+`ADMIN_JWT_SECRET` est déjà en place, posé lors du correctif des annonces diffusées.
+
+Note : la CLI Supabase refuse les noms de secrets commençant par `SUPABASE_`, d'où ce nom.
