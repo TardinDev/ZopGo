@@ -27,6 +27,7 @@ import {
     NotificationOutlined,
     KeyOutlined,
     StarOutlined,
+    MailOutlined,
 } from "@ant-design/icons";
 import { useAuth, useUser } from "@clerk/clerk-react";
 
@@ -54,6 +55,7 @@ import { AdminMessageCreate } from "@/pages/admin-messages/create";
 import { AdminMessageShow } from "@/pages/admin-messages/show";
 import { AgencyInvitationList } from "@/pages/agency-invitations/list";
 import { AgencyInvitationCreate } from "@/pages/agency-invitations/create";
+import { InvitationsPage } from "@/pages/invitations";
 import { TrajetList } from "@/pages/trajets/list";
 import { TrajetShow } from "@/pages/trajets/show";
 import { TrajetCreate } from "@/pages/trajets/create";
@@ -215,6 +217,14 @@ function AppContent() {
                     },
                 },
                 {
+                    name: "invitations",
+                    list: "/invitations",
+                    meta: {
+                        label: "Invitations",
+                        icon: <MailOutlined />,
+                    },
+                },
+                {
                     name: "notifications",
                     list: "/notifications",
                     meta: {
@@ -340,6 +350,9 @@ function AppContent() {
                         <Route index element={<AgencyInvitationList />} />
                         <Route path="create" element={<AgencyInvitationCreate />} />
                     </Route>
+
+                    {/* Enrôlement par invitation email (chauffeurs, hébergeurs) */}
+                    <Route path="/invitations" element={<InvitationsPage />} />
 
                     {/* Système */}
                     <Route path="/notifications" element={<NotificationList />} />
